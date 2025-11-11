@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import LazyImage from './LazyImage';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 interface FragranceCategory {
@@ -17,26 +16,18 @@ interface FragranceCategory {
 
 const fragranceCategories: FragranceCategory[] = [
   {
-    id: 'amber',
-    name: 'AMBER',
-    description: 'Warm, rich, and luxurious scents',
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
-    link: '/collections/candles/amber',
-    color: 'from-orange-600 to-red-700'
-  },
-  {
-    id: 'gourmand',
+    id: 'sweet',
     name: 'GOURMAND',
     description: 'Sweet, edible, and comforting aromas',
-    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
-    link: '/collections/candles/gourmand',
+    image: '/api/placeholder/400/500',
+    link: '/collections/candles/sweet',
     color: 'from-amber-600 to-orange-700'
   },
   {
     id: 'earthy',
     name: 'EARTHY',
     description: 'Natural, grounding, and organic scents',
-    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
+    image: '/api/placeholder/400/500',
     link: '/collections/candles/earthy',
     color: 'from-green-600 to-emerald-700'
   },
@@ -44,23 +35,23 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'floral',
     name: 'FLORAL',
     description: 'Delicate, romantic, and feminine notes',
-    image: 'https://images.unsplash.com/photo-1563241527-3004b7be0ffd?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
+    image: '/api/placeholder/400/500',
     link: '/collections/candles/floral',
     color: 'from-pink-500 to-rose-600'
   },
   {
-    id: 'oceanic',
+    id: 'fresh',
     name: 'OCEANIC',
     description: 'Fresh, clean, and aquatic vibes',
-    image: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
-    link: '/collections/candles/oceanic',
+    image: '/api/placeholder/400/500',
+    link: '/collections/candles/fresh',
     color: 'from-blue-500 to-cyan-600'
   },
   {
     id: 'citrus',
     name: 'CITRUS',
     description: 'Bright, energizing, and zesty scents',
-    image: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
+    image: '/api/placeholder/400/500',
     link: '/collections/candles/citrus',
     color: 'from-yellow-500 to-orange-500'
   },
@@ -68,16 +59,16 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'woodsy',
     name: 'WOODSY',
     description: 'Deep, masculine, and forest-inspired',
-    image: 'https://images.unsplash.com/photo-1448375240586-882707db888b?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
+    image: '/api/placeholder/400/500',
     link: '/collections/candles/woodsy',
     color: 'from-amber-700 to-brown-800'
   },
   {
-    id: 'fresh',
-    name: 'FRESH',
+    id: 'herbal',
+    name: 'HERBAL',
     description: 'Clean, crisp, and invigorating scents',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500&fit=crop&crop=center&auto=format&q=80',
-    link: '/collections/candles/fresh',
+    image: '/api/placeholder/400/500',
+    link: '/collections/candles/herbal',
     color: 'from-green-400 to-teal-500'
   }
 ];
@@ -133,7 +124,7 @@ const FragranceCarousel = memo(() => {
   const visibleSlides = getVisibleSlides();
 
   return (
-    <section ref={targetRef} className="py-20 px-4 sm:px-6 lg:px-8 gradient-teal-subtle overflow-hidden">
+    <section ref={targetRef} className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800 overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -176,18 +167,9 @@ const FragranceCarousel = memo(() => {
                 className="group flex-shrink-0 w-full sm:w-1/3 lg:w-1/5"
               >
                 <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
-                  {/* Background Image */}
+                  {/* Gradient Background */}
                   <div className="aspect-[4/5] relative">
-                    <LazyImage
-                      src={category.image}
-                      alt={`${category.name} fragrance collection`}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-110"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
-                    />
-                    
-                    {/* Gradient Overlay */}
-                    <div className={`absolute inset-0 bg-gradient-to-t ${category.color} opacity-60 group-hover:opacity-70 transition-opacity duration-300`} />
+                    <div className={`absolute inset-0 bg-gradient-to-br ${category.color} transition-all duration-300 group-hover:scale-110`} />
                     
                     {/* Content Overlay */}
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
