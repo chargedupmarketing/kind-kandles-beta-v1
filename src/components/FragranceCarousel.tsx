@@ -21,7 +21,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Sweet, edible, and comforting aromas',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/sweet',
-    color: 'from-amber-600 to-orange-700'
+    color: 'bg-gradient-to-br from-amber-600 to-orange-700'
   },
   {
     id: 'earthy',
@@ -29,7 +29,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Natural, grounding, and organic scents',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/earthy',
-    color: 'from-green-600 to-emerald-700'
+    color: 'bg-gradient-to-br from-green-600 to-emerald-700'
   },
   {
     id: 'floral',
@@ -37,7 +37,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Delicate, romantic, and feminine notes',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/floral',
-    color: 'from-pink-500 to-rose-600'
+    color: 'bg-gradient-to-br from-pink-500 to-rose-600'
   },
   {
     id: 'fresh',
@@ -45,7 +45,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Fresh, clean, and aquatic vibes',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/fresh',
-    color: 'from-blue-500 to-cyan-600'
+    color: 'bg-gradient-to-br from-blue-500 to-cyan-600'
   },
   {
     id: 'citrus',
@@ -53,7 +53,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Bright, energizing, and zesty scents',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/citrus',
-    color: 'from-yellow-500 to-orange-500'
+    color: 'bg-gradient-to-br from-yellow-500 to-orange-500'
   },
   {
     id: 'woodsy',
@@ -61,7 +61,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Deep, masculine, and forest-inspired',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/woodsy',
-    color: 'from-amber-700 to-brown-800'
+    color: 'bg-gradient-to-br from-amber-700 to-brown-800'
   },
   {
     id: 'herbal',
@@ -69,7 +69,7 @@ const fragranceCategories: FragranceCategory[] = [
     description: 'Clean, crisp, and invigorating scents',
     image: '/api/placeholder/400/500',
     link: '/collections/candles/herbal',
-    color: 'from-green-400 to-teal-500'
+    color: 'bg-gradient-to-br from-green-400 to-teal-500'
   }
 ];
 
@@ -169,7 +169,7 @@ const FragranceCarousel = memo(() => {
                 <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
                   {/* Gradient Background */}
                   <div className="aspect-[4/5] relative">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${category.color} transition-all duration-300 group-hover:scale-110`} />
+                    <div className={`absolute inset-0 ${category.color} transition-all duration-300 group-hover:scale-110`} />
                     
                     {/* Content Overlay */}
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
