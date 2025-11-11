@@ -1,26 +1,449 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Dancing+Script:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark mode styles - comprehensive dark theme */
+.dark {
+  color-scheme: dark;
+}
+
+/* Dark mode root variables */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+}
+
+/* Global dark mode styles */
+.dark body {
+  @apply bg-slate-900 text-slate-100;
+}
+
+.dark main {
+  @apply bg-slate-900;
+}
+
+/* Ensure hero sections with videos maintain their styling in dark mode */
+.hero-section {
+  @apply bg-transparent;
+}
+
+/* Force hero section text to stay white in both light and dark mode */
+.hero-section .hero-text,
+.hero-section .hero-text *,
+.hero-section p,
+.hero-section a,
+.hero-section div {
+  color: white !important;
+}
+
+.hero-section svg {
+  color: white !important;
+}
+
+/* Dark mode text colors */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  @apply text-slate-100;
+}
+
+.dark p {
+  @apply text-slate-300;
+}
+
+/* Dark mode cards and containers */
+.dark .bg-white {
+  @apply bg-slate-800 text-slate-100;
+}
+
+.dark .bg-gray-50 {
+  @apply bg-slate-800;
+}
+
+.dark .bg-gray-100 {
+  @apply bg-slate-700;
+}
+
+.dark .text-gray-900 {
+  @apply text-slate-100;
+}
+
+.dark .text-gray-800 {
+  @apply text-slate-200;
+}
+
+.dark .text-gray-700 {
+  @apply text-slate-300;
+}
+
+.dark .text-gray-600 {
+  @apply text-slate-400;
+}
+
+.dark .text-gray-500 {
+  @apply text-slate-500;
+}
+
+/* Dark mode borders */
+.dark .border-gray-200 {
+  @apply border-slate-700;
+}
+
+.dark .border-gray-300 {
+  @apply border-slate-600;
+}
+
+/* Dark mode gradients - preserve candle warmth */
+.dark .gradient-candle {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #0f172a 100%);
+}
+
+.dark .gradient-warm {
+  background: linear-gradient(135deg, #451a03 0%, #7c2d12 50%, #1e293b 100%);
+}
+
+/* Dark mode shadows */
+.dark .shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Candle-focused CSS Variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Candle Color Palette */
+  --candle-flame: #FF6B35;
+  --candle-glow: #FFB347;
+  --wax-cream: #FFF8DC;
+  --wick-brown: #8B4513;
+  --smoke-gray: #696969;
+  --kindness-pink: #EC4899;
+  --warm-amber: #FFBF00;
+  --soft-vanilla: #F3E5AB;
+  --cozy-orange: #FF8C42;
+  --gentle-lavender: #E6E6FA;
+  
+  /* Brand Teal Colors */
+  --brand-teal: #14B8A6;
+  --brand-teal-dark: #0F766E;
+  --brand-teal-light: #5EEAD4;
+  
+  /* Candle Glow Effects */
+  --glow-small: 0 0 10px rgba(255, 179, 71, 0.3);
+  --glow-medium: 0 0 20px rgba(255, 179, 71, 0.4);
+  --glow-large: 0 0 30px rgba(255, 179, 71, 0.5);
+  --flame-glow: 0 0 15px rgba(255, 107, 53, 0.6);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply text-gray-900;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  /* Enhanced Typography */
+  h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+  }
+  
+  .script-font {
+    font-family: 'Dancing Script', cursive;
+  }
+  
+  .serif-font {
+    font-family: 'Playfair Display', serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Enhanced Buttons with Candle Glow Effects */
+  .btn-primary {
+    @apply bg-pink-600 hover:bg-pink-700 text-white font-medium py-3 px-8 rounded-lg transition-all duration-300;
+    box-shadow: var(--glow-small);
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .btn-primary:hover {
+    box-shadow: var(--glow-medium);
+    transform: translateY(-1px);
+  }
+  
+  .btn-candle {
+    background: linear-gradient(135deg, var(--candle-flame) 0%, var(--cozy-orange) 100%);
+    @apply text-white font-medium py-3 px-8 rounded-lg transition-all duration-300;
+    box-shadow: var(--flame-glow);
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  
+  .btn-candle:hover {
+    box-shadow: var(--glow-large);
+    transform: translateY(-2px);
+  }
+  
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-pink-600 font-medium py-3 px-8 rounded-lg border border-pink-600 transition-all duration-300;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .dark .btn-secondary {
+    @apply bg-slate-800 hover:bg-slate-700 text-pink-400 border-pink-400;
+  }
+  
+  .btn-secondary:hover {
+    box-shadow: var(--glow-small);
+    transform: translateY(-1px);
+  }
+  
+  /* Enhanced Cards with Candle Glow */
+  .card {
+    @apply bg-white rounded-lg overflow-hidden transition-all duration-300;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .dark .card {
+    @apply bg-slate-800 border border-slate-700;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  }
+  
+  .card:hover {
+    box-shadow: var(--glow-medium), 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .card-candle {
+    @apply bg-white rounded-lg overflow-hidden transition-all duration-300;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 179, 71, 0.2);
+  }
+  
+  .dark .card-candle {
+    @apply bg-slate-800;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 179, 71, 0.3);
+  }
+  
+  .card-candle:hover {
+    box-shadow: var(--glow-large), 0 15px 35px -5px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    border-color: var(--candle-glow);
+  }
+  
+  /* Candle-Inspired Gradients */
+  .gradient-bg {
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #f3e8ff 100%);
+  }
+  
+  .gradient-candle {
+    background: linear-gradient(135deg, var(--wax-cream) 0%, var(--soft-vanilla) 50%, var(--gentle-lavender) 100%);
+  }
+  
+  .gradient-warm {
+    background: linear-gradient(135deg, var(--soft-vanilla) 0%, var(--candle-glow) 50%, var(--cozy-orange) 100%);
+  }
+  
+  /* Universal Gradient Backgrounds - Light Mode */
+  .gradient-amber-universal {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 50%, #fb923c 100%);
+  }
+  
+  .gradient-teal-universal {
+    background: linear-gradient(135deg, #5eead4 0%, #2dd4bf 50%, #14b8a6 100%);
+  }
+  
+  /* Subtle versions for better text readability - Light Mode */
+  .gradient-amber-subtle {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+  }
+  
+  .gradient-teal-subtle {
+    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 50%, #5eead4 100%);
+  }
+  
+  /* Dark Mode Gradient Overrides - Darker for Better Text Readability */
+  .dark .gradient-amber-universal {
+    background: linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%);
+  }
+  
+  .dark .gradient-teal-universal {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+  }
+  
+  .dark .gradient-amber-subtle {
+    background: linear-gradient(135deg, #78350f 0%, #92400e 50%, #a16207 100%);
+  }
+  
+  .dark .gradient-teal-subtle {
+    background: linear-gradient(135deg, #134e4a 0%, #0f766e 50%, #115e59 100%);
+  }
+  
+  /* Text color adjustments for gradient backgrounds in dark mode */
+  .dark .gradient-amber-universal h1,
+  .dark .gradient-amber-universal h2,
+  .dark .gradient-amber-universal h3,
+  .dark .gradient-amber-universal h4,
+  .dark .gradient-amber-universal h5,
+  .dark .gradient-amber-universal h6 {
+    @apply text-amber-50;
+  }
+  
+  .dark .gradient-amber-universal p,
+  .dark .gradient-amber-universal span,
+  .dark .gradient-amber-universal div {
+    @apply text-amber-100;
+  }
+  
+  .dark .gradient-amber-subtle h1,
+  .dark .gradient-amber-subtle h2,
+  .dark .gradient-amber-subtle h3,
+  .dark .gradient-amber-subtle h4,
+  .dark .gradient-amber-subtle h5,
+  .dark .gradient-amber-subtle h6 {
+    @apply text-amber-50;
+  }
+  
+  .dark .gradient-amber-subtle p,
+  .dark .gradient-amber-subtle span,
+  .dark .gradient-amber-subtle div {
+    @apply text-amber-100;
+  }
+  
+  .dark .gradient-teal-universal h1,
+  .dark .gradient-teal-universal h2,
+  .dark .gradient-teal-universal h3,
+  .dark .gradient-teal-universal h4,
+  .dark .gradient-teal-universal h5,
+  .dark .gradient-teal-universal h6 {
+    @apply text-teal-50;
+  }
+  
+  .dark .gradient-teal-universal p,
+  .dark .gradient-teal-universal span,
+  .dark .gradient-teal-universal div {
+    @apply text-teal-100;
+  }
+  
+  .dark .gradient-teal-subtle h1,
+  .dark .gradient-teal-subtle h2,
+  .dark .gradient-teal-subtle h3,
+  .dark .gradient-teal-subtle h4,
+  .dark .gradient-teal-subtle h5,
+  .dark .gradient-teal-subtle h6 {
+    @apply text-teal-50;
+  }
+  
+  .dark .gradient-teal-subtle p,
+  .dark .gradient-teal-subtle span,
+  .dark .gradient-teal-subtle div {
+    @apply text-teal-100;
+  }
+  
+  /* Teal Accent Classes */
+  .teal-accent {
+    @apply text-teal-600 dark:text-teal-400;
+  }
+  
+  .teal-bg-accent {
+    @apply bg-teal-50 dark:bg-teal-900/20 border-l-4 border-teal-500;
+  }
+  
+  .teal-button {
+    @apply bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-300;
+  }
+  
+  .teal-badge {
+    @apply bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  /* Flame Animation */
+  .flame-flicker {
+    animation: flicker 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes flicker {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1) rotate(-1deg);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05) rotate(1deg);
+    }
+  }
+  
+  /* Glow Pulse Animation */
+  .glow-pulse {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+  
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: var(--glow-small);
+    }
+    50% {
+      box-shadow: var(--glow-medium);
+    }
+  }
+  
+  /* Wax Drip Effect */
+  .wax-drip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 12px solid var(--wax-cream);
+    opacity: 0.7;
+  }
+  
+  /* Scent Badge Styles */
+  .scent-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+    background: linear-gradient(135deg, var(--candle-glow) 0%, var(--warm-amber) 100%);
+    color: var(--wick-brown);
+    box-shadow: var(--glow-small);
+  }
+  
+  .scent-badge-fresh {
+    background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+    color: #0369A1;
+  }
+  
+  .scent-badge-floral {
+    background: linear-gradient(135deg, var(--gentle-lavender) 0%, #DDD6FE 100%);
+    color: #7C3AED;
+  }
+  
+  .scent-badge-woodsy {
+    background: linear-gradient(135deg, #FEF3C7 0%, #D69E2E 100%);
+    color: var(--wick-brown);
+  }
+  
+  .scent-badge-sweet {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    color: #DC2626;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
