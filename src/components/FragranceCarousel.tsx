@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
@@ -19,7 +20,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'sweet',
     name: 'GOURMAND',
     description: 'Sweet, edible, and comforting aromas',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=500&fit=crop',
     link: '/collections/candles/sweet',
     color: 'bg-gradient-to-br from-amber-600 to-orange-700'
   },
@@ -27,7 +28,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'earthy',
     name: 'EARTHY',
     description: 'Natural, grounding, and organic scents',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=500&fit=crop',
     link: '/collections/candles/earthy',
     color: 'bg-gradient-to-br from-green-600 to-emerald-700'
   },
@@ -35,7 +36,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'floral',
     name: 'FLORAL',
     description: 'Delicate, romantic, and feminine notes',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=500&fit=crop',
     link: '/collections/candles/floral',
     color: 'bg-gradient-to-br from-pink-500 to-rose-600'
   },
@@ -43,7 +44,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'fresh',
     name: 'OCEANIC',
     description: 'Fresh, clean, and aquatic vibes',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1505142468610-359e7d316be0?w=400&h=500&fit=crop',
     link: '/collections/candles/fresh',
     color: 'bg-gradient-to-br from-blue-500 to-cyan-600'
   },
@@ -51,7 +52,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'citrus',
     name: 'CITRUS',
     description: 'Bright, energizing, and zesty scents',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1582979512210-99b6a53386f9?w=400&h=500&fit=crop',
     link: '/collections/candles/citrus',
     color: 'bg-gradient-to-br from-yellow-500 to-orange-500'
   },
@@ -59,7 +60,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'woodsy',
     name: 'WOODSY',
     description: 'Deep, masculine, and forest-inspired',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1511497584788-876760111969?w=400&h=500&fit=crop',
     link: '/collections/candles/woodsy',
     color: 'bg-gradient-to-br from-amber-700 to-brown-800'
   },
@@ -67,7 +68,7 @@ const fragranceCategories: FragranceCategory[] = [
     id: 'herbal',
     name: 'HERBAL',
     description: 'Clean, crisp, and invigorating scents',
-    image: '/api/placeholder/400/500',
+    image: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=400&h=500&fit=crop',
     link: '/collections/candles/herbal',
     color: 'bg-gradient-to-br from-green-400 to-teal-500'
   }
@@ -167,12 +168,21 @@ const FragranceCarousel = memo(() => {
                 className="group flex-shrink-0 w-full sm:w-1/3 lg:w-1/5"
               >
                 <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105">
-                  {/* Gradient Background */}
+                  {/* Background Image */}
                   <div className="aspect-[4/5] relative">
-                    <div className={`absolute inset-0 ${category.color} transition-all duration-300 group-hover:scale-110`} />
+                    <Image
+                      src={category.image}
+                      alt={`${category.name} fragrance collection`}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 20vw"
+                    />
+                    
+                    {/* Gradient Overlay */}
+                    <div className={`absolute inset-0 ${category.color} opacity-60 group-hover:opacity-70 transition-opacity duration-300`} />
                     
                     {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
+                    <div className="absolute inset-0 flex flex-col justify-end p-6 text-white z-10">
                       <h3 className="serif-font text-2xl font-bold mb-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
                         {category.name}
                       </h3>
