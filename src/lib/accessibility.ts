@@ -1,4 +1,5 @@
 // Accessibility utilities and helpers
+import React from 'react';
 
 export interface AccessibilityProps {
   'aria-label'?: string;
@@ -13,8 +14,10 @@ export interface AccessibilityProps {
   'aria-current'?: boolean | 'page' | 'step' | 'location' | 'date' | 'time';
   'aria-disabled'?: boolean;
   'aria-invalid'?: boolean | 'grammar' | 'spelling';
+  'aria-required'?: boolean;
   'aria-pressed'?: boolean;
   'aria-selected'?: boolean;
+  'aria-modal'?: boolean;
   role?: string;
   tabIndex?: number;
 }
@@ -28,11 +31,7 @@ export function generateId(prefix: string = 'id'): string {
 
 // Screen reader only text utility
 export function createSROnlyText(text: string): React.ReactElement {
-  return (
-    <span className="sr-only">
-      {text}
-    </span>
-  );
+  return React.createElement('span', { className: 'sr-only' }, text);
 }
 
 // Focus management utilities
@@ -131,7 +130,11 @@ export function handleKeyboardNavigation(
 export function addFocusVisiblePolyfill(): void {
   // Add focus-visible polyfill for better keyboard navigation
   if (typeof window !== 'undefined' && !window.CSS?.supports?.('selector(:focus-visible)')) {
-    import('focus-visible');
+    // Dynamically import focus-visible polyfill if available
+    // @ts-expect-error - Optional polyfill, may not be installed
+    import('focus-visible').catch(() => {
+      // Polyfill not installed, skip
+    });
   }
 }
 
@@ -160,13 +163,13 @@ export function getTextSize(): 'small' | 'medium' | 'large' {
 
 // Skip link utilities
 export function createSkipLink(targetId: string, text: string): React.ReactElement {
-  return (
-    <a
-      href={`#${targetId}`}
-      className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg"
-    >
-      {text}
-    </a>
+  return React.createElement(
+    'a',
+    {
+      href: `#${targetId}`,
+      className: 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg'
+    },
+    text
   );
 }
 
