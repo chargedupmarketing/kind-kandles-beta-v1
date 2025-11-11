@@ -122,7 +122,7 @@ export default function Home() {
       </section>
 
       {/* Featured Categories */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-candle dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="serif-font text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
@@ -201,7 +201,7 @@ export default function Home() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 gradient-amber-subtle">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="serif-font text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
@@ -312,7 +312,7 @@ export default function Home() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-teal-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -360,8 +360,7 @@ export default function Home() {
       <FragranceCarousel />
 
       {/* CTA Section */}
-      <section className="gradient-warm py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-100/30 to-orange-100/30"></div>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center justify-center mb-6">
             <span className="text-6xl flame-flicker">🕯️</span>

@@ -250,7 +250,7 @@ export default function WriteYourStoryPage() {
   return (
     <div className="min-h-screen dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="gradient-bg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 py-20 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
             <PenTool className="h-16 w-16 text-pink-600 dark:text-pink-400" />
@@ -308,7 +308,7 @@ export default function WriteYourStoryPage() {
       </section>
 
       {/* Story Submission Form */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-teal-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-4">Share Your Story</h2>

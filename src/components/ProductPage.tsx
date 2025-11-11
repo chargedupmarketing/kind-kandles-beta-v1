@@ -87,7 +87,7 @@ export default function ProductPage({ product }: ProductPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-amber-50">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Limited Time Offer Banner */}
       {showLimitedOffer && product.originalPrice && (
         <LimitedTimeOffer
@@ -105,7 +105,7 @@ export default function ProductPage({ product }: ProductPageProps) {
       <SocialProofNotifications position="bottom-left" />
 
       {/* Breadcrumb */}
-      <section className="py-4 px-4 sm:px-6 lg:px-8 bg-gradient-candle">
+      <section className="py-4 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <Link href="/collections" className="inline-flex items-center text-amber-700 hover:text-amber-800 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -467,7 +467,7 @@ export default function ProductPage({ product }: ProductPageProps) {
       </section>
       
       {/* Trust & Guarantee Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-amber-50 to-orange-50">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="serif-font text-3xl font-bold text-gray-900 mb-8">
             ✨ Our Promise to You ✨

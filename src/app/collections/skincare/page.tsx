@@ -84,7 +84,7 @@ export default function SkincarePage() {
   return (
     <div className="min-h-screen dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="gradient-bg dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 py-16 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
             Natural Skincare
@@ -96,7 +96,7 @@ export default function SkincarePage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-teal-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 text-center mb-12">
             Why Natural Skincare?
@@ -143,7 +143,7 @@ export default function SkincarePage() {
       </section>
 
       {/* Products Grid */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 dark:bg-slate-900">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
@@ -167,7 +167,7 @@ export default function SkincarePage() {
       </section>
 
       {/* Ingredients Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-amber-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100 mb-6">
             Premium Natural Ingredients

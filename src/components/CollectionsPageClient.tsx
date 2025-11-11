@@ -37,7 +37,7 @@ export default function CollectionsPageClient({ collections, featuredProducts }:
       {/* Main Content with dynamic top padding based on banner visibility */}
       <div className={`min-h-screen dark:bg-slate-900 transition-all duration-300 ${isBannerVisible ? 'pt-11' : 'pt-0'}`}>
         {/* Hero Section */}
-        <section className="gradient-candle dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 py-16 px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="serif-font text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
               Our Collections
@@ -50,7 +50,7 @@ export default function CollectionsPageClient({ collections, featuredProducts }:
         </section>
 
         {/* Collections Grid */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8">
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {collections.map((collection) => (
@@ -78,7 +78,7 @@ export default function CollectionsPageClient({ collections, featuredProducts }:
         </section>
 
         {/* Featured Products */}
-        <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-amber-subtle">
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="serif-font text-3xl md:text-4xl font-bold text-gray-900 dark:text-slate-100 mb-4">

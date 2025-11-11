@@ -29,8 +29,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="gradient-candle dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900 py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-100/30 to-orange-100/30 dark:from-slate-700/30 dark:to-slate-800/30"></div>
+      <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center justify-center mb-6">
             <span className="text-6xl flame-flicker">🕯️</span>
@@ -80,7 +79,7 @@ export default function AboutPage() {
       </section>
 
       {/* Our Values */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-amber-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Values</h2>
@@ -107,7 +106,7 @@ export default function AboutPage() {
       </section>
 
       {/* Location & Contact */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 gradient-teal-subtle">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
