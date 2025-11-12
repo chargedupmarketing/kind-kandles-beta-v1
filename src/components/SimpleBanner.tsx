@@ -47,23 +47,28 @@ export default function SimpleBanner({ onVisibilityChange }: SimpleBannerProps) 
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-pink-600 via-pink-400 to-white text-gray-900 h-8">
-      <div className="max-w-7xl mx-auto flex items-center justify-center relative h-full px-4">
-        <div className="flex items-center justify-center gap-2 text-sm">
-          <span className="animate-pulse">🔥</span>
-          <span className="font-bold">PRE-BLACK FRIDAY SALE</span>
-          <span>•</span>
-          <span>Save 25% on everything + FREE shipping on orders $50+</span>
-          <span className="animate-pulse">🔥</span>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-pink-600 via-pink-400 to-white text-gray-900 h-auto sm:h-8">
+      <div className="max-w-7xl mx-auto flex items-center justify-center relative h-full px-8 sm:px-4 py-1 sm:py-0">
+        {/* Mobile: Stacked layout, Desktop: Single line */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm text-center">
+          <div className="flex items-center gap-2">
+            <span className="animate-pulse">🔥</span>
+            <span className="font-bold whitespace-nowrap">PRE-BLACK FRIDAY SALE</span>
+            <span className="animate-pulse">🔥</span>
+          </div>
+          <span className="hidden sm:inline">•</span>
+          <span className="text-xs sm:text-sm">Save 25% on everything</span>
+          <span className="hidden sm:inline">•</span>
+          <span className="text-xs sm:text-sm">FREE shipping on orders $50+</span>
         </div>
         
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute right-4 text-gray-600 hover:text-gray-900 transition-colors"
+          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
           aria-label="Close banner"
         >
-          <X className="h-3 w-3" />
+          <X className="h-4 w-4 sm:h-3 sm:w-3" />
         </button>
       </div>
     </div>

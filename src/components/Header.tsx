@@ -108,7 +108,7 @@ const Header = () => {
   };
 
   // Dynamic header classes based on scroll state, page, and banner visibility  
-  const topPosition = isSimpleBannerVisible ? 'top-8' : 'top-0';
+  const topPosition = isSimpleBannerVisible ? 'top-[52px] sm:top-8' : 'top-0';
   const headerClasses = isHomepage 
     ? `fixed ${topPosition} left-0 right-0 z-40 transition-all duration-300 ${
         isScrolled 
