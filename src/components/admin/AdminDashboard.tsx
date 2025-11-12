@@ -9,15 +9,17 @@ import {
   BookOpen, 
   LogOut,
   Shield,
-  AlertTriangle
+  AlertTriangle,
+  Gift
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
 import MaintenanceMode from './MaintenanceMode';
 import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
+import SurveyManagement from './SurveyManagement';
 
-type AdminSection = 'menu' | 'maintenance' | 'contacts' | 'stories';
+type AdminSection = 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('contacts');
@@ -35,6 +37,12 @@ export default function AdminDashboard() {
       label: 'Contact Forms',
       icon: MessageSquare,
       description: 'Form Submissions'
+    },
+    {
+      id: 'survey' as AdminSection,
+      label: 'Survey & Newsletter',
+      icon: Gift,
+      description: 'Survey Responses'
     },
     {
       id: 'stories' as AdminSection,
@@ -66,6 +74,8 @@ export default function AdminDashboard() {
         return <MaintenanceMode />;
       case 'contacts':
         return <ContactSubmissions />;
+      case 'survey':
+        return <SurveyManagement />;
       case 'stories':
         return <StoryManagement />;
       default:

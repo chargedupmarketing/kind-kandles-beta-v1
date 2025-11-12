@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SimpleBanner from "@/components/SimpleBanner";
 import MaintenancePage from "@/components/MaintenancePage";
+import SurveyPopup from "@/components/SurveyPopup";
 import { useBanner } from "@/contexts/BannerContext";
 import { useAdmin } from "@/contexts/AdminContext";
 
@@ -72,6 +73,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         {children}
       </main>
       <Footer />
+      {/* Survey Popup - Only shows on first visit */}
+      {!isAdminPage && <SurveyPopup />}
     </div>
   );
 }

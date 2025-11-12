@@ -65,14 +65,14 @@ const CountdownTimer = memo(({
   const TimeUnit = ({ value, label, isBlackFriday }: { value: number; label: string; isBlackFriday?: boolean }) => (
     <div className="text-center">
       <div className={`${isBlackFriday 
-        ? 'bg-gray-900 border-2 border-gray-500' 
+        ? 'bg-white border border-teal-200 shadow-lg shadow-teal-100/50' 
         : 'bg-white border-2 border-red-200'
       } rounded-lg p-3 shadow-md min-w-[60px]`}>
-        <div className={`text-2xl font-bold serif-font ${isBlackFriday ? 'text-white' : 'text-red-600'}`}>
+        <div className={`text-2xl font-bold serif-font ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`}>
           {value.toString().padStart(2, '0')}
         </div>
       </div>
-      <div className={`text-xs mt-1 font-medium uppercase tracking-wide ${isBlackFriday ? 'text-gray-300' : 'text-gray-600'}`}>
+      <div className={`text-xs mt-1 font-medium uppercase tracking-wide ${isBlackFriday ? 'text-gray-600' : 'text-gray-600'}`}>
         {label}
       </div>
     </div>
@@ -115,14 +115,14 @@ const CountdownTimer = memo(({
   
   return (
     <div className={`${isBlackFriday 
-      ? 'bg-gradient-to-br from-gray-800 to-black border-2 border-gray-600' 
+      ? 'bg-white border border-gray-200 shadow-2xl shadow-teal-200/50' 
       : 'bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200'
     } rounded-xl p-6 text-center`}>
       <div className="flex items-center justify-center gap-2 mb-3">
-        <Clock className={`h-5 w-5 animate-pulse ${isBlackFriday ? 'text-white' : 'text-red-600'}`} />
-        <h3 className={`serif-font text-xl font-bold ${isBlackFriday ? 'text-white' : 'text-red-700'}`}>{title}</h3>
+        <Clock className={`h-5 w-5 animate-pulse ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`} />
+        <h3 className={`serif-font text-xl font-bold ${isBlackFriday ? 'text-gray-800' : 'text-red-700'}`}>{title}</h3>
       </div>
-      <p className={`mb-4 font-medium ${isBlackFriday ? 'text-gray-200' : 'text-red-600'}`}>{subtitle}</p>
+      <p className={`mb-4 font-medium ${isBlackFriday ? 'text-gray-600' : 'text-red-600'}`}>{subtitle}</p>
       
       <div className="flex justify-center gap-4">
         {timeLeft.days > 0 && <TimeUnit value={timeLeft.days} label="Days" isBlackFriday={isBlackFriday} />}

@@ -1,0 +1,6 @@
+# Ignore survey submissions data (contains customer emails and personal info)
+survey-submissions.json
+
+# Keep this directory structure in git
+!.gitignore
+
