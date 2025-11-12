@@ -6,7 +6,6 @@ import { ArrowRight, Sparkles, Heart, Leaf, Clock, Shield, Truck } from 'lucide-
 import CountdownTimer from '@/components/CountdownTimer';
 import LimitedTimeOffer from '@/components/LimitedTimeOffer';
 import TrustBadges from '@/components/TrustBadges';
-import SocialProofNotifications from '@/components/SocialProofNotifications';
 import FragranceCarousel from '@/components/FragranceCarousel';
 import FeaturedProductsSlider from '@/components/FeaturedProductsSlider';
 
@@ -72,9 +71,6 @@ export default function Home() {
 
   return (
     <>
-        {/* Social Proof Notifications */}
-        <SocialProofNotifications position="bottom-left" />
-
       {/* Hero Section */}
       <section className="hero-section relative h-screen flex flex-col justify-end overflow-hidden">
         {/* Background Video */}
