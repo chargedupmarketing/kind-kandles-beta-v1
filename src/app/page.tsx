@@ -83,7 +83,7 @@ export default function Home() {
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-contain sm:object-cover object-center"
+          className="absolute inset-0 w-full h-full object-cover object-center"
         >
           <source src="/logos/hero.mp4" type="video/mp4" />
         </video>
