@@ -10,6 +10,7 @@ import { useBanner } from '../contexts/BannerContext';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [expandedMobileMenus, setExpandedMobileMenus] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const { isDarkMode, toggleDarkMode } = useDarkMode();
   const { isBannerVisible, isSimpleBannerVisible } = useBanner();
@@ -90,6 +91,21 @@ const Header = () => {
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Toggle mobile menu expansion
+  const toggleMobileMenu = (menuName: string) => {
+    setExpandedMobileMenus(prev => 
+      prev.includes(menuName) 
+        ? prev.filter(name => name !== menuName)
+        : [...prev, menuName]
+    );
+  };
+
+  // Close mobile menu and reset expanded menus
+  const closeMobileMenu = () => {
+    setIsMenuOpen(false);
+    setExpandedMobileMenus([]);
+  };
 
   // Dynamic header classes based on scroll state, page, and banner visibility  
   const topPosition = isSimpleBannerVisible ? 'top-8' : 'top-0';
@@ -243,56 +259,107 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Sidebar Overlay */}
         {isMenuOpen && (
-          <div className="md:hidden">
-            <div className={`px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t ${
-              isHomepage 
-                ? (isScrolled ? 'bg-teal-500' : 'bg-black bg-opacity-20 dark:bg-slate-900 dark:bg-opacity-90')
-                : 'bg-teal-500'
-            }`}>
-              {navigation.map((item) => (
-                <div key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`${textClasses} hover:text-pink-300 block px-3 py-2 text-base font-medium transition-colors duration-300`}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                  {item.dropdown && (
-                    <div className="pl-4">
-                      {item.dropdown.map((dropdownItem) => (
-                        <div key={dropdownItem.name}>
-                          <Link
-                            href={dropdownItem.href}
-                            className={`${textClasses} opacity-80 hover:text-pink-300 block px-3 py-1 text-sm transition-colors duration-300`}
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            {dropdownItem.name}
-                          </Link>
-                          {dropdownItem.submenu && (
-                            <div className="pl-4">
-                              {dropdownItem.submenu.map((subItem) => (
-                                <Link
-                                  key={subItem.name}
-                                  href={subItem.href}
-                                  className={`${textClasses} opacity-60 hover:text-pink-300 block px-3 py-1 text-xs transition-colors duration-300`}
-                                  onClick={() => setIsMenuOpen(false)}
-                                >
-                                  {subItem.name}
-                                </Link>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={closeMobileMenu}
+            />
+            
+            {/* Sidebar */}
+            <div className="fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl z-50 md:hidden overflow-y-auto transform transition-transform duration-300 ease-in-out">
+              {/* Sidebar Header */}
+              <div className="sticky top-0 bg-teal-500 dark:bg-teal-600 px-6 py-4 flex items-center justify-between border-b-4 border-teal-600 dark:border-teal-700">
+                <h2 className="text-white font-bold text-lg">Menu</h2>
+                <button
+                  onClick={closeMobileMenu}
+                  className="text-white hover:text-pink-300 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Navigation Items */}
+              <nav className="py-4">
+                {navigation.map((item) => (
+                  <div key={item.name} className="border-b border-gray-200 dark:border-slate-700">
+                    {/* Main Menu Item */}
+                    {item.dropdown ? (
+                      <button
+                        onClick={() => toggleMobileMenu(item.name)}
+                        className="w-full flex items-center justify-between px-6 py-3 text-gray-900 dark:text-slate-100 hover:bg-pink-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <span className="font-medium">{item.name}</span>
+                        <ChevronDown 
+                          className={`h-5 w-5 transition-transform duration-200 ${
+                            expandedMobileMenus.includes(item.name) ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        onClick={closeMobileMenu}
+                        className="block px-6 py-3 text-gray-900 dark:text-slate-100 hover:bg-pink-50 dark:hover:bg-slate-800 transition-colors font-medium"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
+
+                    {/* Dropdown Content */}
+                    {item.dropdown && expandedMobileMenus.includes(item.name) && (
+                      <div className="bg-gray-50 dark:bg-slate-800">
+                        {item.dropdown.map((dropdownItem) => (
+                          <div key={dropdownItem.name}>
+                            {/* Dropdown Item */}
+                            {dropdownItem.submenu ? (
+                              <button
+                                onClick={() => toggleMobileMenu(`${item.name}-${dropdownItem.name}`)}
+                                className="w-full flex items-center justify-between px-8 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-pink-100 dark:hover:bg-slate-700 transition-colors"
+                              >
+                                <span>{dropdownItem.name}</span>
+                                <ChevronDown 
+                                  className={`h-4 w-4 transition-transform duration-200 ${
+                                    expandedMobileMenus.includes(`${item.name}-${dropdownItem.name}`) ? 'rotate-180' : ''
+                                  }`}
+                                />
+                              </button>
+                            ) : (
+                              <Link
+                                href={dropdownItem.href}
+                                onClick={closeMobileMenu}
+                                className="block px-8 py-2.5 text-sm text-gray-700 dark:text-slate-300 hover:bg-pink-100 dark:hover:bg-slate-700 transition-colors"
+                              >
+                                {dropdownItem.name}
+                              </Link>
+                            )}
+
+                            {/* Submenu Content */}
+                            {dropdownItem.submenu && expandedMobileMenus.includes(`${item.name}-${dropdownItem.name}`) && (
+                              <div className="bg-gray-100 dark:bg-slate-900">
+                                {dropdownItem.submenu.map((subItem) => (
+                                  <Link
+                                    key={subItem.name}
+                                    href={subItem.href}
+                                    onClick={closeMobileMenu}
+                                    className="block px-12 py-2 text-xs text-gray-600 dark:text-slate-400 hover:bg-pink-50 dark:hover:bg-slate-800 hover:text-pink-600 dark:hover:text-pink-400 transition-colors"
+                                  >
+                                    {subItem.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </nav>
             </div>
-          </div>
+          </>
         )}
       </div>
     </header>
