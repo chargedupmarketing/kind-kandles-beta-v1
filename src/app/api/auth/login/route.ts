@@ -14,8 +14,8 @@ import {
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
 // Configuration from environment variables
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'KindKandles2024!'; // Will be hashed in production
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'test@kindkandlesboutique.com';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234'; // Will be hashed in production
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
 const RATE_LIMIT_MAX_ATTEMPTS = parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || '5');
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'); // 15 minutes
