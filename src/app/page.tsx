@@ -88,12 +88,12 @@ export default function Home() {
           <source src="/logos/hero.mp4" type="video/mp4" />
         </video>
         
-        {/* Overlay - Lighter on mobile for better video visibility */}
-        <div className="absolute inset-0 bg-black bg-opacity-30 sm:bg-opacity-40"></div>
+        {/* Overlay - Much lighter on mobile for maximum video visibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent sm:bg-black sm:bg-opacity-40"></div>
         
-        {/* Content - Compact on mobile, positioned at bottom */}
-        <div className="hero-text relative z-10 text-white px-4 sm:px-6 lg:px-8 pb-20 sm:pb-20 text-center sm:text-right">
-          <div className="max-w-7xl mx-auto">
+        {/* Content - Minimal on mobile, at very bottom */}
+        <div className="hero-text relative z-10 text-white text-center sm:text-right">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 sm:pb-20">
             <div className="max-w-3xl mx-auto sm:ml-auto sm:mr-0 sm:pr-8 md:pr-12 lg:pr-16">
               {/* Hide description on mobile, show on tablet+ */}
               <p className="hidden sm:block text-lg md:text-xl opacity-80 mb-10 font-light leading-relaxed animate-fade-in-up">
@@ -101,12 +101,12 @@ export default function Home() {
               </p>
               
               {/* Compact buttons on mobile */}
-              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4 justify-center sm:justify-end animate-fade-in-up animation-delay-300">
-                <Link href="/collections/all" className="glass-button bg-white bg-opacity-20 hover:bg-opacity-30 font-medium py-2.5 sm:py-3 px-5 sm:px-8 rounded-full transition-all duration-300 border border-white border-opacity-30 inline-flex items-center justify-center transform hover:scale-105 text-sm sm:text-base whitespace-nowrap">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center sm:justify-end animate-fade-in-up animation-delay-300">
+                <Link href="/collections/all" className="glass-button bg-white/30 backdrop-blur-sm hover:bg-white/40 font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full transition-all duration-300 border border-white/50 inline-flex items-center justify-center transform hover:scale-105 text-sm sm:text-base whitespace-nowrap shadow-lg">
                   Shop All Products
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
-                <Link href="/about/mission" className="bg-transparent hover:bg-white hover:bg-opacity-10 font-medium py-2.5 sm:py-3 px-5 sm:px-8 rounded-full border-2 border-white border-opacity-50 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base whitespace-nowrap">
+                <Link href="/about/mission" className="bg-transparent hover:bg-white/20 backdrop-blur-sm font-semibold py-2.5 sm:py-3 px-6 sm:px-8 rounded-full border-2 border-white/70 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base whitespace-nowrap shadow-lg">
                   Our Mission
                 </Link>
               </div>
@@ -114,13 +114,13 @@ export default function Home() {
           </div>
         </div>
         
-        {/* Scroll Indicator - Positioned above buttons on mobile */}
-        <div className="hero-text absolute bottom-2 sm:bottom-8 left-1/2 transform -translate-x-1/2">
-          <div className="flex items-center gap-2 sm:gap-3 animate-bounce">
-            <span className="text-white font-semibold text-sm sm:text-lg" style={{ textShadow: '0 0 8px rgba(236, 72, 153, 1), 0 0 12px rgba(236, 72, 153, 0.6)' }}>
+        {/* Scroll Indicator - At very bottom on mobile */}
+        <div className="hero-text absolute bottom-4 sm:bottom-8 left-1/2 transform -translate-x-1/2">
+          <div className="flex items-center gap-2 sm:gap-3 animate-bounce bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full">
+            <span className="text-white font-bold text-xs sm:text-lg" style={{ textShadow: '0 0 10px rgba(236, 72, 153, 1), 0 0 20px rgba(236, 72, 153, 0.8)' }}>
               Deals Below!
             </span>
-            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 6px rgba(236, 72, 153, 1))' }}>
+            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 8px rgba(236, 72, 153, 1))' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </div>
