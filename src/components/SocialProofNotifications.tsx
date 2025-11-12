@@ -21,7 +21,7 @@ interface SocialProofNotificationsProps {
 export default function SocialProofNotifications({
   position = 'bottom-left',
   autoHide = true,
-  hideDelay = 5000
+  hideDelay = 10000 // 10 seconds
 }: SocialProofNotificationsProps) {
   const [notifications, setNotifications] = useState<SocialProofNotification[]>([]);
   const [currentNotification, setCurrentNotification] = useState<SocialProofNotification | null>(null);
@@ -72,23 +72,26 @@ export default function SocialProofNotifications({
 
   useEffect(() => {
     let notificationIndex = 0;
+    let timeoutId: NodeJS.Timeout;
     
     const showNextNotification = () => {
       if (mockNotifications.length > 0) {
         setCurrentNotification(mockNotifications[notificationIndex]);
         notificationIndex = (notificationIndex + 1) % mockNotifications.length;
+        
+        // Schedule next notification after 1 minute + 10 seconds (display time)
+        timeoutId = setTimeout(() => {
+          showNextNotification();
+        }, 70000); // 70 seconds total (10s visible + 60s wait)
       }
     };
 
     // Show first notification immediately
     showNextNotification();
 
-    // Then show new notifications every 8-12 seconds
-    const interval = setInterval(() => {
-      showNextNotification();
-    }, Math.random() * 4000 + 8000); // Random between 8-12 seconds
-
-    return () => clearInterval(interval);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
