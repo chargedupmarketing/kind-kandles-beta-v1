@@ -19,6 +19,7 @@ export default function SurveyPopup() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [couponCode, setCouponCode] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
   const [formData, setFormData] = useState<SurveyData>({
     email: '',
     name: '',
@@ -30,7 +31,14 @@ export default function SurveyPopup() {
     otherInfo: ''
   });
 
+  // Ensure component is mounted before accessing localStorage
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     // Check if user has already seen the popup
     const hasSeenPopup = localStorage.getItem('hasSeenSurvey');
     
@@ -42,7 +50,7 @@ export default function SurveyPopup() {
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [isMounted]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -100,7 +108,8 @@ export default function SurveyPopup() {
     'Earthy'
   ];
 
-  if (!isOpen) return null;
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!isMounted || !isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">

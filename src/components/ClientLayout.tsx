@@ -19,10 +19,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isSimpleBannerVisible, setSimpleBannerVisible } = useBanner();
   const { isMaintenanceMode, maintenanceAccessCode } = useAdmin();
   const [hasMaintenanceAccess, setHasMaintenanceAccess] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
+
+  // Ensure component is mounted before accessing localStorage
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check if user has maintenance access stored
   useEffect(() => {
+    if (!isMounted) return;
+    
     // Check for maintenance access cookie (server-side set)
     const checkMaintenanceAccess = () => {
       // The cookie is HTTP-only, so we'll check by making a request
@@ -35,7 +43,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     };
     
     checkMaintenanceAccess();
-  }, []);
+  }, [isMounted]);
 
   // Allow admin pages even in maintenance mode
   const isAdminPage = pathname?.startsWith('/restricted');
@@ -52,9 +60,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   // Show maintenance page if maintenance mode is active and user doesn't have access
   if (isMaintenanceMode && !hasMaintenanceAccess && !isAdminPage) {
-    const maintenanceMessage = localStorage.getItem('maintenanceMessage') || 
-      'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!';
-    const estimatedTime = localStorage.getItem('maintenanceEstimatedTime') || '2 hours';
+    const maintenanceMessage = isMounted 
+      ? (localStorage.getItem('maintenanceMessage') || 
+         'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!')
+      : 'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!';
+    const estimatedTime = isMounted 
+      ? (localStorage.getItem('maintenanceEstimatedTime') || '2 hours')
+      : '2 hours';
 
     return (
       <MaintenancePage

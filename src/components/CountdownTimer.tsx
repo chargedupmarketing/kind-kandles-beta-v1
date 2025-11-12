@@ -27,6 +27,7 @@ const CountdownTimer = memo(({
 }: CountdownTimerProps) => {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isExpired, setIsExpired] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const calculateTimeLeft = useCallback(() => {
     const now = new Date().getTime();
@@ -47,12 +48,47 @@ const CountdownTimer = memo(({
     }
   }, [endTime, onExpire]);
 
+  // Ensure component is mounted before calculating time
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     calculateTimeLeft();
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [calculateTimeLeft]);
+  }, [isMounted, calculateTimeLeft]);
+
+  // Don't render until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200 rounded-xl p-4 sm:p-6 text-center">
+        <div className="flex justify-center gap-2 sm:gap-4">
+          <div className="text-center">
+            <div className="bg-white border-2 border-red-200 rounded-lg p-2 sm:p-3 shadow-md min-w-[50px] sm:min-w-[60px]">
+              <div className="text-xl sm:text-2xl font-bold serif-font text-red-600">00</div>
+            </div>
+            <div className="text-[10px] sm:text-xs mt-1 font-medium uppercase tracking-wide text-gray-600">Hours</div>
+          </div>
+          <div className="text-center">
+            <div className="bg-white border-2 border-red-200 rounded-lg p-2 sm:p-3 shadow-md min-w-[50px] sm:min-w-[60px]">
+              <div className="text-xl sm:text-2xl font-bold serif-font text-red-600">00</div>
+            </div>
+            <div className="text-[10px] sm:text-xs mt-1 font-medium uppercase tracking-wide text-gray-600">Minutes</div>
+          </div>
+          <div className="text-center">
+            <div className="bg-white border-2 border-red-200 rounded-lg p-2 sm:p-3 shadow-md min-w-[50px] sm:min-w-[60px]">
+              <div className="text-xl sm:text-2xl font-bold serif-font text-red-600">00</div>
+            </div>
+            <div className="text-[10px] sm:text-xs mt-1 font-medium uppercase tracking-wide text-gray-600">Seconds</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (isExpired) {
     return (

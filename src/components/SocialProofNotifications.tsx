@@ -25,6 +25,7 @@ export default function SocialProofNotifications({
 }: SocialProofNotificationsProps) {
   const [notifications, setNotifications] = useState<SocialProofNotification[]>([]);
   const [currentNotification, setCurrentNotification] = useState<SocialProofNotification | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Mock notifications data
   const mockNotifications: SocialProofNotification[] = [
@@ -70,7 +71,14 @@ export default function SocialProofNotifications({
     }
   ];
 
+  // Ensure component is mounted before starting notifications
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
     let notificationIndex = 0;
     let timeoutId: NodeJS.Timeout;
     
@@ -92,7 +100,7 @@ export default function SocialProofNotifications({
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, []);
+  }, [isMounted]);
 
   useEffect(() => {
     if (currentNotification && autoHide) {
@@ -104,7 +112,8 @@ export default function SocialProofNotifications({
     }
   }, [currentNotification, autoHide, hideDelay]);
 
-  if (!currentNotification) return null;
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!isMounted || !currentNotification) return null;
 
   const getIcon = () => {
     switch (currentNotification.type) {

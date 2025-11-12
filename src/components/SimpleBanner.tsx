@@ -9,8 +9,16 @@ interface SimpleBannerProps {
 
 export default function SimpleBanner({ onVisibilityChange }: SimpleBannerProps) {
   const [isVisible, setIsVisible] = useState(false); // Start as false, will be set by useEffect
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure component is mounted before accessing localStorage
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
+    if (!isMounted) return;
+    
     // Check if banner was dismissed and when
     const bannerDismissed = localStorage.getItem('preBFBannerDismissed');
     
@@ -33,7 +41,7 @@ export default function SimpleBanner({ onVisibilityChange }: SimpleBannerProps) 
     // Show banner if not dismissed or if 24 hours have passed
     setIsVisible(true);
     onVisibilityChange?.(true);
-  }, [onVisibilityChange]);
+  }, [isMounted, onVisibilityChange]);
 
   const handleClose = () => {
     // Store the current timestamp when banner is dismissed
@@ -42,7 +50,8 @@ export default function SimpleBanner({ onVisibilityChange }: SimpleBannerProps) 
     onVisibilityChange?.(false);
   };
 
-  if (!isVisible) {
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!isMounted || !isVisible) {
     return null;
   }
 
