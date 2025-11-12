@@ -67,12 +67,12 @@ const CountdownTimer = memo(({
       <div className={`${isBlackFriday 
         ? 'bg-white border border-teal-200 shadow-lg shadow-teal-100/50' 
         : 'bg-white border-2 border-red-200'
-      } rounded-lg p-3 shadow-md min-w-[60px]`}>
-        <div className={`text-2xl font-bold serif-font ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`}>
+      } rounded-lg p-2 sm:p-3 shadow-md min-w-[50px] sm:min-w-[60px]`}>
+        <div className={`text-xl sm:text-2xl font-bold serif-font ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`}>
           {value.toString().padStart(2, '0')}
         </div>
       </div>
-      <div className={`text-xs mt-1 font-medium uppercase tracking-wide ${isBlackFriday ? 'text-gray-600' : 'text-gray-600'}`}>
+      <div className={`text-[10px] sm:text-xs mt-1 font-medium uppercase tracking-wide ${isBlackFriday ? 'text-gray-600' : 'text-gray-600'}`}>
         {label}
       </div>
     </div>
@@ -117,14 +117,14 @@ const CountdownTimer = memo(({
     <div className={`${isBlackFriday 
       ? 'bg-white border border-gray-200 shadow-2xl shadow-teal-200/50' 
       : 'bg-gradient-to-br from-red-50 to-pink-50 border-2 border-red-200'
-    } rounded-xl p-6 text-center`}>
-      <div className="flex items-center justify-center gap-2 mb-3">
-        <Clock className={`h-5 w-5 animate-pulse ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`} />
-        <h3 className={`serif-font text-xl font-bold ${isBlackFriday ? 'text-gray-800' : 'text-red-700'}`}>{title}</h3>
+    } rounded-xl p-4 sm:p-6 text-center`}>
+      <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+        <Clock className={`h-4 w-4 sm:h-5 sm:w-5 animate-pulse ${isBlackFriday ? 'text-teal-600' : 'text-red-600'}`} />
+        <h3 className={`serif-font text-base sm:text-xl font-bold ${isBlackFriday ? 'text-gray-800' : 'text-red-700'}`}>{title}</h3>
       </div>
-      <p className={`mb-4 font-medium ${isBlackFriday ? 'text-gray-600' : 'text-red-600'}`}>{subtitle}</p>
+      <p className={`mb-3 sm:mb-4 font-medium text-sm sm:text-base ${isBlackFriday ? 'text-gray-600' : 'text-red-600'}`}>{subtitle}</p>
       
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center gap-2 sm:gap-4">
         {timeLeft.days > 0 && <TimeUnit value={timeLeft.days} label="Days" isBlackFriday={isBlackFriday} />}
         <TimeUnit value={timeLeft.hours} label="Hours" isBlackFriday={isBlackFriday} />
         <TimeUnit value={timeLeft.minutes} label="Minutes" isBlackFriday={isBlackFriday} />

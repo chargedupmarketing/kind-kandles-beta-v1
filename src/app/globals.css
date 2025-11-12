@@ -446,4 +446,55 @@
   .text-balance {
     text-wrap: balance;
   }
+  
+  /* Mobile-specific optimizations */
+  @media (max-width: 640px) {
+    /* Improve touch targets on mobile */
+    button, a {
+      min-height: 44px;
+    }
+    
+    /* Better mobile spacing */
+    .mobile-tight {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+      overflow-x: hidden;
+    }
+    
+    /* Optimize text readability on mobile */
+    p {
+      line-height: 1.6;
+    }
+    
+    h1 {
+      line-height: 1.2;
+    }
+    
+    h2, h3 {
+      line-height: 1.3;
+    }
+    
+    /* Better mobile image handling */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* Improve form inputs on mobile */
+    input, textarea, select {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+  }
+  
+  /* Tablet optimizations */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
 }

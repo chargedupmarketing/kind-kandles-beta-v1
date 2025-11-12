@@ -163,44 +163,44 @@ export default function FeaturedProductsSlider() {
   };
 
   return (
-    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
+    <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="serif-font text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
+        <div className="text-center mb-8 sm:mb-16">
+          <h2 className="serif-font text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-4 sm:mb-6">
             🌟 Featured Products 🌟
           </h2>
-          <p className="text-xl text-gray-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-xl text-gray-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed px-2">
             Our most beloved handmade treasures, crafted with love and flying off the shelves
           </p>
-          <div className="script-font text-amber-600 dark:text-amber-400 text-lg mt-3">
+          <div className="script-font text-amber-600 dark:text-amber-400 text-base sm:text-lg mt-2 sm:mt-3">
             ✨ Each piece tells a story of kindness ✨
           </div>
         </div>
 
         {/* Category Tabs */}
-        <div className="flex justify-center gap-4 mb-12 flex-wrap">
+        <div className="flex justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 flex-wrap">
           {productCategories.map((category, index) => (
             <button
               key={category.id}
               onClick={() => handleCategoryChange(index)}
-              className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 ${
+              className={`px-4 sm:px-8 py-2 sm:py-4 rounded-xl font-semibold text-sm sm:text-lg transition-all duration-300 transform hover:scale-105 ${
                 activeCategory === index
                   ? `bg-gradient-to-r ${category.color} text-white shadow-xl`
                   : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:shadow-lg'
               }`}
             >
-              <span className="mr-2">{category.icon}</span>
+              <span className="mr-1 sm:mr-2">{category.icon}</span>
               {category.name}
             </button>
           ))}
         </div>
 
         {/* Product Grid - All 3 Products */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
           {currentCategory.products.map((product) => (
             <div key={product.id} className="bg-white dark:bg-gray-700 rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col">
               {/* Product Image */}
-              <div className="relative h-[300px]">
+              <div className="relative h-[250px] sm:h-[300px]">
                 {/* TODO: Replace with Shopify product images when backend is connected */}
                 <img
                   src={product.image}
@@ -235,33 +235,33 @@ export default function FeaturedProductsSlider() {
               </div>
 
               {/* Product Details */}
-              <div className="p-6 flex flex-col flex-grow">
-                <h3 className="serif-font text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
+              <div className="p-4 sm:p-6 flex flex-col flex-grow">
+                <h3 className="serif-font text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-3 line-clamp-2">
                   {product.name}
                 </h3>
 
-                <p className="text-gray-600 dark:text-gray-300 mb-4 text-sm leading-relaxed line-clamp-2 flex-grow">
+                <p className="text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 text-sm leading-relaxed line-clamp-2 flex-grow">
                   {product.description}
                 </p>
 
                 {/* Burn Time for Candles */}
                 {product.isCandle && 'burnTime' in product && product.burnTime && (
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
                     <Clock className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-medium">
                       {product.burnTime} burn time
                     </span>
                   </div>
                 )}
 
                 {/* Price */}
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="serif-font text-2xl font-bold text-gray-900 dark:text-white">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4 flex-wrap">
+                  <span className="serif-font text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                     {product.price}
                   </span>
                   {'originalPrice' in product && product.originalPrice && (
                     <>
-                      <span className="text-lg text-gray-500 line-through">
+                      <span className="text-base sm:text-lg text-gray-500 line-through">
                         {product.originalPrice}
                       </span>
                       <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
@@ -274,7 +274,7 @@ export default function FeaturedProductsSlider() {
                 {/* CTA Button */}
                 <Link
                   href={product.href}
-                  className="btn-primary w-full text-center py-3 text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all mt-auto"
+                  className="btn-primary w-full text-center py-2.5 sm:py-3 text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all mt-auto"
                 >
                   <Sparkles className="h-4 w-4" />
                   {product.isCandle ? 'Light Up Your Space' : 'Choose Options'}
