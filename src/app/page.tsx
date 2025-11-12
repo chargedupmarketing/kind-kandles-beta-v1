@@ -88,37 +88,39 @@ export default function Home() {
           <source src="/logos/hero.mp4" type="video/mp4" />
         </video>
         
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+        {/* Overlay - Lighter on mobile for better video visibility */}
+        <div className="absolute inset-0 bg-black bg-opacity-30 sm:bg-opacity-40"></div>
         
-        {/* Content - Positioned at bottom right to align with video text */}
-        <div className="hero-text relative z-10 text-right text-white px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20">
+        {/* Content - Compact on mobile, positioned at bottom */}
+        <div className="hero-text relative z-10 text-white px-4 sm:px-6 lg:px-8 pb-20 sm:pb-20 text-center sm:text-right">
           <div className="max-w-7xl mx-auto">
-            <div className="max-w-3xl ml-auto pr-4 sm:pr-8 md:pr-12 lg:pr-16">
-              <p className="text-base sm:text-lg md:text-xl opacity-80 mb-6 sm:mb-10 font-light leading-relaxed animate-fade-in-up">
+            <div className="max-w-3xl mx-auto sm:ml-auto sm:mr-0 sm:pr-8 md:pr-12 lg:pr-16">
+              {/* Hide description on mobile, show on tablet+ */}
+              <p className="hidden sm:block text-lg md:text-xl opacity-80 mb-10 font-light leading-relaxed animate-fade-in-up">
                 Discover our collection of natural handmade candles, luxurious skincare, and boutique items crafted with love and natural ingredients.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-end animate-fade-in-up animation-delay-300">
-              <Link href="/collections/all" className="glass-button bg-white bg-opacity-20 hover:bg-opacity-30 font-medium py-2.5 sm:py-3 px-6 sm:px-8 rounded-full transition-all duration-300 border border-white border-opacity-30 inline-flex items-center justify-center transform hover:scale-105 text-sm sm:text-base">
-                Shop All Products
-                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-              <Link href="/about/mission" className="bg-transparent hover:bg-white hover:bg-opacity-10 font-medium py-2.5 sm:py-3 px-6 sm:px-8 rounded-full border-2 border-white border-opacity-50 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base">
-                Our Mission
-              </Link>
+              {/* Compact buttons on mobile */}
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-4 justify-center sm:justify-end animate-fade-in-up animation-delay-300">
+                <Link href="/collections/all" className="glass-button bg-white bg-opacity-20 hover:bg-opacity-30 font-medium py-2.5 sm:py-3 px-5 sm:px-8 rounded-full transition-all duration-300 border border-white border-opacity-30 inline-flex items-center justify-center transform hover:scale-105 text-sm sm:text-base whitespace-nowrap">
+                  Shop All Products
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                </Link>
+                <Link href="/about/mission" className="bg-transparent hover:bg-white hover:bg-opacity-10 font-medium py-2.5 sm:py-3 px-5 sm:px-8 rounded-full border-2 border-white border-opacity-50 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base whitespace-nowrap">
+                  Our Mission
+                </Link>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Scroll Indicator */}
-        <div className="hero-text absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2">
+        {/* Scroll Indicator - Positioned above buttons on mobile */}
+        <div className="hero-text absolute bottom-2 sm:bottom-8 left-1/2 transform -translate-x-1/2">
           <div className="flex items-center gap-2 sm:gap-3 animate-bounce">
-            <span className="text-white font-semibold text-base sm:text-lg" style={{ textShadow: '0 0 8px rgba(236, 72, 153, 1), 0 0 12px rgba(236, 72, 153, 0.6)' }}>
+            <span className="text-white font-semibold text-sm sm:text-lg" style={{ textShadow: '0 0 8px rgba(236, 72, 153, 1), 0 0 12px rgba(236, 72, 153, 0.6)' }}>
               Deals Below!
             </span>
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 6px rgba(236, 72, 153, 1))' }}>
+            <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ filter: 'drop-shadow(0 0 6px rgba(236, 72, 153, 1))' }}>
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
             </svg>
           </div>
