@@ -82,6 +82,7 @@ const productCategories = [
         category: "Skincare",
         description: "Luxurious hydration that melts into your skin",
         badge: "🔥 Trending",
+        isCandle: false,
         stockLevel: 12
       },
       {
@@ -92,6 +93,7 @@ const productCategories = [
         href: "/products/foaming-body-scrub",
         category: "Skincare",
         description: "Exfoliating scrub that leaves skin smooth and radiant",
+        isCandle: false,
         stockLevel: 8
       },
       {
@@ -102,6 +104,7 @@ const productCategories = [
         href: "/products/natural-bar-soap",
         category: "Skincare",
         description: "Gentle cleansing with natural ingredients",
+        isCandle: false,
         stockLevel: 20
       }
     ]
@@ -120,6 +123,7 @@ const productCategories = [
         href: "/products/rosemary-peppermint-herbal-hair-oil",
         category: "Body Oils",
         description: "Invigorating herbal blend for healthy, lustrous hair",
+        isCandle: false,
         stockLevel: 6
       },
       {
@@ -131,6 +135,7 @@ const productCategories = [
         category: "Body Oils",
         description: "Soothing herbal formula for relaxation and hair health",
         badge: "Best Seller",
+        isCandle: false,
         stockLevel: 15
       },
       {
@@ -141,6 +146,7 @@ const productCategories = [
         href: "/products/warm-embrace-body-oil",
         category: "Body Oils",
         description: "Comforting blend that wraps you in warmth",
+        isCandle: false,
         stockLevel: 10
       }
     ]
@@ -239,7 +245,7 @@ export default function FeaturedProductsSlider() {
                 </p>
 
                 {/* Burn Time for Candles */}
-                {product.isCandle && product.burnTime && (
+                {product.isCandle && 'burnTime' in product && product.burnTime && (
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="h-4 w-4 text-amber-600" />
                     <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
@@ -253,7 +259,7 @@ export default function FeaturedProductsSlider() {
                   <span className="serif-font text-2xl font-bold text-gray-900 dark:text-white">
                     {product.price}
                   </span>
-                  {product.originalPrice && (
+                  {'originalPrice' in product && product.originalPrice && (
                     <>
                       <span className="text-lg text-gray-500 line-through">
                         {product.originalPrice}
