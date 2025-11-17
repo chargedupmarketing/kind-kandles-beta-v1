@@ -124,7 +124,7 @@ export default function Home() {
       </section>
 
       {/* Pre-Black Friday Countdown */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-100 to-purple-100">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
         <div className="max-w-4xl mx-auto">
           <CountdownTimer
             endTime={preBlackFridayEndTime}

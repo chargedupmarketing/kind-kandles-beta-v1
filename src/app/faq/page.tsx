@@ -28,10 +28,6 @@ export default function FAQPage() {
       answer: "Yes, we ship our products nationwide. Shipping costs and delivery times vary by location. Contact us for specific shipping information to your area."
     },
     {
-      question: "Can I visit your boutique in person?",
-      answer: "Absolutely! We'd love to have you visit our boutique in Owings Mills, Maryland. You can see our full product line, smell our candles, and experience our products firsthand."
-    },
-    {
       question: "How long do your candles burn?",
       answer: "Our candle burn times vary by size. Small candles (4oz) burn for approximately 25-30 hours, medium candles (8oz) burn for 50-60 hours, and large candles (12oz) burn for 75-85 hours with proper care."
     },
