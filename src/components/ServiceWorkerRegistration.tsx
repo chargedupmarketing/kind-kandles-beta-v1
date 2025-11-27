@@ -13,7 +13,9 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('Service Worker registered successfully:', registration.scope);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Service Worker registered successfully:', registration.scope);
+          }
           
           // Check for updates
           registration.addEventListener('updatefound', () => {
@@ -37,13 +39,17 @@ export default function ServiceWorkerRegistration() {
       // Listen for messages from service worker
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'CACHE_UPDATED') {
-          console.log('Cache updated:', event.data.payload);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Cache updated:', event.data.payload);
+          }
         }
       });
 
       // Handle offline/online events
       const handleOnline = () => {
-        console.log('Back online - syncing data...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Back online - syncing data...');
+        }
         // Trigger background sync if supported
         if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
           navigator.serviceWorker.ready.then((registration) => {
@@ -54,7 +60,9 @@ export default function ServiceWorkerRegistration() {
       };
 
       const handleOffline = () => {
-        console.log('Gone offline - caching enabled');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Gone offline - caching enabled');
+        }
       };
 
       window.addEventListener('online', handleOnline);

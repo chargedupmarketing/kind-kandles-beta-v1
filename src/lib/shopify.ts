@@ -4,10 +4,20 @@ import { createStorefrontApiClient } from '@shopify/storefront-api-client';
 const storeDomain = process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN;
 const accessToken = process.env.NEXT_PUBLIC_SHOPIFY_STOREFRONT_ACCESS_TOKEN;
 
+// Development-only logging
+if (process.env.NODE_ENV === 'development') {
+  if (typeof window !== 'undefined') {
+    console.log('Shopify Config:', {
+      storeDomain: storeDomain ? 'Set' : 'Missing',
+      accessToken: accessToken ? 'Set' : 'Missing',
+    });
+  }
+}
+
 // Create client only if environment variables are available
 const client = storeDomain && accessToken ? createStorefrontApiClient({
   storeDomain,
-  apiVersion: '2024-10',
+  apiVersion: 'unstable', // Use unstable to ensure API is available
   publicAccessToken: accessToken,
 }) : null;
 

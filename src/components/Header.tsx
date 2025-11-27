@@ -139,7 +139,6 @@ const Header = () => {
                   alt="My Kind Kandles & Boutique"
                   className="h-24 w-24 object-contain transition-all duration-300"
                   onError={(e) => {
-                    console.log('Logo failed to load');
                     e.currentTarget.style.display = 'none';
                   }}
                 />

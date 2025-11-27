@@ -11,7 +11,19 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'api.placeholder.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'cdn.shopify.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
         port: '',
         pathname: '/**',
       }
@@ -25,6 +37,9 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', '@headlessui/react'],
   },
+
+  // React strict mode
+  reactStrictMode: true,
 
   // Compression
   compress: true,

@@ -50,7 +50,7 @@ This guide will walk you through connecting your Next.js website to your existin
 
 #### 1.5 Get Your Credentials
 After installation, you'll see:
-1. **Storefront API access token** - Click "Reveal token once" and copy it
+1. **Storefront API access token** - Click "Reveal token once" and copy it 
    - ⚠️ Important: Save this somewhere secure! You can only see it once.
 2. Your **Store Domain** will be in the format: `kindkandlesboutique.myshopify.com`
 
