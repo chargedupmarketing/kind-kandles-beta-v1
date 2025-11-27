@@ -2,46 +2,27 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Share2, Minus, Plus, Star, Shield, Truck, Heart, Clock, Users } from 'lucide-react';
+import { ArrowLeft, Share2, Minus, Plus, Star, Shield, Truck, Heart, Clock, Users, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
+import { useCart } from '@/contexts/CartContext';
+import { formatPrice } from '@/lib/localStore';
+import type { Product } from '@/lib/types';
 import CountdownTimer from './CountdownTimer';
 import InventoryAlert from './InventoryAlert';
 import LimitedTimeOffer from './LimitedTimeOffer';
 import SocialProofNotifications from './SocialProofNotifications';
 
 interface ProductPageProps {
-  product: {
-    id: string;
-    name: string;
-    price: string;
-    originalPrice?: string;
-    description: string;
-    ingredients?: string;
-    careInstructions?: string;
-    image: string;
-    category: string;
-    inStock: boolean;
-    sizes?: string[];
-    colors?: string[];
-    variants?: any[];
-    handle?: string;
-    isCandle?: boolean;
-    burnTime?: string;
-    scentProfile?: string;
-    rating?: number;
-    reviewCount?: number;
-    stockLevel?: number;
-    isHandmade?: boolean;
-    isNatural?: boolean;
-  };
+  product: Product;
 }
 
 export default function ProductPage({ product }: ProductPageProps) {
+  const { addToCart, isInCart, getItemQuantity } = useCart();
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
+  const [selectedVariantId, setSelectedVariantId] = useState(product.variants?.[0]?.id || '');
   const [showReviews, setShowReviews] = useState(false);
   const [showLimitedOffer, setShowLimitedOffer] = useState(true);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Create urgency timers (24 hours from now for demo)
   const saleEndTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -344,16 +325,28 @@ export default function ProductPage({ product }: ProductPageProps) {
               {/* Enhanced Add to Cart */}
               <div className="mb-8 space-y-4">
                 <button
-                  disabled={!product.inStock}
+                  onClick={() => {
+                    addToCart(product, quantity, selectedVariantId || undefined);
+                    setAddedToCart(true);
+                    setTimeout(() => setAddedToCart(false), 2000);
+                  }}
+                  disabled={!product.available || product.inventoryQuantity === 0}
                   className={`w-full py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 transform ${
-                    product.inStock
+                    product.available && product.inventoryQuantity > 0
                       ? 'btn-candle hover:scale-105 shadow-lg hover:shadow-xl'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {product.inStock ? (
+                  {product.available && product.inventoryQuantity > 0 ? (
                     <span className="flex items-center justify-center gap-2">
-                      🕯️ Add to Cart - {product.price}
+                      {addedToCart ? (
+                        <>✓ Added to Cart!</>
+                      ) : (
+                        <>
+                          <ShoppingCart className="h-5 w-5" />
+                          Add to Cart - {formatPrice(product.price)}
+                        </>
+                      )}
                     </span>
                   ) : (
                     'Currently Sold Out'

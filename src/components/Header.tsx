@@ -3,12 +3,17 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Menu, X, ShoppingCart, ChevronDown, Moon, Sun } from 'lucide-react';
+import { Menu, X, ChevronDown, Moon, Sun, Search } from 'lucide-react';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useBanner } from '../contexts/BannerContext';
+import CartIcon from './CartIcon';
+import Cart from './Cart';
+import ProductSearch from './ProductSearch';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [expandedMobileMenus, setExpandedMobileMenus] = useState<string[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -235,18 +240,22 @@ const Header = () => {
           {/* Right side icons */}
           <div className="flex items-center space-x-4 pr-4">
             <button 
+              onClick={() => setIsSearchOpen(true)}
+              className={`${textClasses} hover:text-pink-300 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-300`}
+              title="Search Products"
+            >
+              <Search className="h-5 w-5" />
+            </button>
+            <button 
               onClick={toggleDarkMode}
               className={`${textClasses} hover:text-pink-300 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all duration-300`}
               title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
               {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
-            <button className={`${textClasses} hover:text-pink-300 hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] relative transition-all duration-300`}>
-              <ShoppingCart className="h-5 w-5" />
-              <span className="absolute -top-2 -right-2 bg-pink-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
-            </button>
+            <div className={textClasses}>
+              <CartIcon onClick={() => setIsCartOpen(true)} />
+            </div>
 
             {/* Mobile menu button */}
             <button
@@ -361,6 +370,12 @@ const Header = () => {
           </>
         )}
       </div>
+
+      {/* Cart Drawer */}
+      <Cart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      
+      {/* Search Modal */}
+      <ProductSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   );
 };

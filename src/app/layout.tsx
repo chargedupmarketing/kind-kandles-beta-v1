@@ -7,6 +7,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { DarkModeProvider } from "@/contexts/DarkModeContext";
 import { BannerProvider } from "@/contexts/BannerContext";
 import { AdminProvider } from "@/contexts/AdminContext";
+import { CartProvider } from "@/contexts/CartContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -70,9 +71,11 @@ export default function RootLayout({
           <AdminProvider>
             <DarkModeProvider>
               <BannerProvider>
-                <ClientLayout>
-                  {children}
-                </ClientLayout>
+                <CartProvider>
+                  <ClientLayout>
+                    {children}
+                  </ClientLayout>
+                </CartProvider>
               </BannerProvider>
             </DarkModeProvider>
           </AdminProvider>
