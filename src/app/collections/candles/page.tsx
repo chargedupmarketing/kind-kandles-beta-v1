@@ -1,89 +1,71 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { Package, Loader } from 'lucide-react';
+import { formatPrice } from '@/lib/localStore';
+
+interface Product {
+  id: string;
+  title: string;
+  handle: string;
+  description: string | null;
+  price: number;
+  compare_at_price: number | null;
+  product_type: string | null;
+  tags: string[] | null;
+  images: { url: string }[];
+  variants: { inventory_quantity: number }[];
+}
 
 export default function CandlesPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const candleCategories = [
-    { name: 'Citrus', href: '/collections/candles/citrus', count: 4 },
-    { name: 'Fresh', href: '/collections/candles/fresh', count: 6 },
-    { name: 'Floral', href: '/collections/candles/floral', count: 5 },
-    { name: 'Sweet', href: '/collections/candles/sweet', count: 4 },
-    { name: 'Woodsy', href: '/collections/candles/woodsy', count: 3 },
-    { name: 'Herbal', href: '/collections/candles/herbal', count: 2 },
-    { name: 'Earthy', href: '/collections/candles/earthy', count: 3 }
+    { name: 'Citrus', href: '/collections/candles/citrus', icon: '🍊' },
+    { name: 'Fresh', href: '/collections/candles/fresh', icon: '🌿' },
+    { name: 'Floral', href: '/collections/candles/floral', icon: '🌸' },
+    { name: 'Sweet', href: '/collections/candles/sweet', icon: '🍯' },
+    { name: 'Woodsy', href: '/collections/candles/woodsy', icon: '🌲' },
+    { name: 'Herbal', href: '/collections/candles/herbal', icon: '🌱' },
+    { name: 'Earthy', href: '/collections/candles/earthy', icon: '🍃' }
   ];
 
-  const candles = [
-    {
-      id: 'calm-down-girl-candle',
-      name: 'Calm Down Girl-Eucalyptus and Spearmint Candle',
-      price: 'From $20.00',
-      originalPrice: '$25.00',
-      image: '/api/placeholder/300/300',
-      badge: 'Sale',
-      href: '/products/calm-down-girl-candle',
-      description: 'Relaxing eucalyptus and spearmint blend perfect for unwinding after a long day',
-      isCandle: true,
-      scentProfile: 'herbal' as const,
-      burnTime: '45 hours'
-    },
-    {
-      id: 'lavender-dreams',
-      name: 'Lavender Dreams Candle',
-      price: '$24.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/lavender-dreams',
-      description: 'Soothing lavender scent to promote relaxation and better sleep',
-      isCandle: true,
-      scentProfile: 'floral' as const,
-      burnTime: '50 hours'
-    },
-    {
-      id: 'citrus-burst',
-      name: 'Citrus Burst Candle',
-      price: '$22.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/citrus-burst',
-      description: 'Energizing blend of orange, lemon, and grapefruit',
-      isCandle: true,
-      scentProfile: 'citrus' as const,
-      burnTime: '40 hours'
-    },
-    {
-      id: 'vanilla-spice',
-      name: 'Vanilla Spice Candle',
-      price: '$23.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/vanilla-spice',
-      description: 'Warm vanilla with hints of cinnamon and nutmeg',
-      isCandle: true,
-      scentProfile: 'sweet' as const,
-      burnTime: '48 hours'
-    },
-    {
-      id: 'ocean-breeze',
-      name: 'Ocean Breeze Candle',
-      price: '$21.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/ocean-breeze',
-      description: 'Fresh, clean scent reminiscent of seaside mornings',
-      isCandle: true,
-      scentProfile: 'fresh' as const,
-      burnTime: '42 hours'
-    },
-    {
-      id: 'forest-walk',
-      name: 'Forest Walk Candle',
-      price: '$25.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/forest-walk',
-      description: 'Earthy blend of pine, cedar, and moss',
-      isCandle: true,
-      scentProfile: 'woodsy' as const,
-      burnTime: '55 hours'
-    }
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/collections/candles');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const formatProductForCard = (product: Product) => ({
+    id: product.id,
+    name: product.title,
+    price: formatPrice(product.price),
+    originalPrice: product.compare_at_price ? formatPrice(product.compare_at_price) : undefined,
+    image: product.images?.[0]?.url || '/api/placeholder/300/300',
+    badge: product.compare_at_price ? 'Sale' : undefined,
+    href: `/products/${product.handle}`,
+    description: product.description || '',
+    isCandle: true,
+    scentProfile: product.tags?.find(t => 
+      ['fresh', 'floral', 'woodsy', 'sweet', 'citrus', 'herbal', 'earthy'].includes(t.toLowerCase())
+    )?.toLowerCase() as any,
+    burnTime: product.tags?.find(t => t.toLowerCase().includes('hour')) || undefined
+  });
 
   return (
     <div className="min-h-screen dark:bg-slate-900">
@@ -104,12 +86,12 @@ export default function CandlesPage() {
             ✨ Light up your world with intention ✨
           </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="btn-candle glow-pulse">
+            <Link href="/collections/candles/all" className="btn-candle glow-pulse">
               🔥 Shop All Candles
-            </button>
-            <button className="btn-secondary">
+            </Link>
+            <Link href="/about/mission" className="btn-secondary">
               📖 Learn About Our Process
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -133,21 +115,10 @@ export default function CandlesPage() {
                 className="group relative"
               >
                 <div className="text-center p-6 rounded-xl border-2 border-amber-200 dark:border-amber-600 hover:border-amber-400 dark:hover:border-amber-500 bg-white dark:bg-slate-800 hover:bg-gradient-to-br hover:from-amber-50 hover:to-orange-50 dark:hover:from-slate-700 dark:hover:to-slate-600 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-lg">
-                  <div className="text-3xl mb-3">
-                    {category.name === 'Citrus' && '🍊'}
-                    {category.name === 'Fresh' && '🌿'}
-                    {category.name === 'Floral' && '🌸'}
-                    {category.name === 'Sweet' && '🍯'}
-                    {category.name === 'Woodsy' && '🌲'}
-                    {category.name === 'Herbal' && '🌱'}
-                    {category.name === 'Earthy' && '🍃'}
-                  </div>
+                  <div className="text-3xl mb-3">{category.icon}</div>
                   <h3 className="serif-font font-semibold text-gray-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 mb-2 transition-colors">
                     {category.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                    {category.count} candles
-                  </p>
                   <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-200/20 to-orange-200/20"></div>
                   </div>
@@ -163,7 +134,7 @@ export default function CandlesPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-              All Candles ({candles.length})
+              All Candles {!isLoading && `(${products.length})`}
             </h2>
             <select className="border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-2 text-sm">
               <option>Sort by: Featured</option>
@@ -174,11 +145,30 @@ export default function CandlesPage() {
             </select>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {candles.map((candle) => (
-              <ProductCard key={candle.id} {...candle} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader className="h-8 w-8 animate-spin text-pink-600" />
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products.map((product) => (
+                <ProductCard key={product.id} {...formatProductForCard(product)} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                No candles yet
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                Check back soon for our handmade candle collection!
+              </p>
+              <Link href="/collections" className="btn-primary">
+                Browse All Collections
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 

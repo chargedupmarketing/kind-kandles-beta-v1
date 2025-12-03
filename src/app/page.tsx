@@ -13,44 +13,6 @@ export default function Home() {
   // Pre-Black Friday sale end time (November 27th, 2025 at 11:59 PM)
   const preBlackFridayEndTime = new Date('2025-11-27T23:59:59');
 
-  const featuredProducts = [
-    {
-      id: 1,
-      name: "Calm Down Girl-Eucalyptus and Spearmint Candle",
-      price: "$20.00",
-      originalPrice: "$25.00",
-      image: "/api/placeholder/300/300",
-      badge: "🔥 Flash Sale",
-      href: "/products/calm-down-girl-eucalyptus-spearmint",
-      isCandle: true,
-      scentProfile: "herbal",
-      burnTime: "45 hours",
-      stockLevel: 3
-    },
-    {
-      id: 2,
-      name: "Whipped Body Butter",
-      price: "$22.00",
-      image: "/api/placeholder/300/300",
-      href: "/products/whipped-body-butter",
-      isCandle: false,
-      stockLevel: 12,
-      isTrending: true
-    },
-    {
-      id: 3,
-      name: "Purple Love Candle",
-      price: "From $16.00",
-      image: "/api/placeholder/300/300",
-      href: "/products/purple-love",
-      isCandle: true,
-      scentProfile: "floral",
-      burnTime: "40 hours",
-      stockLevel: 7,
-      isLimitedEdition: true
-    }
-  ];
-
   const benefits = [
     {
       icon: <Leaf className="h-8 w-8 text-green-600" />,

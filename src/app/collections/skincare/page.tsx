@@ -1,66 +1,34 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import ProductCard from '@/components/ProductCard';
 import Link from 'next/link';
+import { Package, Loader } from 'lucide-react';
+import { formatPrice } from '@/lib/localStore';
+
+interface Product {
+  id: string;
+  title: string;
+  handle: string;
+  description: string | null;
+  price: number;
+  compare_at_price: number | null;
+  product_type: string | null;
+  tags: string[] | null;
+  images: { url: string }[];
+  variants: { inventory_quantity: number }[];
+}
 
 export default function SkincarePage() {
-  const skincareCategories = [
-    { name: 'Foaming Body Scrub', href: '/collections/skincare/foaming-body-scrub', count: 3 },
-    { name: 'Body Spray Mist', href: '/collections/skincare/body-spray-mist', count: 4 },
-    { name: 'Handmade Lotion', href: '/collections/skincare/handmade-lotion', count: 5 },
-    { name: 'Whipped Body Butter', href: '/collections/skincare/whipped-body-butter', count: 6 },
-    { name: 'Natural Bar Soap', href: '/collections/skincare/natural-handmade-bar-soap', count: 4 }
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const skincareProducts = [
-    {
-      id: 'luxury-whipped-body-butter',
-      name: 'Luxury Whipped Body Butter',
-      price: '$22.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/luxury-whipped-body-butter',
-      description: 'Rich, creamy body butter that deeply moisturizes and nourishes skin with natural ingredients'
-    },
-    {
-      id: 'foaming-body-scrub-lavender',
-      name: 'Foaming Body Scrub - Lavender',
-      price: '$18.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/foaming-body-scrub-lavender',
-      description: 'Gentle exfoliating scrub with lavender essential oil to remove dead skin cells'
-    },
-    {
-      id: 'handmade-lotion-vanilla',
-      name: 'Handmade Lotion - Vanilla',
-      price: '$15.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/handmade-lotion-vanilla',
-      description: 'Daily moisturizing lotion with warm vanilla scent and natural ingredients'
-    },
-    {
-      id: 'body-spray-mist-rose',
-      name: 'Body Spray Mist - Rose',
-      price: '$12.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/body-spray-mist-rose',
-      description: 'Refreshing body mist with delicate rose fragrance for all-day freshness'
-    },
-    {
-      id: 'natural-bar-soap-oatmeal',
-      name: 'Natural Bar Soap - Oatmeal & Honey',
-      price: '$8.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/natural-bar-soap-oatmeal',
-      description: 'Gentle cleansing bar with oatmeal and honey for sensitive skin'
-    },
-    {
-      id: 'whipped-body-butter-coconut',
-      name: 'Whipped Body Butter - Coconut',
-      price: '$20.00',
-      image: '/api/placeholder/300/300',
-      href: '/products/whipped-body-butter-coconut',
-      description: 'Light, fluffy body butter with tropical coconut scent'
-    }
+  const skincareCategories = [
+    { name: 'Foaming Body Scrub', href: '/collections/skincare/foaming-body-scrub', icon: '✨' },
+    { name: 'Body Spray Mist', href: '/collections/skincare/body-spray-mist', icon: '🌸' },
+    { name: 'Handmade Lotion', href: '/collections/skincare/handmade-lotion', icon: '🧴' },
+    { name: 'Whipped Body Butter', href: '/collections/skincare/whipped-body-butter', icon: '🍦' },
+    { name: 'Natural Bar Soap', href: '/collections/skincare/natural-handmade-bar-soap', icon: '🧼' }
   ];
 
   const benefits = [
@@ -80,6 +48,35 @@ export default function SkincarePage() {
       icon: '💧'
     }
   ];
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/collections/skincare');
+        if (response.ok) {
+          const data = await response.json();
+          setProducts(data.products || []);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const formatProductForCard = (product: Product) => ({
+    id: product.id,
+    name: product.title,
+    price: formatPrice(product.price),
+    originalPrice: product.compare_at_price ? formatPrice(product.compare_at_price) : undefined,
+    image: product.images?.[0]?.url || '/api/placeholder/300/300',
+    badge: product.compare_at_price ? 'Sale' : undefined,
+    href: `/products/${product.handle}`,
+    description: product.description || ''
+  });
 
   return (
     <div className="min-h-screen dark:bg-slate-900">
@@ -130,12 +127,10 @@ export default function SkincarePage() {
                 href={category.href}
                 className="text-center p-6 rounded-lg bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 hover:border-teal-300 dark:hover:border-teal-400 hover:bg-teal-50 dark:hover:bg-slate-600 transition-colors group"
               >
-                <h3 className="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 mb-2">
+                <div className="text-3xl mb-2">{category.icon}</div>
+                <h3 className="font-semibold text-gray-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400">
                   {category.name}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-slate-400">
-                  {category.count} products
-                </p>
               </Link>
             ))}
           </div>
@@ -147,7 +142,7 @@ export default function SkincarePage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
-              All Skincare Products ({skincareProducts.length})
+              All Skincare Products {!isLoading && `(${products.length})`}
             </h2>
             <select className="border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-md px-3 py-2 text-sm">
               <option>Sort by: Featured</option>
@@ -158,11 +153,30 @@ export default function SkincarePage() {
             </select>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {skincareProducts.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader className="h-8 w-8 animate-spin text-pink-600" />
+            </div>
+          ) : products.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {products.map((product) => (
+                <ProductCard key={product.id} {...formatProductForCard(product)} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                No skincare products yet
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">
+                Check back soon for our handmade skincare collection!
+              </p>
+              <Link href="/collections" className="btn-primary">
+                Browse All Collections
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
