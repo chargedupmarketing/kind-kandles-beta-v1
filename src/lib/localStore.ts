@@ -40,67 +40,11 @@ export function formatPrice(amount: number | string, currencyCode: string = 'USD
   }).format(numAmount);
 }
 
-// Get products by collection (returns mock data for now)
+// Get products by collection (returns empty array - products come from database)
 export function getProductsByCollection(collection: string): LocalProduct[] {
-  // Mock data for featured products
-  const mockProducts: LocalProduct[] = [
-    {
-      id: '1',
-      title: 'Calm Down Girl Candle',
-      handle: 'calm-down-girl-candle',
-      description: 'A soothing blend of lavender and vanilla to help you unwind.',
-      price: 24.99,
-      compareAtPrice: 29.99,
-      image: '/api/placeholder/300/300',
-      images: ['/api/placeholder/300/300'],
-      availableForSale: true,
-      inventory: 15,
-      category: 'Candles',
-      badge: 'Sale',
-      inventoryQuantity: 15,
-      isCandle: true,
-      burnTime: '45 hours',
-    },
-    {
-      id: '2',
-      title: 'Whipped Body Butter',
-      handle: 'whipped-body-butter',
-      description: 'Luxuriously rich and creamy body butter for silky smooth skin.',
-      price: 18.99,
-      image: '/api/placeholder/300/300',
-      images: ['/api/placeholder/300/300'],
-      availableForSale: true,
-      inventory: 20,
-      category: 'Skincare',
-      inventoryQuantity: 20,
-      isCandle: false,
-    },
-    {
-      id: '3',
-      title: 'Rosemary Body Oil',
-      handle: 'rosemary-body-oil',
-      description: 'Invigorating rosemary and peppermint body oil.',
-      price: 19.99,
-      image: '/api/placeholder/300/300',
-      images: ['/api/placeholder/300/300'],
-      availableForSale: true,
-      inventory: 12,
-      category: 'Body Oils',
-      inventoryQuantity: 12,
-      isCandle: false,
-    },
-  ];
-
-  // Filter by collection if needed
-  if (collection === 'candles') {
-    return mockProducts.filter(p => p.isCandle);
-  } else if (collection === 'skincare') {
-    return mockProducts.filter(p => p.category === 'Skincare');
-  } else if (collection === 'body-oils') {
-    return mockProducts.filter(p => p.category === 'Body Oils');
-  }
-  
-  return mockProducts;
+  // Products are now fetched from the database
+  // This function returns empty array as a fallback
+  return [];
 }
 
 // Calculate discount percentage
