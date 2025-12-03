@@ -17,9 +17,10 @@ interface ProductPageProps {
 }
 
 export default function ProductPage({ product }: ProductPageProps) {
-  const { addToCart, isInCart, getItemQuantity } = useCart();
+  const { addItem, items } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState(product.variants?.[0]?.id || '');
+  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [showReviews, setShowReviews] = useState(false);
   const [showLimitedOffer, setShowLimitedOffer] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -326,18 +327,28 @@ export default function ProductPage({ product }: ProductPageProps) {
               <div className="mb-8 space-y-4">
                 <button
                   onClick={() => {
-                    addToCart(product, quantity, selectedVariantId || undefined);
+                    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId) || product.variants?.[0];
+                    addItem({
+                      variantId: selectedVariantId || product.id,
+                      productId: product.id,
+                      title: product.name,
+                      variantTitle: selectedVariant?.title || 'Default',
+                      price: typeof product.price === 'string' ? parseFloat(product.price.replace('$', '')) : product.price,
+                      quantity: quantity,
+                      image: product.image,
+                      handle: product.handle,
+                    });
                     setAddedToCart(true);
                     setTimeout(() => setAddedToCart(false), 2000);
                   }}
-                  disabled={!product.available || product.inventoryQuantity === 0}
+                  disabled={!product.inStock || (product.stockLevel ?? 0) === 0}
                   className={`w-full py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 transform ${
-                    product.available && product.inventoryQuantity > 0
+                    product.inStock && (product.stockLevel ?? 0) > 0
                       ? 'btn-candle hover:scale-105 shadow-lg hover:shadow-xl'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {product.available && product.inventoryQuantity > 0 ? (
+                  {product.inStock && (product.stockLevel ?? 0) > 0 ? (
                     <span className="flex items-center justify-center gap-2">
                       {addedToCart ? (
                         <>✓ Added to Cart!</>

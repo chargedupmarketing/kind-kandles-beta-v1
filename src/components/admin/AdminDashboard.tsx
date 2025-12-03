@@ -10,7 +10,9 @@ import {
   LogOut,
   Shield,
   AlertTriangle,
-  Gift
+  Gift,
+  Package,
+  ShoppingCart
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -18,11 +20,13 @@ import MaintenanceMode from './MaintenanceMode';
 import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
+import ProductManagement from './ProductManagement';
+import OrderManagement from './OrderManagement';
 
-type AdminSection = 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey';
+type AdminSection = 'products' | 'orders' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey';
 
 export default function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState<AdminSection>('contacts');
+  const [activeSection, setActiveSection] = useState<AdminSection>('orders');
   const { logout, isMaintenanceMode, user } = useAdmin();
 
   const handleLogout = async () => {
@@ -32,6 +36,18 @@ export default function AdminDashboard() {
   };
 
   const sidebarItems = [
+    {
+      id: 'orders' as AdminSection,
+      label: 'Orders',
+      icon: ShoppingCart,
+      description: 'Manage Orders'
+    },
+    {
+      id: 'products' as AdminSection,
+      label: 'Products',
+      icon: Package,
+      description: 'Manage Products'
+    },
     {
       id: 'contacts' as AdminSection,
       label: 'Contact Forms',
@@ -68,6 +84,10 @@ export default function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'products':
+        return <ProductManagement />;
+      case 'orders':
+        return <OrderManagement />;
       case 'menu':
         return <MenuManagement />;
       case 'maintenance':
@@ -79,7 +99,7 @@ export default function AdminDashboard() {
       case 'stories':
         return <StoryManagement />;
       default:
-        return <ContactSubmissions />;
+        return <OrderManagement />;
     }
   };
 

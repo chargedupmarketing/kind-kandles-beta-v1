@@ -1,36 +1,58 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
-import shopifyClient from '@/lib/shopify';
-import { GET_COLLECTION_BY_HANDLE } from '@/lib/queries/collections';
-import { formatPrice, getShopifyImageUrl } from '@/lib/shopify';
+import { supabase } from '@/lib/supabase';
+import { formatPrice } from '@/lib/localStore';
 
 interface CollectionPageProps {
-  params: {
+  params: Promise<{
     handle: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     sort?: string;
     page?: string;
-  };
+  }>;
 }
 
-async function getCollection(handle: string, sortKey = 'COLLECTION_DEFAULT', reverse = false) {
+async function getCollection(handle: string, sortBy = 'created_at', ascending = false) {
   try {
-    if (!shopifyClient) {
-      console.warn('Shopify client not configured - using mock data');
+    // Get collection
+    const { data: collection, error: collectionError } = await supabase
+      .from('collections')
+      .select('*')
+      .eq('handle', handle)
+      .single();
+
+    if (collectionError || !collection) {
       return null;
     }
-    const { data } = await shopifyClient.request(GET_COLLECTION_BY_HANDLE, {
-      variables: { 
-        handle, 
-        first: 24, 
-        sortKey,
-        reverse 
-      },
-    });
 
-    return data?.collection;
+    // Get products in collection
+    let productsQuery = supabase
+      .from('products')
+      .select(`
+        *,
+        variants:product_variants(*),
+        images:product_images(*)
+      `)
+      .eq('status', 'active');
+
+    // Handle 'all' collection specially
+    if (handle !== 'all') {
+      productsQuery = productsQuery.eq('collection_id', (collection as any).id);
+    }
+
+    // Apply sorting
+    productsQuery = productsQuery.order(sortBy, { ascending });
+
+    const { data: products, error: productsError } = await productsQuery;
+
+    if (productsError) {
+      console.error('Error fetching products:', productsError);
+      return { ...collection, products: [] };
+    }
+
+    return { ...collection, products: products || [] };
   } catch (error) {
     console.error('Error fetching collection:', error);
     return null;
@@ -38,58 +60,61 @@ async function getCollection(handle: string, sortKey = 'COLLECTION_DEFAULT', rev
 }
 
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
+  const { handle } = await params;
+  const { sort } = await searchParams;
+
   // Handle sorting
-  let sortKey = 'COLLECTION_DEFAULT';
-  let reverse = false;
+  let sortBy = 'created_at';
+  let ascending = false;
   
-  switch (searchParams.sort) {
+  switch (sort) {
     case 'price-low-high':
-      sortKey = 'PRICE';
-      reverse = false;
+      sortBy = 'price';
+      ascending = true;
       break;
     case 'price-high-low':
-      sortKey = 'PRICE';
-      reverse = true;
+      sortBy = 'price';
+      ascending = false;
       break;
     case 'title-a-z':
-      sortKey = 'TITLE';
-      reverse = false;
+      sortBy = 'title';
+      ascending = true;
       break;
     case 'title-z-a':
-      sortKey = 'TITLE';
-      reverse = true;
+      sortBy = 'title';
+      ascending = false;
       break;
     case 'created':
-      sortKey = 'CREATED';
-      reverse = true;
+      sortBy = 'created_at';
+      ascending = false;
       break;
     default:
-      sortKey = 'COLLECTION_DEFAULT';
+      sortBy = 'created_at';
+      ascending = false;
   }
 
-  const collection = await getCollection(params.handle, sortKey, reverse);
+  const collection = await getCollection(handle, sortBy, ascending);
 
   if (!collection) {
     notFound();
   }
 
-  const products = collection.products.edges.map((edge: any) => {
-    const product = edge.node;
-    const image = product.images.edges[0]?.node;
+  const products = (collection.products || []).map((product: any) => {
+    const image = product.images?.[0];
     
     return {
       id: product.id,
       name: product.title,
-      price: formatPrice(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode),
-      originalPrice: product.compareAtPriceRange?.minVariantPrice?.amount 
-        ? formatPrice(product.compareAtPriceRange.minVariantPrice.amount, product.compareAtPriceRange.minVariantPrice.currencyCode)
+      price: formatPrice(product.price),
+      originalPrice: product.compare_at_price 
+        ? formatPrice(product.compare_at_price)
         : undefined,
-      image: image ? getShopifyImageUrl(image.url, 400, 400) : '/api/placeholder/400/400',
-      badge: product.compareAtPriceRange?.minVariantPrice?.amount ? 'Sale' : undefined,
+      image: image?.url || '/api/placeholder/400/400',
+      badge: product.compare_at_price ? 'Sale' : undefined,
       href: `/products/${product.handle}`,
-      description: product.description.length > 100 
+      description: product.description && product.description.length > 100 
         ? product.description.substring(0, 100) + '...' 
-        : product.description,
+        : product.description || '',
     };
   });
 
@@ -134,16 +159,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
               <select 
                 id="sort"
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white"
-                defaultValue={searchParams.sort || 'featured'}
-                onChange={(e) => {
-                  const url = new URL(window.location.href);
-                  if (e.target.value === 'featured') {
-                    url.searchParams.delete('sort');
-                  } else {
-                    url.searchParams.set('sort', e.target.value);
-                  }
-                  window.location.href = url.toString();
-                }}
+                defaultValue={sort || 'featured'}
               >
                 <option value="featured">Featured</option>
                 <option value="price-low-high">Price: Low to High</option>
@@ -178,7 +194,8 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: CollectionPageProps) {
-  const collection = await getCollection(params.handle);
+  const { handle } = await params;
+  const collection = await getCollection(handle);
 
   if (!collection) {
     return {
@@ -187,14 +204,14 @@ export async function generateMetadata({ params }: CollectionPageProps) {
   }
 
   return {
-    title: collection.seo?.title || collection.title,
-    description: collection.seo?.description || collection.description,
+    title: `${collection.title} | My Kind Kandles & Boutique`,
+    description: collection.description || `Browse our ${collection.title} collection`,
     openGraph: {
       title: collection.title,
-      description: collection.description,
-      images: collection.image ? [{
-        url: collection.image.url,
-        alt: collection.image.altText || collection.title,
+      description: collection.description || `Browse our ${collection.title} collection`,
+      images: collection.image_url ? [{
+        url: collection.image_url,
+        alt: collection.title,
       }] : [],
     },
   };

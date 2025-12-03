@@ -1,19 +1,19 @@
-import shopifyClient from '@/lib/shopify';
-import { GET_COLLECTIONS } from '@/lib/queries/collections';
-import { GET_PRODUCTS } from '@/lib/queries/products';
-import { formatPrice, getShopifyImageUrl } from '@/lib/shopify';
+import { supabase } from '@/lib/supabase';
+import { formatPrice } from '@/lib/localStore';
 import CollectionsPageClient from '@/components/CollectionsPageClient';
 
 async function getCollections() {
   try {
-    if (!shopifyClient) {
-      console.warn('Shopify client not configured - using mock data');
+    const { data, error } = await supabase
+      .from('collections')
+      .select('*')
+      .order('position', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching collections:', error);
       return [];
     }
-    const { data } = await shopifyClient.request(GET_COLLECTIONS, {
-      variables: { first: 10 },
-    });
-    return data?.collections?.edges || [];
+    return data || [];
   } catch (error) {
     console.error('Error fetching collections:', error);
     return [];
@@ -22,14 +22,22 @@ async function getCollections() {
 
 async function getFeaturedProducts() {
   try {
-    if (!shopifyClient) {
-      console.warn('Shopify client not configured - using mock data');
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        variants:product_variants(*),
+        images:product_images(*)
+      `)
+      .eq('status', 'active')
+      .eq('featured', true)
+      .limit(6);
+
+    if (error) {
+      console.error('Error fetching products:', error);
       return [];
     }
-    const { data } = await shopifyClient.request(GET_PRODUCTS, {
-      variables: { first: 6, sortKey: 'BEST_SELLING' },
-    });
-    return data?.products?.edges || [];
+    return data || [];
   } catch (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -42,13 +50,13 @@ export default async function CollectionsPage() {
     getFeaturedProducts()
   ]);
 
-  // Mock collections data when Shopify is not configured
-  const collections = collectionsData.length > 0 ? collectionsData.map((edge: any) => ({
-    name: edge.node.title,
-    description: edge.node.description || `Discover our ${edge.node.title.toLowerCase()} collection`,
-    href: `/collections/${edge.node.handle}`,
-    image: edge.node.image ? getShopifyImageUrl(edge.node.image.url, 400, 300) : '/api/placeholder/400/300',
-    productCount: `${edge.node.products.edges.length}+ products`
+  // Format collections data
+  const collections = collectionsData.length > 0 ? collectionsData.map((collection: any) => ({
+    name: collection.title,
+    description: collection.description || `Discover our ${collection.title.toLowerCase()} collection`,
+    href: `/collections/${collection.handle}`,
+    image: collection.image_url || '/api/placeholder/400/300',
+    productCount: `Browse collection`
   })) : [
     {
       name: "Candles",
@@ -65,44 +73,43 @@ export default async function CollectionsPage() {
       productCount: "8+ products"
     },
     {
-      name: "Essential Oils",
-      description: "Pure essential oils for wellness and aromatherapy",
-      href: "/collections/essential-oils",
+      name: "Body Oils",
+      description: "Nourishing body oils for radiant skin",
+      href: "/collections/body-oils",
       image: "/api/placeholder/400/300",
-      productCount: "15+ products"
+      productCount: "6+ products"
     }
   ];
 
-  // Mock products data when Shopify is not configured
-  const featuredProducts = productsData.length > 0 ? productsData.map((edge: any) => {
-    const product = edge.node;
-    const image = product.images.edges[0]?.node;
+  // Format products data
+  const featuredProducts = productsData.length > 0 ? productsData.map((product: any) => {
+    const image = product.images?.[0];
     
     return {
       id: product.id,
       name: product.title,
-      price: formatPrice(product.priceRange.minVariantPrice.amount, product.priceRange.minVariantPrice.currencyCode),
-      originalPrice: product.compareAtPriceRange?.minVariantPrice?.amount 
-        ? formatPrice(product.compareAtPriceRange.minVariantPrice.amount, product.compareAtPriceRange.minVariantPrice.currencyCode)
+      price: formatPrice(product.price),
+      originalPrice: product.compare_at_price 
+        ? formatPrice(product.compare_at_price)
         : undefined,
-      image: image ? getShopifyImageUrl(image.url, 300, 300) : '/api/placeholder/300/300',
-      badge: product.compareAtPriceRange?.minVariantPrice?.amount ? 'Sale' : undefined,
+      image: image?.url || '/api/placeholder/300/300',
+      badge: product.compare_at_price ? 'Sale' : undefined,
       href: `/products/${product.handle}`,
-      description: product.description.length > 100 
+      description: product.description && product.description.length > 100 
         ? product.description.substring(0, 100) + '...' 
-        : product.description,
-      isCandle: product.productType?.toLowerCase().includes('candle') || product.tags?.some((tag: string) => tag.toLowerCase().includes('candle')),
+        : product.description || '',
+      isCandle: product.product_type?.toLowerCase().includes('candle') || product.tags?.some((tag: string) => tag.toLowerCase().includes('candle')),
       scentProfile: product.tags?.find((tag: string) => 
         ['fresh', 'floral', 'woodsy', 'sweet', 'citrus', 'herbal', 'earthy'].includes(tag.toLowerCase())
       )?.toLowerCase() as 'fresh' | 'floral' | 'woodsy' | 'sweet' | 'citrus' | 'herbal' | 'earthy',
       burnTime: product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'))?.replace(/[^0-9]/g, '') + ' hours',
-      stockLevel: product.totalInventory,
+      stockLevel: product.variants?.[0]?.inventory_quantity || 0,
       isLimitedEdition: product.tags?.some((tag: string) => tag.toLowerCase().includes('limited')),
-      isTrending: Math.random() > 0.7, // Random trending for demo
+      isTrending: product.featured,
     };
   }) : [
     {
-      id: 1,
+      id: '1',
       name: "Calm Down Girl - Eucalyptus & Spearmint Candle",
       price: "$24.99",
       originalPrice: "$29.99",
@@ -118,7 +125,7 @@ export default async function CollectionsPage() {
       isTrending: true
     },
     {
-      id: 2,
+      id: '2',
       name: "Lavender Dreams Candle",
       price: "$22.99",
       image: "/api/placeholder/300/300",
@@ -132,7 +139,7 @@ export default async function CollectionsPage() {
       isTrending: false
     },
     {
-      id: 3,
+      id: '3',
       name: "Vanilla Bourbon Candle",
       price: "$26.99",
       image: "/api/placeholder/300/300",

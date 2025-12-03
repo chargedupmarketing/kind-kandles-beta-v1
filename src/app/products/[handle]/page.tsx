@@ -1,25 +1,32 @@
 import { notFound } from 'next/navigation';
 import ProductPage from '@/components/ProductPage';
-import shopifyClient from '@/lib/shopify';
-import { GET_PRODUCT_BY_HANDLE } from '@/lib/queries/products';
+import { supabase } from '@/lib/supabase';
+import { formatPrice } from '@/lib/localStore';
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     handle: string;
-  };
+  }>;
 }
 
 async function getProduct(handle: string) {
   try {
-    if (!shopifyClient) {
-      console.warn('Shopify client not configured - using mock data');
+    const { data: product, error } = await supabase
+      .from('products')
+      .select(`
+        *,
+        variants:product_variants(*),
+        images:product_images(*)
+      `)
+      .eq('handle', handle)
+      .eq('status', 'active')
+      .single();
+
+    if (error || !product) {
       return null;
     }
-    const { data } = await shopifyClient.request(GET_PRODUCT_BY_HANDLE, {
-      variables: { handle },
-    });
 
-    return data?.product;
+    return product;
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;
@@ -27,39 +34,44 @@ async function getProduct(handle: string) {
 }
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
-  const product = await getProduct(params.handle);
+  const { handle } = await params;
+  const product = await getProduct(handle);
 
   if (!product) {
     notFound();
   }
 
-  // Transform Shopify product data to match our component interface
+  // Get first variant for availability check
+  const firstVariant = product.variants?.[0];
+  const inStock = firstVariant?.available_for_sale && (firstVariant?.inventory_quantity || 0) > 0;
+
+  // Transform product data to match our component interface
   const transformedProduct = {
     id: product.id,
     name: product.title,
-    price: `$${parseFloat(product.priceRange.minVariantPrice.amount).toFixed(2)}`,
-    originalPrice: product.compareAtPriceRange?.minVariantPrice?.amount 
-      ? `$${parseFloat(product.compareAtPriceRange.minVariantPrice.amount).toFixed(2)}`
+    price: formatPrice(product.price),
+    originalPrice: product.compare_at_price 
+      ? formatPrice(product.compare_at_price)
       : undefined,
-    description: product.description,
-    ingredients: product.tags.find((tag: string) => tag.startsWith('ingredients:'))?.replace('ingredients:', ''),
-    careInstructions: product.tags.find((tag: string) => tag.startsWith('care:'))?.replace('care:', ''),
-    image: product.images.edges[0]?.node.url || '/api/placeholder/500/500',
-    category: product.productType,
-    inStock: product.availableForSale && product.totalInventory > 0,
-    sizes: product.options.find((option: any) => option.name.toLowerCase() === 'size')?.values,
-    colors: product.options.find((option: any) => option.name.toLowerCase() === 'color')?.values,
-    variants: product.variants.edges.map((edge: any) => edge.node),
+    description: product.description || '',
+    ingredients: product.tags?.find((tag: string) => tag.startsWith('ingredients:'))?.replace('ingredients:', ''),
+    careInstructions: product.tags?.find((tag: string) => tag.startsWith('care:'))?.replace('care:', ''),
+    image: product.images?.[0]?.url || '/api/placeholder/500/500',
+    category: product.product_type,
+    inStock,
+    sizes: product.variants?.filter((v: any) => v.option1_name?.toLowerCase() === 'size').map((v: any) => v.option1_value),
+    colors: product.variants?.filter((v: any) => v.option1_name?.toLowerCase() === 'color').map((v: any) => v.option1_value),
+    variants: product.variants || [],
     handle: product.handle,
     // Enhanced conversion data
-    isCandle: product.productType?.toLowerCase().includes('candle') || product.tags?.some((tag: string) => tag.toLowerCase().includes('candle')),
+    isCandle: product.product_type?.toLowerCase().includes('candle') || product.tags?.some((tag: string) => tag.toLowerCase().includes('candle')),
     burnTime: product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'))?.replace(/[^0-9]/g, '') + ' hours',
     scentProfile: product.tags?.find((tag: string) => 
       ['fresh', 'floral', 'woodsy', 'sweet', 'citrus', 'herbal', 'earthy'].includes(tag.toLowerCase())
     )?.toLowerCase(),
-    rating: 4.8, // Will be replaced with actual Shopify review data
-    reviewCount: 127, // Will be replaced with actual review count
-    stockLevel: product.totalInventory,
+    rating: 4.8, // Placeholder for reviews
+    reviewCount: 127, // Placeholder for review count
+    stockLevel: firstVariant?.inventory_quantity || 0,
     isHandmade: product.tags?.some((tag: string) => tag.toLowerCase().includes('handmade')) ?? true,
     isNatural: product.tags?.some((tag: string) => tag.toLowerCase().includes('natural')) ?? true,
   };
@@ -69,7 +81,8 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
 // Generate metadata for SEO
 export async function generateMetadata({ params }: ProductPageProps) {
-  const product = await getProduct(params.handle);
+  const { handle } = await params;
+  const product = await getProduct(handle);
 
   if (!product) {
     return {
@@ -78,15 +91,15 @@ export async function generateMetadata({ params }: ProductPageProps) {
   }
 
   return {
-    title: product.seo?.title || product.title,
-    description: product.seo?.description || product.description,
+    title: `${product.title} | My Kind Kandles & Boutique`,
+    description: product.description || `Shop ${product.title} at My Kind Kandles & Boutique`,
     openGraph: {
       title: product.title,
-      description: product.description,
-      images: product.images.edges.map((edge: any) => ({
-        url: edge.node.url,
-        alt: edge.node.altText || product.title,
-      })),
+      description: product.description || `Shop ${product.title}`,
+      images: product.images?.map((img: any) => ({
+        url: img.url,
+        alt: img.alt_text || product.title,
+      })) || [],
     },
   };
 }

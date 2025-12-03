@@ -2,9 +2,9 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, Sparkles } from 'lucide-react';
+import { Clock, Sparkles, ChevronRight } from 'lucide-react';
 import { getProductsByCollection, formatPrice } from '@/lib/localStore';
-import type { Product } from '@/lib/types';
+import type { DisplayProduct } from '@/lib/types';
 
 interface ProductCategory {
   id: string;
@@ -97,7 +97,7 @@ export default function FeaturedProductsSlider() {
                 {/* Product Image */}
                 <div className="relative h-[250px] sm:h-[300px]">
                   <img
-                    src={product.images[0] || '/api/placeholder/300/300'}
+                    src={product.images?.[0] || '/api/placeholder/300/300'}
                     alt={product.title}
                     className="w-full h-full object-cover"
                   />
@@ -112,7 +112,7 @@ export default function FeaturedProductsSlider() {
                   </div>
 
                   {/* Stock Alert */}
-                  {product.inventoryQuantity <= 5 && product.inventoryQuantity > 0 && (
+                  {(product.inventoryQuantity ?? 0) <= 5 && (product.inventoryQuantity ?? 0) > 0 && (
                     <div className="absolute top-3 right-3">
                       <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
                         Only {product.inventoryQuantity} left!
