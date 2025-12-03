@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import { 
   asyncHandler, 
   ValidationError, 
@@ -13,9 +14,9 @@ import {
 // Rate limiting storage (in production, use Redis or database)
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
-// Configuration from environment variables
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'test@kindkandlesboutique.com';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '1234'; // Will be hashed in production
+// Configuration from environment variables (fallback if database not configured)
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
 const RATE_LIMIT_MAX_ATTEMPTS = parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || '5');
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'); // 15 minutes
@@ -26,10 +27,57 @@ interface LoginRequest {
   password: string;
 }
 
+interface AdminUser {
+  id: string;
+  email: string;
+  password_hash: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  is_active: boolean;
+}
+
 // Simple password verification (in production, use bcrypt)
 function verifyPassword(plainPassword: string, storedPassword: string): boolean {
   // TODO: Replace with bcrypt.compare(plainPassword, hashedPassword) in production
   return plainPassword === storedPassword;
+}
+
+// Check credentials against database
+async function checkDatabaseCredentials(email: string, password: string): Promise<AdminUser | null> {
+  try {
+    if (!isSupabaseConfigured()) {
+      return null;
+    }
+    
+    const supabase = createServerClient();
+    const { data: user, error } = await supabase
+      .from('admin_users')
+      .select('*')
+      .eq('email', email)
+      .eq('is_active', true)
+      .single();
+    
+    if (error || !user) {
+      return null;
+    }
+    
+    // Verify password
+    if (!verifyPassword(password, user.password_hash)) {
+      return null;
+    }
+    
+    // Update last login
+    await supabase
+      .from('admin_users')
+      .update({ last_login: new Date().toISOString() })
+      .eq('id', user.id);
+    
+    return user as AdminUser;
+  } catch (error) {
+    console.error('Database auth error:', error);
+    return null;
+  }
 }
 
 // Rate limiting check
@@ -60,11 +108,11 @@ function checkRateLimit(clientId: string): boolean {
 }
 
 // Create JWT token
-async function createToken(username: string): Promise<string> {
+async function createToken(username: string, role: string = 'admin'): Promise<string> {
   const secret = new TextEncoder().encode(JWT_SECRET);
   const alg = 'HS256';
   
-  const jwt = await new SignJWT({ username, role: 'admin' })
+  const jwt = await new SignJWT({ username, role })
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + SESSION_TIMEOUT_MS / 1000)
@@ -101,8 +149,23 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Verify credentials
-    if (body.username !== ADMIN_USERNAME || !verifyPassword(body.password, ADMIN_PASSWORD)) {
+    // First try database authentication
+    let authenticatedUser: { email: string; role: string } | null = null;
+    
+    const dbUser = await checkDatabaseCredentials(body.username, body.password);
+    if (dbUser) {
+      authenticatedUser = { email: dbUser.email, role: dbUser.role };
+    }
+    
+    // Fallback to environment variable authentication
+    if (!authenticatedUser) {
+      if (body.username === ADMIN_USERNAME && verifyPassword(body.password, ADMIN_PASSWORD)) {
+        authenticatedUser = { email: body.username, role: 'admin' };
+      }
+    }
+    
+    // If still not authenticated, return error
+    if (!authenticatedUser) {
       // Add delay to prevent timing attacks
       await new Promise(resolve => setTimeout(resolve, 1000));
       
@@ -113,7 +176,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Create JWT token
-    const token = await createToken(body.username);
+    const token = await createToken(authenticatedUser.email, authenticatedUser.role);
     
     // Create response with secure HTTP-only cookie
     const response = NextResponse.json({ 
