@@ -19,7 +19,11 @@ import {
   Cog,
   Megaphone,
   Star,
-  FileText
+  FileText,
+  Store,
+  Layout,
+  Mail,
+  Wrench
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -49,92 +53,115 @@ export default function AdminDashboard() {
     }
   };
 
-  const sidebarItems = [
+  // Standalone items (always visible, not in groups)
+  const standaloneItems = [
     {
       id: 'dashboard' as AdminSection,
       label: 'Dashboard',
       icon: BarChart3,
-      description: 'Analytics Overview'
+    }
+  ];
+
+  // Grouped sidebar items
+  const sidebarGroups = [
+    {
+      id: 'store',
+      label: 'Store',
+      icon: Store,
+      defaultOpen: true,
+      items: [
+        {
+          id: 'orders' as AdminSection,
+          label: 'Orders',
+          icon: ShoppingCart,
+        },
+        {
+          id: 'products' as AdminSection,
+          label: 'Products',
+          icon: Package,
+        },
+        {
+          id: 'customers' as AdminSection,
+          label: 'Customers',
+          icon: Users,
+        },
+        {
+          id: 'discounts' as AdminSection,
+          label: 'Discounts',
+          icon: Tag,
+        },
+      ]
     },
     {
-      id: 'orders' as AdminSection,
-      label: 'Orders',
-      icon: ShoppingCart,
-      description: 'Manage Orders'
+      id: 'website',
+      label: 'Website',
+      icon: Layout,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'promotions' as AdminSection,
+          label: 'Promotions & Banners',
+          icon: Megaphone,
+        },
+        {
+          id: 'featured' as AdminSection,
+          label: 'Featured Products',
+          icon: Star,
+        },
+        {
+          id: 'blog' as AdminSection,
+          label: 'Blog Posts',
+          icon: FileText,
+        },
+        {
+          id: 'menu' as AdminSection,
+          label: 'Navigation Menu',
+          icon: Menu,
+        },
+      ]
     },
     {
-      id: 'products' as AdminSection,
-      label: 'Products',
-      icon: Package,
-      description: 'Manage Products'
+      id: 'engagement',
+      label: 'Engagement',
+      icon: Mail,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'contacts' as AdminSection,
+          label: 'Contact Forms',
+          icon: MessageSquare,
+        },
+        {
+          id: 'survey' as AdminSection,
+          label: 'Survey & Newsletter',
+          icon: Gift,
+        },
+        {
+          id: 'stories' as AdminSection,
+          label: 'Customer Stories',
+          icon: BookOpen,
+        },
+      ]
     },
     {
-      id: 'customers' as AdminSection,
-      label: 'Customers',
-      icon: Users,
-      description: 'Customer CRM'
-    },
-    {
-      id: 'discounts' as AdminSection,
-      label: 'Discounts',
-      icon: Tag,
-      description: 'Discount Codes'
-    },
-    {
-      id: 'promotions' as AdminSection,
-      label: 'Promotions',
-      icon: Megaphone,
-      description: 'Banners & Offers'
-    },
-    {
-      id: 'featured' as AdminSection,
-      label: 'Featured Products',
-      icon: Star,
-      description: 'Homepage Carousel'
-    },
-    {
-      id: 'blog' as AdminSection,
-      label: 'Blog',
-      icon: FileText,
-      description: 'Blog Posts'
-    },
-    {
-      id: 'contacts' as AdminSection,
-      label: 'Contact Forms',
-      icon: MessageSquare,
-      description: 'Form Submissions'
-    },
-    {
-      id: 'survey' as AdminSection,
-      label: 'Survey & Newsletter',
-      icon: Gift,
-      description: 'Survey Responses'
-    },
-    {
-      id: 'stories' as AdminSection,
-      label: 'Story Management',
-      icon: BookOpen,
-      description: 'User Stories'
-    },
-    {
-      id: 'menu' as AdminSection,
-      label: 'Menu Management',
-      icon: Menu,
-      description: 'Product Categories'
-    },
-    {
-      id: 'settings' as AdminSection,
-      label: 'Settings',
-      icon: Cog,
-      description: 'Store Settings'
-    },
-    {
-      id: 'maintenance' as AdminSection,
-      label: 'Maintenance Mode',
-      icon: Settings,
-      description: 'Site Maintenance',
-      badge: isMaintenanceMode ? 'ACTIVE' : undefined,
-      badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
+      id: 'system',
+      label: 'System',
+      icon: Wrench,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'settings' as AdminSection,
+          label: 'Store Settings',
+          icon: Cog,
+        },
+        {
+          id: 'maintenance' as AdminSection,
+          label: 'Maintenance Mode',
+          icon: Settings,
+          badge: isMaintenanceMode ? 'ON' : undefined,
+          badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
+        },
+      ]
     }
   ];
 
@@ -180,21 +207,23 @@ export default function AdminDashboard() {
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Shield className="h-8 w-8 text-red-600" />
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-lg">
+                  <Shield className="h-6 w-6 text-teal-600 dark:text-teal-400" />
+                </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                    Admin Panel
+                  <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    Kind Kandles Admin
                   </h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Kind Kandles Boutique
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Manage your store
                   </p>
                 </div>
               </div>
               {isMaintenanceMode && (
-                <div className="flex items-center space-x-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-3 py-1 rounded-full">
+                <div className="flex items-center space-x-2 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-3 py-1.5 rounded-full">
                   <AlertTriangle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Maintenance Mode Active</span>
+                  <span className="text-sm font-medium">Maintenance Mode</span>
                 </div>
               )}
             </div>
@@ -210,7 +239,7 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 <span>Logout</span>
@@ -223,13 +252,14 @@ export default function AdminDashboard() {
       <div className="flex">
         {/* Sidebar */}
         <AdminSidebar
-          items={sidebarItems}
+          groups={sidebarGroups}
+          standaloneItems={standaloneItems}
           activeSection={activeSection}
           onSectionChange={setActiveSection}
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 overflow-auto">
           {renderContent()}
         </main>
       </div>
