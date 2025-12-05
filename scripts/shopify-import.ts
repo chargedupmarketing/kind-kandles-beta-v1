@@ -514,14 +514,18 @@ async function importOrders(filePath: string) {
       
       if (!customerExists && order.customer_email !== 'unknown@example.com') {
         const nameParts = order.customer_name.split(' ');
-        await supabase.from('customers').insert({
-          email: order.customer_email,
-          first_name: nameParts[0] || null,
-          last_name: nameParts.slice(1).join(' ') || null,
-          accepts_marketing: false,
-          total_orders: 1,
-          total_spent: order.total
-        }).catch(() => {}); // Ignore if already exists
+        try {
+          await supabase.from('customers').insert({
+            email: order.customer_email,
+            first_name: nameParts[0] || null,
+            last_name: nameParts.slice(1).join(' ') || null,
+            accepts_marketing: false,
+            total_orders: 1,
+            total_spent: order.total
+          });
+        } catch {
+          // Ignore if already exists
+        }
       }
       
       console.log(`   ✅ Imported: Order ${orderName}`);
