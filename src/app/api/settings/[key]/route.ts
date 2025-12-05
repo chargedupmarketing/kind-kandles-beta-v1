@@ -74,11 +74,51 @@ const defaultSettings: Record<string, any> = {
       trigger_delay_seconds: 10,
       trigger_scroll_percent: 50
     }
+  },
+  featured_products: {
+    enabled: true,
+    title: 'Featured Products',
+    subtitle: 'Our most beloved handmade treasures, crafted with love and flying off the shelves',
+    tagline: 'Each piece tells a story of kindness',
+    show_emojis: true,
+    categories: [
+      {
+        id: 'candles',
+        name: 'Candles',
+        icon: '🕯️',
+        color: 'from-amber-500 to-orange-500',
+        collectionHandle: 'candles',
+        enabled: true,
+        order: 0
+      },
+      {
+        id: 'skincare',
+        name: 'Skincare',
+        icon: '✨',
+        color: 'from-teal-500 to-cyan-500',
+        collectionHandle: 'skincare',
+        enabled: true,
+        order: 1
+      },
+      {
+        id: 'body-oils',
+        name: 'Body Oils',
+        icon: '🌿',
+        color: 'from-green-500 to-emerald-500',
+        collectionHandle: 'body-oils',
+        enabled: true,
+        order: 2
+      }
+    ],
+    products_per_category: 3,
+    show_sale_badge: true,
+    show_stock_alert: true,
+    stock_alert_threshold: 5
   }
 };
 
 // Public settings that don't require authentication
-const publicSettings = ['promotions'];
+const publicSettings = ['promotions', 'featured_products'];
 
 export async function GET(
   request: NextRequest,

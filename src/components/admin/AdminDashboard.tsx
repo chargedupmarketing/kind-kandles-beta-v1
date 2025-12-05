@@ -17,7 +17,8 @@ import {
   Tag,
   BarChart3,
   Cog,
-  Megaphone
+  Megaphone,
+  Star
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -32,8 +33,9 @@ import DiscountManagement from './DiscountManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SettingsPanel from './SettingsPanel';
 import PromotionsManagement from './PromotionsManagement';
+import FeaturedProductsManagement from './FeaturedProductsManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'promotions' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -81,6 +83,12 @@ export default function AdminDashboard() {
       label: 'Promotions',
       icon: Megaphone,
       description: 'Banners & Offers'
+    },
+    {
+      id: 'featured' as AdminSection,
+      label: 'Featured Products',
+      icon: Star,
+      description: 'Homepage Carousel'
     },
     {
       id: 'contacts' as AdminSection,
@@ -136,6 +144,8 @@ export default function AdminDashboard() {
         return <DiscountManagement />;
       case 'promotions':
         return <PromotionsManagement />;
+      case 'featured':
+        return <FeaturedProductsManagement />;
       case 'menu':
         return <MenuManagement />;
       case 'maintenance':

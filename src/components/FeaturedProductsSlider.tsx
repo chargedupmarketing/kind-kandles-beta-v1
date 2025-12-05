@@ -11,6 +11,21 @@ interface ProductCategory {
   icon: string;
   color: string;
   collectionHandle: string;
+  enabled: boolean;
+  order: number;
+}
+
+interface FeaturedSettings {
+  enabled: boolean;
+  title: string;
+  subtitle: string;
+  tagline: string;
+  show_emojis: boolean;
+  categories: ProductCategory[];
+  products_per_category: number;
+  show_sale_badge: boolean;
+  show_stock_alert: boolean;
+  stock_alert_threshold: number;
 }
 
 interface Product {
@@ -26,43 +41,90 @@ interface Product {
   variants: { inventory_quantity: number }[];
 }
 
-const productCategories: ProductCategory[] = [
-  {
-    id: 'candles',
-    name: 'Candles',
-    icon: '🕯️',
-    color: 'from-amber-500 to-orange-500',
-    collectionHandle: 'candles',
-  },
-  {
-    id: 'skincare',
-    name: 'Skincare',
-    icon: '✨',
-    color: 'from-pink-500 to-purple-500',
-    collectionHandle: 'skincare',
-  },
-  {
-    id: 'body-oils',
-    name: 'Body Oils',
-    icon: '🌿',
-    color: 'from-green-500 to-emerald-500',
-    collectionHandle: 'body-oils',
-  },
-];
+const DEFAULT_SETTINGS: FeaturedSettings = {
+  enabled: true,
+  title: 'Featured Products',
+  subtitle: 'Our most beloved handmade treasures, crafted with love and flying off the shelves',
+  tagline: 'Each piece tells a story of kindness',
+  show_emojis: true,
+  categories: [
+    {
+      id: 'candles',
+      name: 'Candles',
+      icon: '🕯️',
+      color: 'from-amber-500 to-orange-500',
+      collectionHandle: 'candles',
+      enabled: true,
+      order: 0
+    },
+    {
+      id: 'skincare',
+      name: 'Skincare',
+      icon: '✨',
+      color: 'from-teal-500 to-cyan-500',
+      collectionHandle: 'skincare',
+      enabled: true,
+      order: 1
+    },
+    {
+      id: 'body-oils',
+      name: 'Body Oils',
+      icon: '🌿',
+      color: 'from-green-500 to-emerald-500',
+      collectionHandle: 'body-oils',
+      enabled: true,
+      order: 2
+    }
+  ],
+  products_per_category: 3,
+  show_sale_badge: true,
+  show_stock_alert: true,
+  stock_alert_threshold: 5
+};
 
 export default function FeaturedProductsSlider() {
+  const [settings, setSettings] = useState<FeaturedSettings>(DEFAULT_SETTINGS);
   const [activeCategory, setActiveCategory] = useState(0);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
-  const currentCategory = productCategories[activeCategory];
-  
+  // Fetch settings from API
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/settings/featured_products');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value) {
+            setSettings({ ...DEFAULT_SETTINGS, ...data.value });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching featured products settings:', error);
+      } finally {
+        setSettingsLoaded(true);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // Get enabled categories sorted by order
+  const enabledCategories = settings.categories
+    .filter(cat => cat.enabled)
+    .sort((a, b) => a.order - b.order);
+
+  const currentCategory = enabledCategories[activeCategory] || enabledCategories[0];
+
   // Fetch products from database
   useEffect(() => {
+    if (!settingsLoaded || !currentCategory) return;
+
     const fetchProducts = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/collections/${currentCategory.collectionHandle}?limit=3`);
+        const response = await fetch(`/api/collections/${currentCategory.collectionHandle}?limit=${settings.products_per_category}`);
         if (response.ok) {
           const data = await response.json();
           setProducts(data.products || []);
@@ -78,7 +140,7 @@ export default function FeaturedProductsSlider() {
     };
 
     fetchProducts();
-  }, [currentCategory.collectionHandle]);
+  }, [currentCategory?.collectionHandle, settingsLoaded, settings.products_per_category]);
 
   const handleCategoryChange = (index: number) => {
     setActiveCategory(index);
@@ -94,24 +156,29 @@ export default function FeaturedProductsSlider() {
     return burnTimeTag || null;
   };
 
+  // Don't render if section is disabled or no categories
+  if (!settings.enabled || enabledCategories.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-16">
           <h2 className="serif-font text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-4 sm:mb-6">
-            🌟 Featured Products 🌟
+            {settings.show_emojis ? '🌟 ' : ''}{settings.title}{settings.show_emojis ? ' 🌟' : ''}
           </h2>
           <p className="text-base sm:text-xl text-gray-700 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed px-2">
-            Our most beloved handmade treasures, crafted with love and flying off the shelves
+            {settings.subtitle}
           </p>
           <div className="script-font text-amber-600 dark:text-amber-400 text-base sm:text-lg mt-2 sm:mt-3">
-            ✨ Each piece tells a story of kindness ✨
+            ✨ {settings.tagline} ✨
           </div>
         </div>
 
         {/* Category Tabs */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-8 sm:mb-12 flex-wrap">
-          {productCategories.map((category, index) => (
+          {enabledCategories.map((category, index) => (
             <button
               key={category.id}
               onClick={() => handleCategoryChange(index)}
@@ -135,7 +202,7 @@ export default function FeaturedProductsSlider() {
         )}
 
         {/* Empty State */}
-        {!isLoading && products.length === 0 && (
+        {!isLoading && products.length === 0 && currentCategory && (
           <div className="text-center py-16">
             <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -155,8 +222,8 @@ export default function FeaturedProductsSlider() {
         )}
 
         {/* Product Grid */}
-        {!isLoading && products.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+        {!isLoading && products.length > 0 && currentCategory && (
+          <div className={`grid grid-cols-1 ${settings.products_per_category === 2 ? 'md:grid-cols-2' : settings.products_per_category >= 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-4 sm:gap-8`}>
             {products.map((product) => {
               const discountPercent = product.compare_at_price 
                 ? Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)
@@ -177,7 +244,7 @@ export default function FeaturedProductsSlider() {
                     
                     {/* Badges */}
                     <div className="absolute top-3 left-3 flex flex-col gap-2">
-                      {product.compare_at_price && (
+                      {settings.show_sale_badge && product.compare_at_price && (
                         <span className="px-3 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg animate-pulse">
                           Sale
                         </span>
@@ -185,7 +252,7 @@ export default function FeaturedProductsSlider() {
                     </div>
 
                     {/* Stock Alert */}
-                    {inventoryQuantity <= 5 && inventoryQuantity > 0 && (
+                    {settings.show_stock_alert && inventoryQuantity <= settings.stock_alert_threshold && inventoryQuantity > 0 && (
                       <div className="absolute top-3 right-3">
                         <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
                           Only {inventoryQuantity} left!
@@ -254,15 +321,17 @@ export default function FeaturedProductsSlider() {
         )}
 
         {/* View All Link */}
-        <div className="text-center mt-12">
-          <Link
-            href={`/collections/${currentCategory.id}`}
-            className="inline-flex items-center gap-2 text-lg font-semibold text-pink-600 hover:text-pink-700 transition-colors"
-          >
-            View All {currentCategory.name}
-            <ChevronRight className="h-5 w-5" />
-          </Link>
-        </div>
+        {currentCategory && (
+          <div className="text-center mt-12">
+            <Link
+              href={`/collections/${currentCategory.collectionHandle}`}
+              className="inline-flex items-center gap-2 text-lg font-semibold text-pink-600 hover:text-pink-700 transition-colors"
+            >
+              View All {currentCategory.name}
+              <ChevronRight className="h-5 w-5" />
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
