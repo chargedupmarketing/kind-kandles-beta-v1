@@ -12,7 +12,11 @@ import {
   AlertTriangle,
   Gift,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  Users,
+  Tag,
+  BarChart3,
+  Cog
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -22,11 +26,15 @@ import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
 import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
+import CustomerManagement from './CustomerManagement';
+import DiscountManagement from './DiscountManagement';
+import AnalyticsDashboard from './AnalyticsDashboard';
+import SettingsPanel from './SettingsPanel';
 
-type AdminSection = 'products' | 'orders' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
 
 export default function AdminDashboard() {
-  const [activeSection, setActiveSection] = useState<AdminSection>('orders');
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const { logout, isMaintenanceMode, user } = useAdmin();
 
   const handleLogout = async () => {
@@ -36,6 +44,12 @@ export default function AdminDashboard() {
   };
 
   const sidebarItems = [
+    {
+      id: 'dashboard' as AdminSection,
+      label: 'Dashboard',
+      icon: BarChart3,
+      description: 'Analytics Overview'
+    },
     {
       id: 'orders' as AdminSection,
       label: 'Orders',
@@ -47,6 +61,18 @@ export default function AdminDashboard() {
       label: 'Products',
       icon: Package,
       description: 'Manage Products'
+    },
+    {
+      id: 'customers' as AdminSection,
+      label: 'Customers',
+      icon: Users,
+      description: 'Customer CRM'
+    },
+    {
+      id: 'discounts' as AdminSection,
+      label: 'Discounts',
+      icon: Tag,
+      description: 'Discount Codes'
     },
     {
       id: 'contacts' as AdminSection,
@@ -73,6 +99,12 @@ export default function AdminDashboard() {
       description: 'Product Categories'
     },
     {
+      id: 'settings' as AdminSection,
+      label: 'Settings',
+      icon: Cog,
+      description: 'Store Settings'
+    },
+    {
       id: 'maintenance' as AdminSection,
       label: 'Maintenance Mode',
       icon: Settings,
@@ -84,10 +116,16 @@ export default function AdminDashboard() {
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'dashboard':
+        return <AnalyticsDashboard />;
       case 'products':
         return <ProductManagement />;
       case 'orders':
         return <OrderManagement />;
+      case 'customers':
+        return <CustomerManagement />;
+      case 'discounts':
+        return <DiscountManagement />;
       case 'menu':
         return <MenuManagement />;
       case 'maintenance':
@@ -98,8 +136,10 @@ export default function AdminDashboard() {
         return <SurveyManagement />;
       case 'stories':
         return <StoryManagement />;
+      case 'settings':
+        return <SettingsPanel />;
       default:
-        return <OrderManagement />;
+        return <AnalyticsDashboard />;
     }
   };
 
