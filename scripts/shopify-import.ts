@@ -1,12 +1,12 @@
 /**
- * Shopify Data Import Script
+ * Shopify Data Import Script - Rewritten for proper CSV parsing
  * 
  * This script imports data exported from Shopify into your Supabase database.
  * 
  * Usage:
  * 1. Export data from Shopify Admin (see SHOPIFY_DATA_IMPORT.md for instructions)
  * 2. Place CSV files in the /data/shopify-export/ folder
- * 3. Run: npx ts-node scripts/shopify-import.ts
+ * 3. Run: npx tsx scripts/shopify-import.ts
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -26,23 +26,47 @@ if (!supabaseUrl || !supabaseServiceKey) {
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// CSV Parser (simple implementation)
+// Robust CSV Parser that handles quoted fields properly
 function parseCSV(content: string): Record<string, string>[] {
-  const lines = content.split('\n');
+  const lines: string[] = [];
+  let currentLine = '';
+  let inQuotes = false;
+  
+  // Split by lines, handling quoted newlines
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      currentLine += char;
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (currentLine.trim()) {
+        lines.push(currentLine);
+      }
+      currentLine = '';
+      // Skip \r\n
+      if (char === '\r' && content[i + 1] === '\n') {
+        i++;
+      }
+    } else {
+      currentLine += char;
+    }
+  }
+  if (currentLine.trim()) {
+    lines.push(currentLine);
+  }
+  
   if (lines.length < 2) return [];
   
   const headers = parseCSVLine(lines[0]);
   const results: Record<string, string>[] = [];
   
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    
-    const values = parseCSVLine(line);
+    const values = parseCSVLine(lines[i]);
     const row: Record<string, string> = {};
     
     headers.forEach((header, index) => {
-      row[header.trim()] = values[index]?.trim() || '';
+      row[header.trim()] = (values[index] || '').trim();
     });
     
     results.push(row);
@@ -78,15 +102,7 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-// Generate URL-friendly handle from title
-function generateHandle(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-// Import Products
+// Import Products - Using Handle as the unique identifier
 async function importProducts(filePath: string) {
   console.log('\n📦 Importing Products...');
   
@@ -98,33 +114,31 @@ async function importProducts(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const rows = parseCSV(content);
   
-  console.log(`   Found ${rows.length} product rows`);
+  console.log(`   Found ${rows.length} product rows in CSV`);
   
   // Group by Handle (Shopify exports variants as separate rows)
   const productMap = new Map<string, any>();
   
   for (const row of rows) {
-    const rawTitle = row['Title'] || '';
-    // Skip rows without a proper title (these are variant rows or HTML fragments)
-    if (!rawTitle || rawTitle.length > 200 || rawTitle.includes('<') || rawTitle.includes('href=')) {
-      continue;
-    }
+    const handle = row['Handle'];
     
-    const handle = row['Handle'] || generateHandle(rawTitle);
-    // Skip if handle is empty or invalid
-    if (!handle || handle.length < 2) {
-      continue;
-    }
+    // Skip rows without a handle (these are additional variant rows for the same product)
+    if (!handle) continue;
     
     if (!productMap.has(handle)) {
+      // First row for this product - set up the base product
+      const title = row['Title'] || handle;
+      const status = row['Status']?.toLowerCase() === 'active' ? 'active' : 
+                     row['Status']?.toLowerCase() === 'draft' ? 'draft' : 'active';
+      
       productMap.set(handle, {
-        title: rawTitle.substring(0, 250), // Truncate to fit VARCHAR(255)
+        title: title.substring(0, 250),
         handle: handle.substring(0, 250),
-        description: row['Body (HTML)'] || row['Body HTML'] || '',
+        description: row['Body (HTML)'] || '',
         vendor: (row['Vendor'] || 'My Kind Kandles').substring(0, 250),
-        product_type: (row['Type'] || row['Product Type'] || '').substring(0, 250) || null,
-        tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()) : [],
-        status: row['Status']?.toLowerCase() === 'active' ? 'active' : 'draft',
+        product_type: (row['Type'] || '').substring(0, 250) || null,
+        tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()).filter(Boolean) : [],
+        status,
         variants: [],
         images: []
       });
@@ -132,35 +146,50 @@ async function importProducts(filePath: string) {
     
     const product = productMap.get(handle)!;
     
-    // Add variant
-    const variantPrice = parseFloat(row['Variant Price'] || row['Price'] || '0');
-    const compareAtPrice = parseFloat(row['Variant Compare At Price'] || row['Compare At Price'] || '0');
+    // Add variant info
+    const variantPrice = parseFloat(row['Variant Price'] || '0') || 0;
+    const compareAtPrice = parseFloat(row['Variant Compare At Price'] || '0') || 0;
+    const inventoryQty = parseInt(row['Variant Inventory Qty'] || '0') || 0;
+    const variantGrams = parseFloat(row['Variant Grams'] || '0') || 0;
+    
+    // Build variant title from options
+    let variantTitle = row['Option1 Value'] || '';
+    if (row['Option2 Value']) variantTitle += ` / ${row['Option2 Value']}`;
+    if (row['Option3 Value']) variantTitle += ` / ${row['Option3 Value']}`;
+    variantTitle = variantTitle || 'Default Title';
     
     product.variants.push({
-      title: row['Option1 Value'] || row['Variant Title'] || 'Default Title',
-      sku: row['Variant SKU'] || row['SKU'] || null,
+      title: variantTitle.substring(0, 250),
+      sku: row['Variant SKU'] || null,
       price: variantPrice,
       compare_at_price: compareAtPrice > 0 ? compareAtPrice : null,
-      inventory_quantity: parseInt(row['Variant Inventory Qty'] || row['Inventory Qty'] || '0'),
-      weight: parseFloat(row['Variant Grams'] || '0') / 28.35, // Convert grams to oz
+      inventory_quantity: inventoryQty,
+      weight: variantGrams / 28.35, // Convert grams to oz
       weight_unit: 'oz'
     });
     
-    // Set base price from first variant
-    if (!product.price) {
+    // Set base price from first variant with a price
+    if (!product.price && variantPrice > 0) {
       product.price = variantPrice;
       product.compare_at_price = compareAtPrice > 0 ? compareAtPrice : null;
     }
     
-    // Add image if present
-    const imageUrl = row['Image Src'] || row['Variant Image'];
-    if (imageUrl && !product.images.includes(imageUrl)) {
-      product.images.push(imageUrl);
+    // Add image if present and not already added
+    const imageUrl = row['Image Src'];
+    if (imageUrl && !product.images.some((img: any) => img.url === imageUrl)) {
+      product.images.push({
+        url: imageUrl,
+        alt_text: row['Image Alt Text'] || product.title,
+        position: parseInt(row['Image Position'] || '0') || product.images.length
+      });
     }
   }
   
+  console.log(`   Found ${productMap.size} unique products`);
+  
   let imported = 0;
   let skipped = 0;
+  let errors = 0;
   
   for (const [handle, product] of productMap) {
     try {
@@ -172,10 +201,12 @@ async function importProducts(filePath: string) {
         .single();
       
       if (existing) {
-        console.log(`   ⏭️  Skipping existing: ${product.title}`);
         skipped++;
         continue;
       }
+      
+      // Ensure we have a valid price
+      const price = product.price || product.variants[0]?.price || 0;
       
       // Insert product
       const { data: newProduct, error: productError } = await supabase
@@ -184,18 +215,20 @@ async function importProducts(filePath: string) {
           title: product.title,
           handle: product.handle,
           description: product.description,
-          price: product.price || 0,
+          price: price,
           compare_at_price: product.compare_at_price,
           vendor: product.vendor,
           product_type: product.product_type,
           tags: product.tags.length > 0 ? product.tags : null,
-          status: product.status
+          status: product.status,
+          featured: false
         })
         .select()
         .single();
       
       if (productError) {
-        console.error(`   ❌ Error importing ${product.title}:`, productError.message);
+        console.error(`   ❌ Error importing "${product.title}": ${productError.message}`);
+        errors++;
         continue;
       }
       
@@ -205,7 +238,7 @@ async function importProducts(filePath: string) {
           product_id: newProduct.id,
           title: variant.title,
           sku: variant.sku,
-          price: variant.price,
+          price: variant.price || price,
           compare_at_price: variant.compare_at_price,
           inventory_quantity: variant.inventory_quantity,
           weight: variant.weight,
@@ -214,23 +247,27 @@ async function importProducts(filePath: string) {
       }
       
       // Insert images
-      for (let i = 0; i < product.images.length; i++) {
+      for (const image of product.images) {
         await supabase.from('product_images').insert({
           product_id: newProduct.id,
-          url: product.images[i],
-          alt_text: product.title,
-          position: i
+          url: image.url,
+          alt_text: image.alt_text,
+          position: image.position
         });
       }
       
       console.log(`   ✅ Imported: ${product.title}`);
       imported++;
     } catch (error: any) {
-      console.error(`   ❌ Error importing ${product.title}:`, error.message);
+      console.error(`   ❌ Error importing "${product.title}": ${error.message}`);
+      errors++;
     }
   }
   
-  console.log(`\n   📊 Products: ${imported} imported, ${skipped} skipped`);
+  console.log(`\n   📊 Products Summary:`);
+  console.log(`      ✅ Imported: ${imported}`);
+  console.log(`      ⏭️  Skipped (existing): ${skipped}`);
+  console.log(`      ❌ Errors: ${errors}`);
 }
 
 // Import Customers
@@ -245,14 +282,15 @@ async function importCustomers(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const rows = parseCSV(content);
   
-  console.log(`   Found ${rows.length} customers`);
+  console.log(`   Found ${rows.length} customers in CSV`);
   
   let imported = 0;
   let skipped = 0;
+  let errors = 0;
   
   for (const row of rows) {
-    const email = row['Email']?.toLowerCase();
-    if (!email) continue;
+    const email = (row['Email'] || '').toLowerCase().trim();
+    if (!email || !email.includes('@')) continue;
     
     try {
       // Check if customer exists
@@ -267,23 +305,33 @@ async function importCustomers(filePath: string) {
         continue;
       }
       
-      await supabase.from('customers').insert({
+      const { error } = await supabase.from('customers').insert({
         email,
         first_name: row['First Name'] || null,
         last_name: row['Last Name'] || null,
         phone: row['Phone'] || null,
         accepts_marketing: row['Accepts Marketing']?.toLowerCase() === 'yes',
-        total_orders: parseInt(row['Total Orders'] || '0'),
-        total_spent: parseFloat(row['Total Spent'] || '0')
+        total_orders: parseInt(row['Total Orders'] || '0') || 0,
+        total_spent: parseFloat(row['Total Spent'] || '0') || 0
       });
+      
+      if (error) {
+        console.error(`   ❌ Error importing ${email}: ${error.message}`);
+        errors++;
+        continue;
+      }
       
       imported++;
     } catch (error: any) {
-      console.error(`   ❌ Error importing ${email}:`, error.message);
+      console.error(`   ❌ Error importing ${email}: ${error.message}`);
+      errors++;
     }
   }
   
-  console.log(`   📊 Customers: ${imported} imported, ${skipped} skipped`);
+  console.log(`\n   📊 Customers Summary:`);
+  console.log(`      ✅ Imported: ${imported}`);
+  console.log(`      ⏭️  Skipped (existing): ${skipped}`);
+  console.log(`      ❌ Errors: ${errors}`);
 }
 
 // Import Orders
@@ -298,13 +346,13 @@ async function importOrders(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const rows = parseCSV(content);
   
-  console.log(`   Found ${rows.length} order rows`);
+  console.log(`   Found ${rows.length} order rows in CSV`);
   
   // Group by Order Name (orders can have multiple line items)
   const orderMap = new Map<string, any>();
   
   for (const row of rows) {
-    const orderName = row['Name'] || row['Order Name'];
+    const orderName = row['Name'];
     if (!orderName) continue;
     
     if (!orderMap.has(orderName)) {
@@ -314,33 +362,34 @@ async function importOrders(filePath: string) {
       const fulfillmentStatus = (row['Fulfillment Status'] || '').toLowerCase();
       
       if (fulfillmentStatus === 'fulfilled') status = 'delivered';
-      else if (fulfillmentStatus === 'shipped') status = 'shipped';
+      else if (fulfillmentStatus === 'shipped' || fulfillmentStatus === 'partial') status = 'shipped';
       else if (financialStatus === 'paid') status = 'paid';
       else if (financialStatus === 'refunded') status = 'refunded';
+      else if (financialStatus === 'partially_refunded') status = 'paid';
+      
+      const paymentStatus = financialStatus === 'paid' || financialStatus === 'partially_refunded' ? 'paid' : 
+                           financialStatus === 'refunded' ? 'refunded' : 'pending';
       
       orderMap.set(orderName, {
         order_number: orderName.replace('#', ''),
-        customer_email: row['Email']?.toLowerCase() || '',
-        customer_name: `${row['Billing Name'] || row['Shipping Name'] || 'Customer'}`,
+        customer_email: (row['Email'] || 'unknown@example.com').toLowerCase().trim(),
+        customer_name: row['Shipping Name'] || row['Billing Name'] || 'Customer',
         status,
-        payment_status: financialStatus === 'paid' ? 'paid' : 'pending',
-        subtotal: parseFloat(row['Subtotal'] || '0'),
-        shipping_cost: parseFloat(row['Shipping'] || '0'),
-        tax: parseFloat(row['Taxes'] || row['Tax'] || '0'),
-        total: parseFloat(row['Total'] || '0'),
-        discount_amount: parseFloat(row['Discount Amount'] || '0'),
+        payment_status: paymentStatus,
+        subtotal: parseFloat(row['Subtotal'] || '0') || 0,
+        shipping_cost: parseFloat(row['Shipping'] || '0') || 0,
+        tax: parseFloat(row['Taxes'] || '0') || 0,
+        total: parseFloat(row['Total'] || '0') || 0,
+        discount: parseFloat(row['Discount Amount'] || '0') || 0,
         discount_code: row['Discount Code'] || null,
-        shipping_address: {
-          first_name: row['Shipping Name']?.split(' ')[0] || '',
-          last_name: row['Shipping Name']?.split(' ').slice(1).join(' ') || '',
-          address1: row['Shipping Street'] || row['Shipping Address1'] || '',
-          address2: row['Shipping Address2'] || '',
-          city: row['Shipping City'] || '',
-          province: row['Shipping Province'] || row['Shipping State'] || '',
-          postal_code: row['Shipping Zip'] || row['Shipping Postal Code'] || '',
-          country: row['Shipping Country'] || 'US'
-        },
-        created_at: row['Created at'] || row['Created At'] || new Date().toISOString(),
+        shipping_address_line1: row['Shipping Address1'] || row['Shipping Street'] || 'Address on file',
+        shipping_address_line2: row['Shipping Address2'] || null,
+        shipping_city: row['Shipping City'] || 'Unknown',
+        shipping_state: row['Shipping Province'] || row['Shipping Province Name'] || 'Unknown',
+        shipping_postal_code: row['Shipping Zip'] || '00000',
+        shipping_country: row['Shipping Country'] || 'US',
+        shipping_method: row['Shipping Method'] || null,
+        created_at: row['Created at'] || new Date().toISOString(),
         items: []
       });
     }
@@ -348,19 +397,22 @@ async function importOrders(filePath: string) {
     const order = orderMap.get(orderName)!;
     
     // Add line item
-    const lineitemName = row['Lineitem name'] || row['Line Item Name'];
+    const lineitemName = row['Lineitem name'];
     if (lineitemName) {
       order.items.push({
-        title: lineitemName,
-        quantity: parseInt(row['Lineitem quantity'] || row['Line Item Quantity'] || '1'),
-        price: parseFloat(row['Lineitem price'] || row['Line Item Price'] || '0'),
-        sku: row['Lineitem sku'] || row['Line Item SKU'] || null
+        title: lineitemName.substring(0, 250),
+        quantity: parseInt(row['Lineitem quantity'] || '1') || 1,
+        price: parseFloat(row['Lineitem price'] || '0') || 0,
+        sku: row['Lineitem sku'] || null
       });
     }
   }
   
+  console.log(`   Found ${orderMap.size} unique orders`);
+  
   let imported = 0;
   let skipped = 0;
+  let errors = 0;
   
   for (const [orderName, order] of orderMap) {
     try {
@@ -376,41 +428,42 @@ async function importOrders(filePath: string) {
         continue;
       }
       
-      // Insert order - using correct column names from schema
+      // Insert order
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
         .insert({
           order_number: order.order_number,
-          customer_email: order.customer_email || 'unknown@example.com',
-          customer_name: order.customer_name || 'Customer',
+          customer_email: order.customer_email,
+          customer_name: order.customer_name,
           status: order.status,
           payment_status: order.payment_status,
-          subtotal: order.subtotal || 0,
-          shipping_cost: order.shipping_cost || 0,
-          tax: order.tax || 0,
-          total: order.total || 0,
-          discount: order.discount_amount || 0,
-          discount_code: order.discount_code || null,
-          // Address columns - use address1 as the main line, or fallback to a placeholder
-          shipping_address_line1: order.shipping_address.address1 || 'Address on file',
-          shipping_address_line2: order.shipping_address.address2 || null,
-          shipping_city: order.shipping_address.city || 'Unknown',
-          shipping_state: order.shipping_address.province || 'Unknown',
-          shipping_postal_code: order.shipping_address.postal_code || '00000',
-          shipping_country: order.shipping_address.country || 'US',
+          subtotal: order.subtotal,
+          shipping_cost: order.shipping_cost,
+          tax: order.tax,
+          total: order.total,
+          discount: order.discount,
+          discount_code: order.discount_code,
+          shipping_address_line1: order.shipping_address_line1,
+          shipping_address_line2: order.shipping_address_line2,
+          shipping_city: order.shipping_city,
+          shipping_state: order.shipping_state,
+          shipping_postal_code: order.shipping_postal_code,
+          shipping_country: order.shipping_country,
+          shipping_method: order.shipping_method,
           created_at: order.created_at
         })
         .select()
         .single();
       
       if (orderError) {
-        console.error(`   ❌ Error importing order ${orderName}:`, orderError.message);
+        console.error(`   ❌ Error importing order ${orderName}: ${orderError.message}`);
+        errors++;
         continue;
       }
       
       // Insert line items
       for (const item of order.items) {
-        // Try to find product by title or SKU
+        // Try to find product by SKU or title
         let productId = null;
         let variantId = null;
         
@@ -427,6 +480,20 @@ async function importOrders(filePath: string) {
           }
         }
         
+        // If no SKU match, try to find by title
+        if (!productId) {
+          const { data: product } = await supabase
+            .from('products')
+            .select('id')
+            .ilike('title', `%${item.title.split(' - ')[0]}%`)
+            .limit(1)
+            .single();
+          
+          if (product) {
+            productId = product.id;
+          }
+        }
+        
         await supabase.from('order_items').insert({
           order_id: newOrder.id,
           product_id: productId,
@@ -438,24 +505,37 @@ async function importOrders(filePath: string) {
         });
       }
       
-      // Update customer stats
-      if (order.customer_email) {
-        try {
-          await supabase.rpc('update_customer_stats', { 
-            customer_email_param: order.customer_email 
-          });
-        } catch {
-          // Ignore if function doesn't exist
-        }
+      // Ensure customer exists
+      const { data: customerExists } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', order.customer_email)
+        .single();
+      
+      if (!customerExists && order.customer_email !== 'unknown@example.com') {
+        const nameParts = order.customer_name.split(' ');
+        await supabase.from('customers').insert({
+          email: order.customer_email,
+          first_name: nameParts[0] || null,
+          last_name: nameParts.slice(1).join(' ') || null,
+          accepts_marketing: false,
+          total_orders: 1,
+          total_spent: order.total
+        }).catch(() => {}); // Ignore if already exists
       }
       
+      console.log(`   ✅ Imported: Order ${orderName}`);
       imported++;
     } catch (error: any) {
-      console.error(`   ❌ Error importing order ${orderName}:`, error.message);
+      console.error(`   ❌ Error importing order ${orderName}: ${error.message}`);
+      errors++;
     }
   }
   
-  console.log(`   📊 Orders: ${imported} imported, ${skipped} skipped`);
+  console.log(`\n   📊 Orders Summary:`);
+  console.log(`      ✅ Imported: ${imported}`);
+  console.log(`      ⏭️  Skipped (existing): ${skipped}`);
+  console.log(`      ❌ Errors: ${errors}`);
 }
 
 // Import Discount Codes
@@ -470,13 +550,14 @@ async function importDiscounts(filePath: string) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const rows = parseCSV(content);
   
-  console.log(`   Found ${rows.length} discount codes`);
+  console.log(`   Found ${rows.length} discount codes in CSV`);
   
   let imported = 0;
   let skipped = 0;
+  let errors = 0;
   
   for (const row of rows) {
-    const code = row['Code']?.toUpperCase();
+    const code = (row['Code'] || '').toUpperCase().trim();
     if (!code) continue;
     
     try {
@@ -498,35 +579,61 @@ async function importDiscounts(filePath: string) {
       
       const discountType = (row['Type'] || row['Discount Type'] || '').toLowerCase();
       
-      if (discountType.includes('shipping')) {
+      if (discountType.includes('shipping') || discountType.includes('free')) {
         type = 'free_shipping';
       } else if (discountType.includes('fixed') || discountType.includes('amount')) {
         type = 'fixed';
-        value = parseFloat(row['Value'] || row['Amount'] || '0');
+        value = parseFloat(row['Value'] || row['Amount'] || '0') || 0;
       } else {
         type = 'percentage';
-        value = parseFloat(row['Value'] || row['Percentage'] || '0');
+        value = parseFloat(row['Value'] || row['Percentage'] || '0') || 0;
       }
       
-      await supabase.from('discount_codes').insert({
+      const { error } = await supabase.from('discount_codes').insert({
         code,
         type,
         value,
         min_purchase: parseFloat(row['Minimum Purchase'] || row['Min Purchase'] || '0') || null,
         max_uses: parseInt(row['Usage Limit'] || row['Max Uses'] || '0') || null,
-        uses: parseInt(row['Times Used'] || row['Uses'] || '0'),
+        uses: parseInt(row['Times Used'] || row['Uses'] || '0') || 0,
         starts_at: row['Start Date'] || null,
         ends_at: row['End Date'] || null,
         active: row['Status']?.toLowerCase() !== 'disabled'
       });
       
+      if (error) {
+        console.error(`   ❌ Error importing ${code}: ${error.message}`);
+        errors++;
+        continue;
+      }
+      
       imported++;
     } catch (error: any) {
-      console.error(`   ❌ Error importing ${code}:`, error.message);
+      console.error(`   ❌ Error importing ${code}: ${error.message}`);
+      errors++;
     }
   }
   
-  console.log(`   📊 Discounts: ${imported} imported, ${skipped} skipped`);
+  console.log(`\n   📊 Discounts Summary:`);
+  console.log(`      ✅ Imported: ${imported}`);
+  console.log(`      ⏭️  Skipped (existing): ${skipped}`);
+  console.log(`      ❌ Errors: ${errors}`);
+}
+
+// Clear existing data (optional - use with caution!)
+async function clearExistingData() {
+  console.log('\n🗑️  Clearing existing data...');
+  
+  // Delete in order to respect foreign keys
+  await supabase.from('order_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('product_images').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('product_variants').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('products').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('customers').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  await supabase.from('discount_codes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  
+  console.log('   ✅ Existing data cleared');
 }
 
 // Main import function
@@ -555,6 +662,13 @@ async function main() {
   console.log(`📁 Found files in ${dataDir}:`);
   files.forEach(f => console.log(`   - ${f}`));
   
+  // Check for --clear flag
+  const shouldClear = process.argv.includes('--clear');
+  if (shouldClear) {
+    console.log('\n⚠️  --clear flag detected. This will DELETE all existing data!');
+    await clearExistingData();
+  }
+  
   // Find CSV files (case-insensitive)
   const findFile = (name: string) => {
     const found = files.find(f => 
@@ -575,7 +689,7 @@ async function main() {
   console.log('1. Check your admin panel to verify imported data');
   console.log('2. Review any skipped items (already existed)');
   console.log('3. Update product images if needed');
+  console.log('\nTo re-import everything fresh, run: npx tsx scripts/shopify-import.ts --clear');
 }
 
 main().catch(console.error);
-
