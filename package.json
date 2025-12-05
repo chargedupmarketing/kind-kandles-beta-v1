@@ -19,10 +19,10 @@
     "@supabase/supabase-js": "^2.86.0",
     "clsx": "^2.1.1",
     "jose": "^6.1.1",
-    "lucide-react": "^0.553.0",
-    "next": "16.0.1",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "lucide-react": "^0.555.0",
+    "next": "^16.0.7",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "resend": "^6.5.2",
     "stripe": "^20.0.0"
   },
@@ -33,7 +33,7 @@
     "autoprefixer": "^10.4.21",
     "dotenv": "^17.2.3",
     "eslint": "^9",
-    "eslint-config-next": "16.0.1",
+    "eslint-config-next": "^16.0.7",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.18",
     "typescript": "^5"
