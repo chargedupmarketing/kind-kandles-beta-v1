@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Sparkles, Heart, Leaf, Clock, Shield, Truck } from 'lucide-react';
@@ -9,9 +10,89 @@ import TrustBadges from '@/components/TrustBadges';
 import FragranceCarousel from '@/components/FragranceCarousel';
 import FeaturedProductsSlider from '@/components/FeaturedProductsSlider';
 
+interface CountdownPromo {
+  enabled: boolean;
+  title: string;
+  subtitle: string;
+  end_date: string;
+  end_time: string;
+  background_style: 'pink-purple' | 'teal' | 'dark' | 'custom';
+}
+
+interface FlashSaleUrgency {
+  enabled: boolean;
+  text: string;
+  show_icon: boolean;
+}
+
+interface PromotionsSettings {
+  countdown_promo: CountdownPromo;
+  flash_sale_urgency: FlashSaleUrgency;
+}
+
+const DEFAULT_COUNTDOWN: CountdownPromo = {
+  enabled: true,
+  title: '🔥 PRE-BLACK FRIDAY SALE ENDS SOON! 🔥',
+  subtitle: 'Early Bird Special - Save 25% on everything + FREE shipping over $50!',
+  end_date: '2025-11-27',
+  end_time: '23:59',
+  background_style: 'pink-purple'
+};
+
+const DEFAULT_URGENCY: FlashSaleUrgency = {
+  enabled: true,
+  text: 'Flash sale ends in 24 hours - Don\'t miss out!',
+  show_icon: true
+};
+
 export default function Home() {
-  // Pre-Black Friday sale end time (November 27th, 2025 at 11:59 PM)
-  const preBlackFridayEndTime = new Date('2025-11-27T23:59:59');
+  const [countdownSettings, setCountdownSettings] = useState<CountdownPromo>(DEFAULT_COUNTDOWN);
+  const [urgencySettings, setUrgencySettings] = useState<FlashSaleUrgency>(DEFAULT_URGENCY);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/settings/promotions');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value?.countdown_promo) {
+            setCountdownSettings({ ...DEFAULT_COUNTDOWN, ...data.value.countdown_promo });
+          }
+          if (data.value?.flash_sale_urgency) {
+            setUrgencySettings({ ...DEFAULT_URGENCY, ...data.value.flash_sale_urgency });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching promotions settings:', error);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // Parse end date and time from settings
+  const getEndTime = () => {
+    const dateStr = countdownSettings.end_date;
+    const timeStr = countdownSettings.end_time;
+    return new Date(`${dateStr}T${timeStr}:59`);
+  };
+
+  const getBackgroundClass = () => {
+    switch (countdownSettings.background_style) {
+      case 'teal':
+        return 'bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-teal-900 dark:to-cyan-900';
+      case 'dark':
+        return 'bg-gradient-to-r from-gray-700 to-gray-800';
+      case 'custom':
+        return 'bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900';
+      case 'pink-purple':
+      default:
+        return 'bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700';
+    }
+  };
 
   const benefits = [
     {
@@ -86,16 +167,18 @@ export default function Home() {
       </section>
 
       {/* Pre-Black Friday Countdown */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
-        <div className="max-w-4xl mx-auto">
-          <CountdownTimer
-            endTime={preBlackFridayEndTime}
-            title="🔥 PRE-BLACK FRIDAY SALE ENDS SOON! 🔥"
-            subtitle="Early Bird Special - Save 25% on everything + FREE shipping over $50!"
-            variant="default"
-          />
-        </div>
-      </section>
+      {countdownSettings.enabled && (
+        <section className={`py-12 px-4 sm:px-6 lg:px-8 ${getBackgroundClass()}`}>
+          <div className="max-w-4xl mx-auto">
+            <CountdownTimer
+              endTime={getEndTime()}
+              title={countdownSettings.title}
+              subtitle={countdownSettings.subtitle}
+              variant="default"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Featured Products Slider */}
       <FeaturedProductsSlider />
@@ -173,10 +256,14 @@ export default function Home() {
           </div>
           
           {/* Urgency Element */}
-          <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 sm:px-6 py-2 sm:py-3 mx-4">
-            <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 animate-pulse flex-shrink-0" />
-            <span className="text-red-700 font-medium text-xs sm:text-base">Flash sale ends in 24 hours - Don't miss out!</span>
-          </div>
+          {urgencySettings.enabled && (
+            <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-4 sm:px-6 py-2 sm:py-3 mx-4">
+              {urgencySettings.show_icon && (
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 animate-pulse flex-shrink-0" />
+              )}
+              <span className="text-red-700 font-medium text-xs sm:text-base">{urgencySettings.text}</span>
+            </div>
+          )}
         </div>
       </section>
     </>

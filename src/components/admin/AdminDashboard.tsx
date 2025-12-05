@@ -16,7 +16,8 @@ import {
   Users,
   Tag,
   BarChart3,
-  Cog
+  Cog,
+  Megaphone
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -30,8 +31,9 @@ import CustomerManagement from './CustomerManagement';
 import DiscountManagement from './DiscountManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SettingsPanel from './SettingsPanel';
+import PromotionsManagement from './PromotionsManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'promotions' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -73,6 +75,12 @@ export default function AdminDashboard() {
       label: 'Discounts',
       icon: Tag,
       description: 'Discount Codes'
+    },
+    {
+      id: 'promotions' as AdminSection,
+      label: 'Promotions',
+      icon: Megaphone,
+      description: 'Banners & Offers'
     },
     {
       id: 'contacts' as AdminSection,
@@ -126,6 +134,8 @@ export default function AdminDashboard() {
         return <CustomerManagement />;
       case 'discounts':
         return <DiscountManagement />;
+      case 'promotions':
+        return <PromotionsManagement />;
       case 'menu':
         return <MenuManagement />;
       case 'maintenance':
