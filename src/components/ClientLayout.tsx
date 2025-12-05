@@ -47,6 +47,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   // Allow admin pages even in maintenance mode
   const isAdminPage = pathname?.startsWith('/restricted');
+  const isAdminDashboard = pathname === '/restricted/admin';
 
   // Handle access code submission
   const handleAccessCodeSubmit = (code: string): boolean => {
@@ -74,6 +75,15 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         estimatedTime={estimatedTime}
         onAccessCodeSubmit={handleAccessCodeSubmit}
       />
+    );
+  }
+
+  // For admin dashboard, render without header/footer/banner
+  if (isAdminDashboard) {
+    return (
+      <div className="relative">
+        {children}
+      </div>
     );
   }
 
