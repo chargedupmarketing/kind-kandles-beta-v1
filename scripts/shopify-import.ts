@@ -104,15 +104,25 @@ async function importProducts(filePath: string) {
   const productMap = new Map<string, any>();
   
   for (const row of rows) {
-    const handle = row['Handle'] || generateHandle(row['Title']);
+    const rawTitle = row['Title'] || '';
+    // Skip rows without a proper title (these are variant rows or HTML fragments)
+    if (!rawTitle || rawTitle.length > 200 || rawTitle.includes('<') || rawTitle.includes('href=')) {
+      continue;
+    }
+    
+    const handle = row['Handle'] || generateHandle(rawTitle);
+    // Skip if handle is empty or invalid
+    if (!handle || handle.length < 2) {
+      continue;
+    }
     
     if (!productMap.has(handle)) {
       productMap.set(handle, {
-        title: row['Title'],
-        handle,
+        title: rawTitle.substring(0, 250), // Truncate to fit VARCHAR(255)
+        handle: handle.substring(0, 250),
         description: row['Body (HTML)'] || row['Body HTML'] || '',
-        vendor: row['Vendor'] || 'My Kind Kandles',
-        product_type: row['Type'] || row['Product Type'] || null,
+        vendor: (row['Vendor'] || 'My Kind Kandles').substring(0, 250),
+        product_type: (row['Type'] || row['Product Type'] || '').substring(0, 250) || null,
         tags: row['Tags'] ? row['Tags'].split(',').map((t: string) => t.trim()) : [],
         status: row['Status']?.toLowerCase() === 'active' ? 'active' : 'draft',
         variants: [],
@@ -366,22 +376,28 @@ async function importOrders(filePath: string) {
         continue;
       }
       
-      // Insert order
+      // Insert order - using correct column names from schema
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
         .insert({
           order_number: order.order_number,
-          customer_email: order.customer_email,
-          customer_name: order.customer_name,
+          customer_email: order.customer_email || 'unknown@example.com',
+          customer_name: order.customer_name || 'Customer',
           status: order.status,
           payment_status: order.payment_status,
-          subtotal: order.subtotal,
-          shipping_cost: order.shipping_cost,
-          tax: order.tax,
-          total: order.total,
-          discount_amount: order.discount_amount,
-          discount_code: order.discount_code,
-          shipping_address: order.shipping_address,
+          subtotal: order.subtotal || 0,
+          shipping_cost: order.shipping_cost || 0,
+          tax: order.tax || 0,
+          total: order.total || 0,
+          discount: order.discount_amount || 0,
+          discount_code: order.discount_code || null,
+          // Address columns - use address1 as the main line, or fallback to a placeholder
+          shipping_address_line1: order.shipping_address.address1 || 'Address on file',
+          shipping_address_line2: order.shipping_address.address2 || null,
+          shipping_city: order.shipping_address.city || 'Unknown',
+          shipping_state: order.shipping_address.province || 'Unknown',
+          shipping_postal_code: order.shipping_address.postal_code || '00000',
+          shipping_country: order.shipping_address.country || 'US',
           created_at: order.created_at
         })
         .select()
@@ -424,9 +440,13 @@ async function importOrders(filePath: string) {
       
       // Update customer stats
       if (order.customer_email) {
-        await supabase.rpc('update_customer_stats', { 
-          customer_email_param: order.customer_email 
-        }).catch(() => {});
+        try {
+          await supabase.rpc('update_customer_stats', { 
+            customer_email_param: order.customer_email 
+          });
+        } catch {
+          // Ignore if function doesn't exist
+        }
       }
       
       imported++;
