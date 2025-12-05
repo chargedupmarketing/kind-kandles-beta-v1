@@ -29,7 +29,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center justify-center mb-6">
             <span className="text-6xl flame-flicker">🕯️</span>

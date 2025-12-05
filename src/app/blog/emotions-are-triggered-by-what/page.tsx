@@ -59,7 +59,7 @@ export default function EmotionsTriggeredPage() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-8">
+            <div className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 rounded-lg p-8">
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Create Your Signature Scent</h3>
               <p className="text-gray-700 dark:text-gray-300 mb-4">
                 Your home's fragrance should tell your story. Whether you prefer fresh and clean or warm and cozy, the right candle becomes part of your personal brand.

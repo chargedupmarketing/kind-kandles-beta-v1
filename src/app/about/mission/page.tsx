@@ -38,7 +38,7 @@ export default function MissionPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero Section */}
-      <section className="gradient-bg py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
+      <section className="gradient-bg py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
             Our Mission
@@ -208,7 +208,7 @@ export default function MissionPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
             Join Our Mission

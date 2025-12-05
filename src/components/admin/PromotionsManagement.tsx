@@ -592,8 +592,8 @@ export default function PromotionsManagement() {
               <label className="block text-sm font-medium mb-2">Background Style</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { value: 'pink-purple', label: 'Pink/Purple', preview: 'bg-gradient-to-r from-pink-100 to-purple-100' },
-                  { value: 'teal', label: 'Teal', preview: 'bg-gradient-to-r from-teal-100 to-cyan-100' },
+                  { value: 'pink-purple', label: 'Teal (Default)', preview: 'bg-gradient-to-r from-teal-100 to-cyan-100' },
+                  { value: 'teal', label: 'Teal Alt', preview: 'bg-gradient-to-r from-teal-50 to-emerald-100' },
                   { value: 'dark', label: 'Dark', preview: 'bg-gradient-to-r from-gray-700 to-gray-800' },
                   { value: 'custom', label: 'Custom', preview: 'bg-gradient-to-r from-yellow-100 to-orange-100' }
                 ].map((style) => (

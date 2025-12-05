@@ -250,7 +250,7 @@ export default function WriteYourStoryPage() {
   return (
     <div className="min-h-screen dark:bg-slate-900">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-20 px-4 sm:px-6 lg:px-8">
+      <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="flex justify-center mb-6">
             <PenTool className="h-16 w-16 text-pink-600 dark:text-pink-400" />

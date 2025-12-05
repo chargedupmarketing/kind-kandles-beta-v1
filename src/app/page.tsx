@@ -83,14 +83,14 @@ export default function Home() {
   const getBackgroundClass = () => {
     switch (countdownSettings.background_style) {
       case 'teal':
-        return 'bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-teal-900 dark:to-cyan-900';
+        return 'bg-gradient-to-r from-teal-50 to-emerald-100 dark:from-teal-900 dark:to-cyan-900';
       case 'dark':
         return 'bg-gradient-to-r from-gray-700 to-gray-800';
       case 'custom':
         return 'bg-gradient-to-r from-yellow-100 to-orange-100 dark:from-yellow-900 dark:to-orange-900';
       case 'pink-purple':
       default:
-        return 'bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700';
+        return 'bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700';
     }
   };
 
@@ -232,7 +232,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700">
+      <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700">
         <div className="max-w-4xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center justify-center mb-4 sm:mb-6">
             <span className="text-5xl sm:text-6xl flame-flicker">🕯️</span>

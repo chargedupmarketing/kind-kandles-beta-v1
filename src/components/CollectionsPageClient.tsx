@@ -37,7 +37,7 @@ export default function CollectionsPageClient({ collections, featuredProducts }:
       {/* Main Content with dynamic top padding based on banner visibility */}
       <div className={`min-h-screen dark:bg-slate-900 transition-all duration-300 ${isBannerVisible ? 'pt-11' : 'pt-0'}`}>
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-pink-100 to-purple-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="serif-font text-4xl md:text-5xl font-bold text-gray-900 dark:text-slate-100 mb-6">
               Our Collections
