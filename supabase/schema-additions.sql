@@ -159,6 +159,16 @@ ALTER TABLE customer_tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_tag_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customer_notes ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist (for re-running the script)
+DROP POLICY IF EXISTS "Service role full access admin_users" ON admin_users;
+DROP POLICY IF EXISTS "Service role full access audit_logs" ON audit_logs;
+DROP POLICY IF EXISTS "Service role full access store_settings" ON store_settings;
+DROP POLICY IF EXISTS "Service role full access product_reviews" ON product_reviews;
+DROP POLICY IF EXISTS "Service role full access customer_tags" ON customer_tags;
+DROP POLICY IF EXISTS "Service role full access customer_tag_assignments" ON customer_tag_assignments;
+DROP POLICY IF EXISTS "Service role full access customer_notes" ON customer_notes;
+DROP POLICY IF EXISTS "Public read approved reviews" ON product_reviews;
+
 -- Service role has full access
 CREATE POLICY "Service role full access admin_users" ON admin_users FOR ALL USING (auth.role() = 'service_role');
 CREATE POLICY "Service role full access audit_logs" ON audit_logs FOR ALL USING (auth.role() = 'service_role');
