@@ -79,9 +79,9 @@ interface PromotionsSettings {
 const DEFAULT_SETTINGS: PromotionsSettings = {
   top_bar_banner: {
     enabled: true,
-    title: 'PRE-BLACK FRIDAY SALE',
-    emoji_left: '🔥',
-    emoji_right: '🔥',
+    title: 'HOLIDAY SALE',
+    emoji_left: '🎄',
+    emoji_right: '🎁',
     highlight_text: 'Save 25% on everything',
     secondary_text: 'FREE shipping on orders $50+',
     tertiary_text: '',
@@ -94,11 +94,11 @@ const DEFAULT_SETTINGS: PromotionsSettings = {
   },
   countdown_promo: {
     enabled: true,
-    title: '🔥 PRE-BLACK FRIDAY SALE ENDS SOON! 🔥',
-    subtitle: 'Early Bird Special - Save 25% on everything + FREE shipping over $50!',
-    end_date: '2025-11-27',
+    title: '🔥 HOLIDAY SALE ENDS SOON! 🔥',
+    subtitle: 'Holiday Special - Save 25% on everything + FREE shipping over $50!',
+    end_date: '2025-12-31',
     end_time: '23:59',
-    background_style: 'pink-purple'
+    background_style: 'teal'
   },
   flash_sale_urgency: {
     enabled: true,

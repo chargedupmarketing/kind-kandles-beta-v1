@@ -32,9 +32,9 @@ interface PromotionsSettings {
 
 const DEFAULT_COUNTDOWN: CountdownPromo = {
   enabled: true,
-  title: '🔥 PRE-BLACK FRIDAY SALE ENDS SOON! 🔥',
-  subtitle: 'Early Bird Special - Save 25% on everything + FREE shipping over $50!',
-  end_date: '2025-11-27',
+  title: '🔥 HOLIDAY SALE ENDS SOON! 🔥',
+  subtitle: 'Holiday Special - Save 25% on everything + FREE shipping over $50!',
+  end_date: '2025-12-31',
   end_time: '23:59',
   background_style: 'pink-purple'
 };

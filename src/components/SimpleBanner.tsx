@@ -25,9 +25,9 @@ interface SimpleBannerProps {
 
 const DEFAULT_SETTINGS: TopBarBannerSettings = {
   enabled: true,
-  title: 'PRE-BLACK FRIDAY SALE',
-  emoji_left: '🔥',
-  emoji_right: '🔥',
+  title: 'HOLIDAY SALE',
+  emoji_left: '🎄',
+  emoji_right: '🎁',
   highlight_text: 'Save 25% on everything',
   secondary_text: 'FREE shipping on orders $50+',
   tertiary_text: '',
