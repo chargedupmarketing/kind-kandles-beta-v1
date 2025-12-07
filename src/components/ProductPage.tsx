@@ -393,9 +393,20 @@ export default function ProductPage({ product }: ProductPageProps) {
               {/* Description */}
               <div className="mb-8">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Description</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  {product.description}
-                </p>
+                <div 
+                  className="text-gray-600 dark:text-gray-300 leading-relaxed prose prose-sm max-w-none
+                    prose-headings:text-gray-900 dark:prose-headings:text-white prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2
+                    prose-h2:text-base prose-h2:border-b prose-h2:border-gray-200 prose-h2:pb-2
+                    prose-p:my-2 prose-p:text-gray-600 dark:prose-p:text-gray-300
+                    prose-strong:text-gray-800 dark:prose-strong:text-gray-200
+                    prose-ul:my-2 prose-li:my-0.5
+                    [&_.fragrance-notes]:bg-amber-50 [&_.fragrance-notes]:dark:bg-amber-900/20 [&_.fragrance-notes]:rounded-lg [&_.fragrance-notes]:p-4 [&_.fragrance-notes]:my-4
+                    [&_.detail-row]:py-1 [&_.detail-row]:border-b [&_.detail-row]:border-amber-200 [&_.detail-row]:dark:border-amber-800 [&_.detail-row]:last:border-b-0
+                    [&_.detail-row-name]:text-sm [&_.detail-row-name]:text-gray-700 [&_.detail-row-name]:dark:text-gray-300
+                    [&_.headline]:text-base [&_.headline]:font-semibold [&_.headline]:text-gray-900 [&_.headline]:dark:text-white [&_.headline]:mt-4 [&_.headline]:mb-2
+                    [&_br]:hidden"
+                  dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                />
               </div>
 
               {/* Ingredients */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, Package, Loader } from 'lucide-react';
-import { formatPrice } from '@/lib/localStore';
+import { formatPrice, getExcerpt } from '@/lib/localStore';
 
 interface Product {
   id: string;
@@ -114,7 +114,7 @@ export default function DynamicCollectionPage({
                         {product.title}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
-                        {product.description || 'Handcrafted with love and care.'}
+                        {getExcerpt(product.description || '', 120) || 'Handcrafted with love and care.'}
                       </p>
                       <div className="flex items-center gap-2">
                         <p className="text-xl font-bold text-pink-600 dark:text-pink-400">

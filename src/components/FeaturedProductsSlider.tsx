@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Clock, Sparkles, ChevronRight, Package } from 'lucide-react';
-import { formatPrice } from '@/lib/localStore';
+import { formatPrice, getExcerpt } from '@/lib/localStore';
 
 interface ProductCategory {
   id: string;
@@ -275,7 +275,7 @@ export default function FeaturedProductsSlider() {
                     </h3>
 
                     <p className="text-gray-600 dark:text-gray-300 mb-3 sm:mb-4 text-sm leading-relaxed line-clamp-2 flex-grow">
-                      {product.description || 'Handcrafted with love and care.'}
+                      {getExcerpt(product.description || '', 120) || 'Handcrafted with love and care.'}
                     </p>
 
                     {/* Burn Time for Candles */}

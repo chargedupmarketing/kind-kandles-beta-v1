@@ -58,3 +58,31 @@ export function isOnSale(price: number, compareAtPrice?: number): boolean {
   return !!compareAtPrice && compareAtPrice > price;
 }
 
+// Strip HTML tags from string (for excerpts/previews)
+export function stripHtml(html: string): string {
+  if (!html) return '';
+  // Remove HTML tags
+  let text = html.replace(/<[^>]*>/g, ' ');
+  // Decode common HTML entities
+  text = text.replace(/&nbsp;/g, ' ');
+  text = text.replace(/&amp;/g, '&');
+  text = text.replace(/&lt;/g, '<');
+  text = text.replace(/&gt;/g, '>');
+  text = text.replace(/&quot;/g, '"');
+  text = text.replace(/&#39;/g, "'");
+  // Clean up whitespace
+  text = text.replace(/\s+/g, ' ').trim();
+  return text;
+}
+
+// Truncate text to a specific length
+export function truncateText(text: string, maxLength: number = 150): string {
+  if (!text || text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+}
+
+// Get clean excerpt from HTML description
+export function getExcerpt(html: string, maxLength: number = 150): string {
+  return truncateText(stripHtml(html), maxLength);
+}
+
