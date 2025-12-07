@@ -293,3 +293,4 @@ For complex migrations, consider:
 - Cleaning up CSV data in Excel first
 - Using Supabase's CSV import feature directly for simple tables
 
+

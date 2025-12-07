@@ -114,6 +114,17 @@ const defaultSettings: Record<string, any> = {
     show_sale_badge: true,
     show_stock_alert: true,
     stock_alert_threshold: 5
+  },
+  stripe_settings: {
+    publishable_key: '',
+    secret_key: '',
+    webhook_secret: '',
+    mode: 'test'
+  },
+  blog: {
+    posts: [],
+    hero_title: 'KKB Blog',
+    hero_subtitle: 'Insights, tips, and inspiration from the world of candles and self-care'
   }
 };
 
@@ -126,6 +137,18 @@ export async function GET(
 ) {
   try {
     const { key } = await params;
+    
+    // Special handling for stripe_status - check if Stripe is configured
+    if (key === 'stripe_status') {
+      const hasPublishableKey = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+      const hasSecretKey = !!process.env.STRIPE_SECRET_KEY;
+      return NextResponse.json({
+        configured: hasPublishableKey && hasSecretKey,
+        hasPublishableKey,
+        hasSecretKey,
+        mode: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_live_') ? 'live' : 'test'
+      });
+    }
     
     // Check if this is a public setting (no auth required)
     const isPublicSetting = publicSettings.includes(key);

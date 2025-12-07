@@ -18,7 +18,15 @@ import {
   Globe,
   DollarSign,
   Percent,
-  AlertCircle
+  AlertCircle,
+  CreditCard,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Copy,
+  CheckCircle,
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
 
 interface StoreInfo {
@@ -55,6 +63,13 @@ interface CheckoutSettings {
   require_phone: boolean;
 }
 
+interface StripeSettings {
+  publishable_key: string;
+  secret_key: string;
+  webhook_secret: string;
+  mode: 'test' | 'live';
+}
+
 interface ShippingZone {
   id: string;
   name: string;
@@ -73,7 +88,7 @@ interface ShippingRate {
   price: number;
 }
 
-type SettingsTab = 'store' | 'shipping' | 'taxes' | 'email';
+type SettingsTab = 'store' | 'payments' | 'shipping' | 'taxes' | 'email';
 
 export default function SettingsPanel() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('store');
@@ -108,9 +123,20 @@ export default function SettingsPanel() {
   });
   const [shippingZones, setShippingZones] = useState<ShippingZone[]>([]);
   const [shippingRates, setShippingRates] = useState<ShippingRate[]>([]);
+  const [stripeSettings, setStripeSettings] = useState<StripeSettings>({
+    publishable_key: '',
+    secret_key: '',
+    webhook_secret: '',
+    mode: 'test'
+  });
+  const [showSecretKey, setShowSecretKey] = useState(false);
+  const [showWebhookSecret, setShowWebhookSecret] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState<'checking' | 'connected' | 'not_configured' | 'error'>('checking');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
+    checkStripeStatus();
   }, []);
 
   const fetchSettings = async () => {
@@ -139,11 +165,48 @@ export default function SettingsPanel() {
       if (checkoutData.value) setCheckoutSettings(checkoutData.value);
       if (zonesData.zones) setShippingZones(zonesData.zones);
       if (ratesData.rates) setShippingRates(ratesData.rates);
+
+      // Fetch Stripe settings
+      const stripeRes = await fetch('/api/settings/stripe_settings', { 
+        headers: { 'Authorization': 'Bearer admin-token' } 
+      });
+      const stripeData = await stripeRes.json();
+      if (stripeData.value) {
+        setStripeSettings(stripeData.value);
+      }
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const checkStripeStatus = async () => {
+    try {
+      const response = await fetch('/api/settings/stripe_status', {
+        headers: { 'Authorization': 'Bearer admin-token' }
+      });
+      const data = await response.json();
+      if (data.configured) {
+        setStripeStatus('connected');
+      } else {
+        setStripeStatus('not_configured');
+      }
+    } catch {
+      setStripeStatus('not_configured');
+    }
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const maskKey = (key: string) => {
+    if (!key) return '';
+    if (key.length <= 12) return '••••••••••••';
+    return key.substring(0, 7) + '••••••••••••' + key.substring(key.length - 4);
   };
 
   const saveSettings = async (key: string, value: any) => {
@@ -176,6 +239,7 @@ export default function SettingsPanel() {
 
   const tabs = [
     { id: 'store', label: 'Store Info', icon: Store },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
     { id: 'shipping', label: 'Shipping', icon: Truck },
     { id: 'taxes', label: 'Taxes', icon: Receipt },
     { id: 'email', label: 'Email', icon: Mail }
@@ -371,6 +435,336 @@ export default function SettingsPanel() {
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save Changes'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Payments Tab */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          {/* Stripe Connection Status */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                  <CreditCard className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">Stripe Payment Processing</h3>
+                  <p className="text-sm text-gray-500">Accept credit cards, Apple Pay, Google Pay, and more</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {stripeStatus === 'checking' && (
+                  <span className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Checking...
+                  </span>
+                )}
+                {stripeStatus === 'connected' && (
+                  <span className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-sm font-medium">
+                    <CheckCircle className="h-4 w-4" />
+                    Connected
+                  </span>
+                )}
+                {stripeStatus === 'not_configured' && (
+                  <span className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-sm font-medium">
+                    <AlertCircle className="h-4 w-4" />
+                    Not Configured
+                  </span>
+                )}
+                {stripeStatus === 'error' && (
+                  <span className="flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-sm font-medium">
+                    <XCircle className="h-4 w-4" />
+                    Error
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Mode Toggle */}
+            <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-6">
+              <span className="text-sm font-medium">Mode:</span>
+              <div className="flex rounded-lg overflow-hidden border dark:border-gray-600">
+                <button
+                  onClick={() => setStripeSettings({ ...stripeSettings, mode: 'test' })}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    stripeSettings.mode === 'test'
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  🧪 Test Mode
+                </button>
+                <button
+                  onClick={() => setStripeSettings({ ...stripeSettings, mode: 'live' })}
+                  className={`px-4 py-2 text-sm font-medium transition-colors ${
+                    stripeSettings.mode === 'live'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  🚀 Live Mode
+                </button>
+              </div>
+              {stripeSettings.mode === 'test' && (
+                <span className="text-xs text-orange-600 dark:text-orange-400">
+                  Using test keys - no real charges will be made
+                </span>
+              )}
+              {stripeSettings.mode === 'live' && (
+                <span className="text-xs text-green-600 dark:text-green-400">
+                  Using live keys - real payments will be processed
+                </span>
+              )}
+            </div>
+
+            {/* API Keys */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Publishable Key
+                  <span className="text-gray-400 font-normal ml-2">
+                    (starts with pk_test_ or pk_live_)
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={stripeSettings.publishable_key}
+                    onChange={(e) => setStripeSettings({ ...stripeSettings, publishable_key: e.target.value })}
+                    className="w-full px-4 py-3 pr-20 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 font-mono text-sm"
+                    placeholder={stripeSettings.mode === 'test' ? 'pk_test_...' : 'pk_live_...'}
+                  />
+                  <button
+                    onClick={() => copyToClipboard(stripeSettings.publishable_key, 'publishable')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600"
+                    title="Copy"
+                  >
+                    {copiedField === 'publishable' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Secret Key
+                  <span className="text-gray-400 font-normal ml-2">
+                    (starts with sk_test_ or sk_live_)
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showSecretKey ? 'text' : 'password'}
+                    value={stripeSettings.secret_key}
+                    onChange={(e) => setStripeSettings({ ...stripeSettings, secret_key: e.target.value })}
+                    className="w-full px-4 py-3 pr-24 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 font-mono text-sm"
+                    placeholder={stripeSettings.mode === 'test' ? 'sk_test_...' : 'sk_live_...'}
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                    <button
+                      onClick={() => setShowSecretKey(!showSecretKey)}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                      title={showSecretKey ? 'Hide' : 'Show'}
+                    >
+                      {showSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => copyToClipboard(stripeSettings.secret_key, 'secret')}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                      title="Copy"
+                    >
+                      {copiedField === 'secret' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-red-500 mt-1">
+                  ⚠️ Keep this key secret! Never share it publicly.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Webhook Secret
+                  <span className="text-gray-400 font-normal ml-2">
+                    (starts with whsec_)
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showWebhookSecret ? 'text' : 'password'}
+                    value={stripeSettings.webhook_secret}
+                    onChange={(e) => setStripeSettings({ ...stripeSettings, webhook_secret: e.target.value })}
+                    className="w-full px-4 py-3 pr-24 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 font-mono text-sm"
+                    placeholder="whsec_..."
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                    <button
+                      onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                      title={showWebhookSecret ? 'Hide' : 'Show'}
+                    >
+                      {showWebhookSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                    <button
+                      onClick={() => copyToClipboard(stripeSettings.webhook_secret, 'webhook')}
+                      className="p-2 text-gray-400 hover:text-gray-600"
+                      title="Copy"
+                    >
+                      {copiedField === 'webhook' ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Used to verify webhook events from Stripe
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-6 mt-6 border-t dark:border-gray-700">
+              <button
+                onClick={() => {
+                  saveSettings('stripe_settings', stripeSettings);
+                  setTimeout(() => checkStripeStatus(), 1000);
+                }}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Stripe Settings'}
+              </button>
+            </div>
+          </div>
+
+          {/* Stripe Setup Guide */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Settings className="h-5 w-5 text-blue-600" />
+              Setup Guide
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  1
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-700 dark:text-blue-300">Create a Stripe Account</h4>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Sign up for a free Stripe account if you don't have one already.
+                  </p>
+                  <a
+                    href="https://dashboard.stripe.com/register"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2"
+                  >
+                    Create Stripe Account <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  2
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-700 dark:text-blue-300">Get Your API Keys</h4>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Go to Developers → API Keys in your Stripe Dashboard. Copy both the Publishable key and Secret key.
+                  </p>
+                  <a
+                    href="https://dashboard.stripe.com/apikeys"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2"
+                  >
+                    Open API Keys <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  3
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-700 dark:text-blue-300">Set Up Webhooks</h4>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Create a webhook endpoint pointing to your site's webhook URL. Select events: <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">payment_intent.succeeded</code>, <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">payment_intent.payment_failed</code>
+                  </p>
+                  <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono break-all">
+                    https://your-domain.com/api/webhooks/stripe
+                  </div>
+                  <a
+                    href="https://dashboard.stripe.com/webhooks"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2"
+                  >
+                    Configure Webhooks <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold">
+                  4
+                </div>
+                <div>
+                  <h4 className="font-medium text-blue-700 dark:text-blue-300">Test Your Integration</h4>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Use test mode and Stripe's test card numbers to verify everything works before going live.
+                  </p>
+                  <div className="mt-2 p-3 bg-gray-100 dark:bg-gray-700 rounded space-y-1">
+                    <p className="text-xs font-medium">Test Card Numbers:</p>
+                    <p className="text-xs font-mono">Success: 4242 4242 4242 4242</p>
+                    <p className="text-xs font-mono">Decline: 4000 0000 0000 0002</p>
+                    <p className="text-xs font-mono">Any future date, any CVC</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Methods Info */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <h3 className="text-lg font-bold mb-4">Supported Payment Methods</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-2xl">💳</span>
+                <span className="text-sm font-medium">Credit Cards</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-2xl">🍎</span>
+                <span className="text-sm font-medium">Apple Pay</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-2xl">📱</span>
+                <span className="text-sm font-medium">Google Pay</span>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span className="text-2xl">🔗</span>
+                <span className="text-sm font-medium">Link by Stripe</span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              All payment methods are automatically enabled when you connect Stripe. Customers will see available options at checkout.
+            </p>
+          </div>
+
+          {/* Important Notes */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6 border border-amber-200 dark:border-amber-800">
+            <h3 className="font-bold text-amber-700 dark:text-amber-300 mb-3 flex items-center gap-2">
+              <AlertCircle className="h-5 w-5" />
+              Important Notes
+            </h3>
+            <ul className="space-y-2 text-sm text-amber-600 dark:text-amber-400">
+              <li>• <strong>Environment Variables:</strong> For production, set these keys in your hosting provider's environment variables (Vercel, etc.) rather than saving them here.</li>
+              <li>• <strong>Test Mode First:</strong> Always test thoroughly with test keys before switching to live mode.</li>
+              <li>• <strong>PCI Compliance:</strong> Stripe handles all sensitive card data. Your site never sees full card numbers.</li>
+              <li>• <strong>Fees:</strong> Stripe charges 2.9% + 30¢ per successful transaction (US rates).</li>
+            </ul>
           </div>
         </div>
       )}
