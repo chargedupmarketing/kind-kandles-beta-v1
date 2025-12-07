@@ -53,7 +53,7 @@ export default function Home() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings/promotions');
+        const response = await fetch('/api/settings/promotions', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data.value?.countdown_promo) {

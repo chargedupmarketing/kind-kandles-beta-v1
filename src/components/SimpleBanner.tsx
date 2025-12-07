@@ -48,7 +48,7 @@ export default function SimpleBanner({ onVisibilityChange }: SimpleBannerProps) 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings/promotions');
+        const response = await fetch('/api/settings/promotions', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data.value?.top_bar_banner) {

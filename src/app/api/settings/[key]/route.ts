@@ -187,12 +187,18 @@ export async function GET(
       return NextResponse.json({ error: 'Setting not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ key: setting.key, value: setting.value });
+    const response = NextResponse.json({ key: setting.key, value: setting.value });
+    // Prevent caching for dynamic settings
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Error in settings GET route:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// Disable static generation for this route
+export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,

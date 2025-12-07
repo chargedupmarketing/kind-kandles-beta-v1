@@ -93,7 +93,7 @@ export default function FeaturedProductsSlider() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch('/api/settings/featured_products');
+        const response = await fetch('/api/settings/featured_products', { cache: 'no-store' });
         if (response.ok) {
           const data = await response.json();
           if (data.value) {
