@@ -122,7 +122,53 @@ const defaultSettings: Record<string, any> = {
     mode: 'test'
   },
   blog: {
-    posts: [],
+    posts: [
+      {
+        id: 'the-thoughtful-gift-that-always-wins',
+        title: 'The Thoughtful Gift That Always Wins',
+        slug: 'the-thoughtful-gift-that-always-wins',
+        author: 'Kia Wells',
+        date: 'March 30, 2025',
+        excerpt: 'Candles are like the little black dress of gift-giving—always appropriate, always appreciated. But with so many options, how do you choose the right one?',
+        content: '',
+        image: '/logos/1.webp',
+        status: 'published',
+        featured: true,
+        tags: ['gifts', 'candles'],
+        created_at: '2025-03-30',
+        updated_at: '2025-03-30'
+      },
+      {
+        id: 'candles-color-psychology',
+        title: 'Candles & Color Psychology: How to Design Your Space with Wax & Wick',
+        slug: 'candles-color-psychology',
+        author: 'Kia Wells',
+        date: 'March 30, 2025',
+        excerpt: 'Color psychology applies to candles too. Studies show that different colors evoke specific emotional responses. Design your space with intention.',
+        content: '',
+        image: '/logos/2.webp',
+        status: 'published',
+        featured: false,
+        tags: ['design', 'psychology', 'candles'],
+        created_at: '2025-03-30',
+        updated_at: '2025-03-30'
+      },
+      {
+        id: 'emotions-are-triggered-by-what',
+        title: 'Emotions are triggered by - WHAT?',
+        slug: 'emotions-are-triggered-by-what',
+        author: 'Kia Wells',
+        date: 'March 30, 2025',
+        excerpt: 'Studies show that 75% of emotions are triggered by scent. The right fragrance makes your home feel inviting and luxurious.',
+        content: '',
+        image: '/logos/3.webp',
+        status: 'published',
+        featured: false,
+        tags: ['scent', 'emotions', 'wellness'],
+        created_at: '2025-03-30',
+        updated_at: '2025-03-30'
+      }
+    ],
     hero_title: 'KKB Blog',
     hero_subtitle: 'Insights, tips, and inspiration from the world of candles and self-care'
   }

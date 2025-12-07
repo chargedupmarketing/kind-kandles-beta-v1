@@ -134,12 +134,23 @@ export default function BlogManagement() {
   const fetchSettings = async () => {
     try {
       const response = await fetch('/api/settings/blog', {
-        headers: { 'Authorization': 'Bearer admin-token' }
+        headers: { 'Authorization': 'Bearer admin-token' },
+        cache: 'no-store'
       });
       if (response.ok) {
         const data = await response.json();
         if (data.value) {
-          setSettings({ ...DEFAULT_SETTINGS, ...data.value });
+          // Merge settings, but only use fetched posts if they exist and have items
+          const fetchedPosts = data.value.posts;
+          const postsToUse = (fetchedPosts && fetchedPosts.length > 0) 
+            ? fetchedPosts 
+            : DEFAULT_SETTINGS.posts;
+          
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...data.value,
+            posts: postsToUse
+          });
         }
       }
     } catch (error) {
