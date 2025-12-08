@@ -21,8 +21,8 @@ import {
   Lock
 } from 'lucide-react';
 
-// Dynamically import Stripe form to avoid SSR issues
-const StripePaymentForm = dynamic(() => import('@/components/StripePaymentForm'), {
+// Dynamically import Square form to avoid SSR issues
+const SquarePaymentForm = dynamic(() => import('@/components/SquarePaymentForm'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center py-12">
@@ -509,9 +509,9 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Stripe Payment Form */}
+              {/* Square Payment Form */}
               {shippingAddress && (
-                <StripePaymentForm
+                <SquarePaymentForm
                   shippingAddress={shippingAddress}
                   items={items}
                   shippingCost={shipping}

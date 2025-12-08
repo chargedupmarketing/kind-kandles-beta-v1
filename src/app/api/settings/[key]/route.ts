@@ -115,11 +115,12 @@ const defaultSettings: Record<string, any> = {
     show_stock_alert: true,
     stock_alert_threshold: 5
   },
-  stripe_settings: {
-    publishable_key: '',
-    secret_key: '',
-    webhook_secret: '',
-    mode: 'test'
+  square_settings: {
+    application_id: '',
+    access_token: '',
+    location_id: '',
+    webhook_signature_key: '',
+    mode: 'sandbox'
   },
   blog: {
     posts: [
@@ -184,15 +185,17 @@ export async function GET(
   try {
     const { key } = await params;
     
-    // Special handling for stripe_status - check if Stripe is configured
-    if (key === 'stripe_status') {
-      const hasPublishableKey = !!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-      const hasSecretKey = !!process.env.STRIPE_SECRET_KEY;
+    // Special handling for square_status - check if Square is configured
+    if (key === 'square_status') {
+      const hasApplicationId = !!process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID;
+      const hasAccessToken = !!process.env.SQUARE_ACCESS_TOKEN;
+      const hasLocationId = !!process.env.SQUARE_LOCATION_ID;
       return NextResponse.json({
-        configured: hasPublishableKey && hasSecretKey,
-        hasPublishableKey,
-        hasSecretKey,
-        mode: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.startsWith('pk_live_') ? 'live' : 'test'
+        configured: hasApplicationId && hasAccessToken && hasLocationId,
+        hasApplicationId,
+        hasAccessToken,
+        hasLocationId,
+        mode: process.env.SQUARE_ENVIRONMENT === 'production' ? 'production' : 'sandbox'
       });
     }
     

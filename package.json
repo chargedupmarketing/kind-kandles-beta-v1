@@ -14,8 +14,6 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
-    "@stripe/react-stripe-js": "^5.4.1",
-    "@stripe/stripe-js": "^8.5.3",
     "@supabase/supabase-js": "^2.86.0",
     "clsx": "^2.1.1",
     "jose": "^6.1.1",
@@ -24,7 +22,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "resend": "^6.5.2",
-    "stripe": "^20.0.0"
+    "square": "^43.2.1"
   },
   "devDependencies": {
     "@types/node": "^20",
