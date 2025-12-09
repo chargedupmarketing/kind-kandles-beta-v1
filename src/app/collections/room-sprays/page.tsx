@@ -9,7 +9,7 @@ export default function RoomSpraysPage() {
       description="Transform your space instantly with our premium room sprays, crafted with natural essential oils for a refreshing ambiance."
       backLink="/collections"
       backLabel="Back to Collections"
-      productType="Room Spray"
+      productType="ROOM SPRAY"
     />
   );
 }
