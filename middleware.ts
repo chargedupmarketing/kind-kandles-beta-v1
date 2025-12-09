@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_PASSWORD || 'fallback-secret-key-change-in-production'
+  process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long'
 );
 
 async function verifyToken(token: string): Promise<any> {
