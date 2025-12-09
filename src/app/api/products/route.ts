@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     const search = searchParams.get('search');
+    const productType = searchParams.get('type');
+    const tag = searchParams.get('tag');
 
     let query = supabase
       .from('products')
@@ -35,6 +37,16 @@ export async function GET(request: NextRequest) {
       if (collectionData) {
         query = query.eq('collection_id', collectionData.id);
       }
+    }
+
+    // Filter by product type (case-insensitive)
+    if (productType) {
+      query = query.ilike('product_type', `%${productType}%`);
+    }
+
+    // Filter by tag
+    if (tag) {
+      query = query.contains('tags', [tag]);
     }
 
     // Filter by featured
