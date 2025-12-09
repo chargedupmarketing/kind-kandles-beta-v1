@@ -24,7 +24,8 @@ import {
   Layout,
   Mail,
   Wrench,
-  ClipboardList
+  ClipboardList,
+  UserCog
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -42,8 +43,9 @@ import SettingsPanel from './SettingsPanel';
 import PromotionsManagement from './PromotionsManagement';
 import FeaturedProductsManagement from './FeaturedProductsManagement';
 import BlogManagement from './BlogManagement';
+import UserManagement from './UserManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -168,6 +170,11 @@ export default function AdminDashboard() {
           badge: isMaintenanceMode ? 'ON' : undefined,
           badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
         },
+        {
+          id: 'users' as AdminSection,
+          label: 'Admin Users',
+          icon: UserCog,
+        },
       ]
     }
   ];
@@ -204,6 +211,8 @@ export default function AdminDashboard() {
         return <StoryManagement />;
       case 'settings':
         return <SettingsPanel />;
+      case 'users':
+        return <UserManagement />;
       default:
         return <AnalyticsDashboard />;
     }
