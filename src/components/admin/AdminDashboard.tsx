@@ -23,7 +23,8 @@ import {
   Store,
   Layout,
   Mail,
-  Wrench
+  Wrench,
+  ClipboardList
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -33,6 +34,7 @@ import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
 import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
+import OrderFulfillment from './OrderFulfillment';
 import CustomerManagement from './CustomerManagement';
 import DiscountManagement from './DiscountManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -41,7 +43,7 @@ import PromotionsManagement from './PromotionsManagement';
 import FeaturedProductsManagement from './FeaturedProductsManagement';
 import BlogManagement from './BlogManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -71,8 +73,13 @@ export default function AdminDashboard() {
       defaultOpen: true,
       items: [
         {
+          id: 'fulfillment' as AdminSection,
+          label: 'Order Fulfillment',
+          icon: ClipboardList,
+        },
+        {
           id: 'orders' as AdminSection,
-          label: 'Orders',
+          label: 'All Orders',
           icon: ShoppingCart,
         },
         {
@@ -171,6 +178,8 @@ export default function AdminDashboard() {
         return <AnalyticsDashboard />;
       case 'products':
         return <ProductManagement />;
+      case 'fulfillment':
+        return <OrderFulfillment />;
       case 'orders':
         return <OrderManagement />;
       case 'customers':

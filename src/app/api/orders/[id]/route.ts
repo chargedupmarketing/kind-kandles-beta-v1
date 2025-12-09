@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { sendShippingNotification, isEmailConfigured } from '@/lib/email';
 
 // GET /api/orders/[id] - Get single order
 export async function GET(
@@ -82,7 +83,21 @@ export async function PUT(
       return NextResponse.json({ error: 'Failed to update order' }, { status: 500 });
     }
 
-    return NextResponse.json({ order });
+    // Send shipping notification if status changed to shipped and send_notification is true
+    let emailSent = false;
+    if (body.status === 'shipped' && body.send_notification && order) {
+      if (isEmailConfigured()) {
+        const emailResult = await sendShippingNotification(order);
+        emailSent = emailResult.success;
+        if (!emailResult.success) {
+          console.error('Failed to send shipping notification:', emailResult.error);
+        }
+      } else {
+        console.log('Email not configured, skipping shipping notification');
+      }
+    }
+
+    return NextResponse.json({ order, emailSent });
   } catch (error) {
     console.error('Update order error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

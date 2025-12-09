@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, createServerClient } from '@/lib/supabase';
 import type { OrderInsert, OrderItemInsert } from '@/lib/database.types';
+import { sendOrderConfirmation, sendAdminOrderNotification, isEmailConfigured } from '@/lib/email';
 
 // GET /api/orders - List orders (admin only)
 export async function GET(request: NextRequest) {
@@ -28,7 +29,13 @@ export async function GET(request: NextRequest) {
       .range(offset, offset + limit - 1);
 
     if (status) {
-      query = query.eq('status', status);
+      // Support comma-separated status values
+      const statuses = status.split(',').map(s => s.trim());
+      if (statuses.length === 1) {
+        query = query.eq('status', statuses[0]);
+      } else {
+        query = query.in('status', statuses);
+      }
     }
 
     const { data: orders, error, count } = await query;
@@ -161,6 +168,19 @@ export async function POST(request: NextRequest) {
       `)
       .eq('id', order.id)
       .single();
+
+    // Send order confirmation emails
+    if (completeOrder && isEmailConfigured()) {
+      // Send confirmation to customer
+      sendOrderConfirmation(completeOrder).catch(err => {
+        console.error('Failed to send order confirmation:', err);
+      });
+      
+      // Send notification to admin
+      sendAdminOrderNotification(completeOrder).catch(err => {
+        console.error('Failed to send admin notification:', err);
+      });
+    }
 
     return NextResponse.json({ order: completeOrder }, { status: 201 });
   } catch (error) {
