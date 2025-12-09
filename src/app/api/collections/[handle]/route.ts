@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, createServerClient } from '@/lib/supabase';
 
+// Map collection handles to product_type patterns
+const COLLECTION_PRODUCT_TYPE_MAP: Record<string, string[]> = {
+  'candles': ['soy candle', 'Soy Candle', 'Soy Blend Candle', 'candle'],
+  'skincare': ['Luxury Whipped Body Butter', 'Body mist', 'Lotion', 'Bar Soap', 'Soap/Body Scrub', 'lotion', 'body butter', 'scrub', 'soap'],
+  'body-oils': ['herbal hair oil', 'body oil', 'oil'],
+  'room-sprays': ['ROOM SPRAY', 'Room Spray', 'room spray'],
+  'clothing-accessories': ['T-Shirt', 'Dress', 't-shirt', 'dress', 'clothing', 'accessories'],
+  'calm-down-girl': [], // Will use title matching
+};
+
 // GET /api/collections/[handle] - Get collection with products
 export async function GET(
   request: NextRequest,
@@ -25,48 +35,74 @@ export async function GET(
       return NextResponse.json({ error: 'Collection not found' }, { status: 404 });
     }
 
-    // Get products in collection
-    let productsQuery = supabase
+    // Get all active products first
+    const { data: allProducts, error: allProductsError } = await supabase
       .from('products')
       .select(`
         *,
         variants:product_variants(*),
         images:product_images(*)
-      `, { count: 'exact' })
-      .eq('status', 'active')
-      .range(offset, offset + limit - 1);
+      `)
+      .eq('status', 'active');
 
-    // Handle 'all' collection specially
-    if (handle !== 'all' && collection) {
-      productsQuery = productsQuery.eq('collection_id', (collection as any).id);
+    if (allProductsError) {
+      console.error('Error fetching products:', allProductsError);
+      return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
+    }
+
+    // Filter products based on collection handle
+    let filteredProducts = allProducts || [];
+    
+    if (handle !== 'all') {
+      const productTypes = COLLECTION_PRODUCT_TYPE_MAP[handle] || [];
+      
+      if (handle === 'calm-down-girl') {
+        // Special case: filter by title containing "Calm Down Girl"
+        filteredProducts = filteredProducts.filter(p => 
+          p.title?.toLowerCase().includes('calm down girl')
+        );
+      } else if (productTypes.length > 0) {
+        // Filter by product_type (case-insensitive)
+        filteredProducts = filteredProducts.filter(p => {
+          if (!p.product_type) return false;
+          const productTypeLower = p.product_type.toLowerCase();
+          return productTypes.some(type => productTypeLower.includes(type.toLowerCase()));
+        });
+      } else {
+        // Try to match by collection_id as fallback
+        filteredProducts = filteredProducts.filter(p => 
+          p.collection_id === (collection as any).id
+        );
+      }
     }
 
     // Apply sorting
     const ascending = sortOrder === 'asc';
-    switch (sortBy) {
-      case 'price':
-        productsQuery = productsQuery.order('price', { ascending });
-        break;
-      case 'title':
-        productsQuery = productsQuery.order('title', { ascending });
-        break;
-      case 'created_at':
-      default:
-        productsQuery = productsQuery.order('created_at', { ascending });
-        break;
-    }
+    filteredProducts.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'price':
+          comparison = (a.price || 0) - (b.price || 0);
+          break;
+        case 'title':
+          comparison = (a.title || '').localeCompare(b.title || '');
+          break;
+        case 'created_at':
+        default:
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+      }
+      return ascending ? comparison : -comparison;
+    });
 
-    const { data: products, error: productsError, count } = await productsQuery;
-
-    if (productsError) {
-      console.error('Error fetching products:', productsError);
-      return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
-    }
+    // Apply pagination
+    const total = filteredProducts.length;
+    const paginatedProducts = filteredProducts.slice(offset, offset + limit);
 
     return NextResponse.json({
       collection,
-      products: products || [],
-      total: count || 0,
+      products: paginatedProducts,
+      total,
       limit,
       offset
     });
