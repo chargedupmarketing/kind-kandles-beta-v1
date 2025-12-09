@@ -5,10 +5,10 @@ import bcrypt from 'bcryptjs';
 // GET /api/admin/users/[id] - Get a specific admin user
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const { data: user, error } = await supabase
       .from('admin_users')
@@ -30,10 +30,10 @@ export async function GET(
 // PATCH /api/admin/users/[id] - Update an admin user
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     // Check if user exists and get their role
@@ -101,10 +101,10 @@ export async function PATCH(
 // DELETE /api/admin/users/[id] - Delete an admin user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check if user exists and get their role
     const { data: existingUser, error: fetchError } = await supabase
@@ -138,4 +138,3 @@ export async function DELETE(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
