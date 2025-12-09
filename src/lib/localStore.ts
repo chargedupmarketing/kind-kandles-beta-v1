@@ -33,11 +33,21 @@ export interface LocalProductVariant {
 
 // Format price helper
 export function formatPrice(amount: number | string, currencyCode: string = 'USD'): string {
-  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  // Handle already formatted price strings (e.g., "$17.00")
+  if (typeof amount === 'string') {
+    // Remove currency symbol and any non-numeric characters except decimal point
+    const cleanedAmount = amount.replace(/[^0-9.-]/g, '');
+    const numAmount = parseFloat(cleanedAmount);
+    if (isNaN(numAmount)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+    }).format(numAmount);
+  }
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currencyCode,
-  }).format(numAmount);
+  }).format(amount);
 }
 
 // Get products by collection (returns empty array - products come from database)

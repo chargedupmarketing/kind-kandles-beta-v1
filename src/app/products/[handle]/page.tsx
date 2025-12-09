@@ -65,7 +65,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     handle: product.handle,
     // Enhanced conversion data
     isCandle: product.product_type?.toLowerCase().includes('candle') || product.tags?.some((tag: string) => tag.toLowerCase().includes('candle')),
-    burnTime: product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'))?.replace(/[^0-9]/g, '') + ' hours',
+    burnTime: (() => {
+      const hourTag = product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'));
+      if (!hourTag) return undefined;
+      const hours = hourTag.replace(/[^0-9]/g, '');
+      return hours ? `${hours} hours` : undefined;
+    })(),
     scentProfile: product.tags?.find((tag: string) => 
       ['fresh', 'floral', 'woodsy', 'sweet', 'citrus', 'herbal', 'earthy'].includes(tag.toLowerCase())
     )?.toLowerCase(),

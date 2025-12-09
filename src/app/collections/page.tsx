@@ -80,7 +80,12 @@ export default async function CollectionsPage() {
       scentProfile: product.tags?.find((tag: string) => 
         ['fresh', 'floral', 'woodsy', 'sweet', 'citrus', 'herbal', 'earthy'].includes(tag.toLowerCase())
       )?.toLowerCase() as 'fresh' | 'floral' | 'woodsy' | 'sweet' | 'citrus' | 'herbal' | 'earthy',
-      burnTime: product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'))?.replace(/[^0-9]/g, '') + ' hours',
+      burnTime: (() => {
+        const hourTag = product.tags?.find((tag: string) => tag.toLowerCase().includes('hour'));
+        if (!hourTag) return undefined;
+        const hours = hourTag.replace(/[^0-9]/g, '');
+        return hours ? `${hours} hours` : undefined;
+      })(),
       stockLevel: product.variants?.[0]?.inventory_quantity || 0,
       isLimitedEdition: product.tags?.some((tag: string) => tag.toLowerCase().includes('limited')),
       isTrending: product.featured,

@@ -178,23 +178,23 @@ export default function ProductPage({ product }: ProductPageProps) {
                   </div>
                 )}
                 
-                {/* Candle-Specific Info */}
-                {product.isCandle && (
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    {product.burnTime && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Clock className="h-4 w-4 text-amber-600" />
-                        <span>{product.burnTime} burn time</span>
-                      </div>
-                    )}
-                    {product.scentProfile && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span className="text-amber-600">🌸</span>
-                        <span className="capitalize">{product.scentProfile} scent</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+              {/* Candle-Specific Info */}
+              {product.isCandle && (product.burnTime || product.scentProfile) && (
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {product.burnTime && product.burnTime !== 'undefined' && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      <span>{product.burnTime} burn time</span>
+                    </div>
+                  )}
+                  {product.scentProfile && product.scentProfile !== 'undefined' && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-amber-600">🌸</span>
+                      <span className="capitalize">{product.scentProfile} scent</span>
+                    </div>
+                  )}
+                </div>
+              )}
               </div>
 
               {/* Price & Savings */}
