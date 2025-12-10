@@ -41,8 +41,13 @@ export default function SquarePaymentForm({
   const paymentsRef = useRef<any>(null);
 
   useEffect(() => {
-    initializeSquare();
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      initializeSquare();
+    }, 100);
+    
     return () => {
+      clearTimeout(timer);
       // Cleanup
       if (card) {
         card.destroy();
@@ -52,10 +57,18 @@ export default function SquarePaymentForm({
 
   const initializeSquare = async () => {
     try {
+      // Fetch config first to determine environment
+      const configResponse = await fetch('/api/checkout/square-config');
+      const config = await configResponse.json();
+      
       // Load Square Web Payments SDK
       if (!window.Square) {
         const script = document.createElement('script');
-        script.src = 'https://sandbox.web.squarecdn.com/v1/square.js';
+        // Use production or sandbox URL based on environment
+        const sdkUrl = config.environment === 'production'
+          ? 'https://web.squarecdn.com/v1/square.js'
+          : 'https://sandbox.web.squarecdn.com/v1/square.js';
+        script.src = sdkUrl;
         script.async = true;
         script.onload = () => initializePayments();
         script.onerror = () => setError('Failed to load Square payment SDK');
@@ -76,6 +89,8 @@ export default function SquarePaymentForm({
       const configResponse = await fetch('/api/checkout/square-config');
       const config = await configResponse.json();
 
+      console.log('Square config:', config);
+
       if (!config.applicationId || !config.locationId) {
         setError('Square is not configured. Please contact support.');
         setIsLoading(false);
@@ -85,6 +100,15 @@ export default function SquarePaymentForm({
       if (!window.Square) {
         setError('Square SDK not loaded');
         setIsLoading(false);
+        return;
+      }
+
+      // Wait for the card container to be in the DOM
+      const cardContainer = document.getElementById('card-container');
+      if (!cardContainer) {
+        console.error('Card container not found, retrying...');
+        // Retry after a short delay
+        setTimeout(() => initializePayments(), 200);
         return;
       }
 
@@ -98,7 +122,7 @@ export default function SquarePaymentForm({
       setIsLoading(false);
     } catch (err) {
       console.error('Error initializing payments:', err);
-      setError('Failed to initialize payment form');
+      setError('Failed to initialize payment form. Please refresh the page.');
       setIsLoading(false);
     }
   };
@@ -204,14 +228,6 @@ export default function SquarePaymentForm({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
-      </div>
-    );
-  }
-
   if (error && !card) {
     return (
       <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
@@ -243,11 +259,18 @@ export default function SquarePaymentForm({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Card Information
         </label>
-        <div 
-          id="card-container" 
-          ref={cardContainerRef}
-          className="min-h-[100px] border rounded-lg p-4 bg-white dark:bg-gray-700"
-        />
+        <div className="relative">
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg z-10">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+            </div>
+          )}
+          <div 
+            id="card-container" 
+            ref={cardContainerRef}
+            className="min-h-[100px] border rounded-lg p-4 bg-white dark:bg-gray-700"
+          />
+        </div>
       </div>
 
       {error && (
