@@ -7,10 +7,7 @@ import { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/localStore';
 import type { Product } from '@/lib/types';
-import CountdownTimer from './CountdownTimer';
 import InventoryAlert from './InventoryAlert';
-import LimitedTimeOffer from './LimitedTimeOffer';
-import SocialProofNotifications from './SocialProofNotifications';
 
 interface ProductPageProps {
   product: Product;
@@ -22,11 +19,7 @@ export default function ProductPage({ product }: ProductPageProps) {
   const [selectedVariantId, setSelectedVariantId] = useState(product.variants?.[0]?.id || '');
   const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || '');
   const [showReviews, setShowReviews] = useState(false);
-  const [showLimitedOffer, setShowLimitedOffer] = useState(true);
   const [addedToCart, setAddedToCart] = useState(false);
-
-  // Create urgency timers (24 hours from now for demo)
-  const saleEndTime = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   const increaseQuantity = () => setQuantity(prev => prev + 1);
   const decreaseQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
@@ -70,22 +63,6 @@ export default function ProductPage({ product }: ProductPageProps) {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Limited Time Offer Banner */}
-      {showLimitedOffer && product.originalPrice && (
-        <LimitedTimeOffer
-          title="🔥 Flash Sale Alert!"
-          description="Save 20% on all candles - Limited time only!"
-          discount={20}
-          endTime={saleEndTime}
-          minOrderAmount={50}
-          variant="banner"
-          onDismiss={() => setShowLimitedOffer(false)}
-        />
-      )}
-
-      {/* Social Proof Notifications */}
-      <SocialProofNotifications position="bottom-left" />
-
       {/* Breadcrumb */}
       <section className="py-4 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
@@ -263,19 +240,7 @@ export default function ProductPage({ product }: ProductPageProps) {
                 )}
               </div>
 
-              {/* Flash Sale Countdown for Individual Product */}
-              {product.originalPrice && (
-                <div className="mb-6">
-                  <CountdownTimer
-                    endTime={saleEndTime}
-                    title="⚡ Flash Sale Ends In"
-                    subtitle="Don't miss out on this special price!"
-                    variant="default"
-                  />
-                </div>
-              )}
-
-              {/* Size Selection */}
+{/* Size Selection */}
               {product.sizes && product.sizes.length > 0 && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
