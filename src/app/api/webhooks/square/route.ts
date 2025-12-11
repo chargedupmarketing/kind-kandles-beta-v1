@@ -3,19 +3,33 @@ import { createServerClient } from '@/lib/supabase';
 import crypto from 'crypto';
 
 const webhookSignatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || '';
+const webhookUrl = 'https://kind-kandles-beta-v1.vercel.app/api/webhooks/square';
 
 // Verify Square webhook signature
+// Square uses: HMAC-SHA256(webhookUrl + body, signatureKey)
 function verifySignature(body: string, signature: string): boolean {
   if (!webhookSignatureKey) {
     console.warn('Square webhook signature key not configured');
-    return true; // Allow in development
+    return false;
   }
 
-  const hmac = crypto.createHmac('sha256', webhookSignatureKey);
-  hmac.update(body);
-  const expectedSignature = hmac.digest('base64');
-  
-  return signature === expectedSignature;
+  try {
+    // Square signature format: webhookUrl + body
+    const payload = webhookUrl + body;
+    const hmac = crypto.createHmac('sha256', webhookSignatureKey);
+    hmac.update(payload);
+    const expectedSignature = hmac.digest('base64');
+    
+    console.log('Webhook signature verification:');
+    console.log('- Received signature:', signature);
+    console.log('- Expected signature:', expectedSignature);
+    console.log('- Match:', signature === expectedSignature);
+    
+    return signature === expectedSignature;
+  } catch (error) {
+    console.error('Error verifying signature:', error);
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -23,10 +37,27 @@ export async function POST(request: NextRequest) {
     const body = await request.text();
     const signature = request.headers.get('x-square-hmacsha256-signature') || '';
 
+    console.log('Square webhook received');
+    console.log('- Has signature key:', !!webhookSignatureKey);
+    console.log('- Has signature header:', !!signature);
+
     // Verify webhook signature
-    if (webhookSignatureKey && !verifySignature(body, signature)) {
-      console.error('Invalid Square webhook signature');
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    if (webhookSignatureKey) {
+      if (!signature) {
+        console.error('Missing Square webhook signature header');
+        return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
+      }
+      
+      if (!verifySignature(body, signature)) {
+        console.error('Invalid Square webhook signature');
+        // In sandbox mode, we might want to still process the webhook
+        // but log the error for debugging
+        if (process.env.SQUARE_ENVIRONMENT === 'sandbox') {
+          console.warn('Proceeding anyway in sandbox mode...');
+        } else {
+          return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+        }
+      }
     }
 
     const event = JSON.parse(body);
@@ -99,4 +130,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Webhook error' }, { status: 500 });
   }
 }
-
