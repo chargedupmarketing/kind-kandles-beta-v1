@@ -25,7 +25,11 @@ import {
   Sparkles,
   Clock,
   Weight,
-  Layers
+  Layers,
+  Wand2,
+  RefreshCw,
+  CheckCircle2,
+  Filter
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 
@@ -107,6 +111,77 @@ const BURN_TIME_OPTIONS = [
   '20 hours', '30 hours', '40 hours', '45 hours', '50 hours', '60 hours', '70+ hours'
 ];
 
+// Product type mapping for auto-organization
+const PRODUCT_TYPE_KEYWORDS: { [key: string]: { type: string; tags: string[] } } = {
+  'candle': { type: 'CANDLE', tags: ['candle'] },
+  'soy candle': { type: 'CANDLE', tags: ['candle', 'soy-wax'] },
+  'room spray': { type: 'ROOM SPRAY', tags: ['room-spray'] },
+  'body spray': { type: 'BODY SPRAY MIST', tags: ['body-spray'] },
+  'body mist': { type: 'BODY SPRAY MIST', tags: ['body-mist'] },
+  'lotion': { type: 'LOTION', tags: ['lotion', 'skincare'] },
+  'body butter': { type: 'BODY BUTTER', tags: ['body-butter', 'skincare'] },
+  'whipped body butter': { type: 'BODY BUTTER', tags: ['body-butter', 'skincare'] },
+  'scrub': { type: 'FOAMING BODY SCRUB', tags: ['body-scrub', 'skincare'] },
+  'foaming body scrub': { type: 'FOAMING BODY SCRUB', tags: ['body-scrub', 'skincare'] },
+  'bar soap': { type: 'BAR SOAP', tags: ['bar-soap', 'skincare'] },
+  'handmade soap': { type: 'BAR SOAP', tags: ['bar-soap', 'skincare', 'handmade'] },
+  'body oil': { type: 'BODY OIL', tags: ['body-oil', 'skincare'] },
+  'hair oil': { type: 'BODY OIL', tags: ['hair-oil', 'skincare'] },
+  'beard oil': { type: 'BODY OIL', tags: ['beard-oil', 'skincare'] },
+  'wax melt': { type: 'WAX MELT', tags: ['wax-melt'] },
+  't-shirt': { type: 'CLOTHING', tags: ['clothing-accessories'] },
+  'tee': { type: 'CLOTHING', tags: ['clothing-accessories'] },
+  'dress': { type: 'CLOTHING', tags: ['clothing-accessories'] },
+  'hair wrap': { type: 'CLOTHING', tags: ['clothing-accessories'] },
+  'tote bag': { type: 'CLOTHING', tags: ['clothing-accessories'] },
+};
+
+// Scent keywords for auto-tagging
+const SCENT_KEYWORDS: { [key: string]: string } = {
+  'eucalyptus': 'herbal',
+  'spearmint': 'herbal',
+  'peppermint': 'herbal',
+  'rosemary': 'herbal',
+  'lavender': 'floral',
+  'rose': 'floral',
+  'blossom': 'floral',
+  'jasmine': 'floral',
+  'lemon': 'citrus',
+  'orange': 'citrus',
+  'citrus': 'citrus',
+  'squeeze': 'citrus',
+  'grapefruit': 'citrus',
+  'bergamot': 'citrus',
+  'cedar': 'woodsy',
+  'mahogany': 'woodsy',
+  'wood': 'woodsy',
+  'fir': 'woodsy',
+  'evergreen': 'woodsy',
+  'pine': 'woodsy',
+  'sandalwood': 'woodsy',
+  'linen': 'fresh',
+  'fresh': 'fresh',
+  'sea salt': 'fresh',
+  'ocean': 'fresh',
+  'waters': 'fresh',
+  'clean': 'fresh',
+  'sugar': 'sweet',
+  'vanilla': 'sweet',
+  'cheesecake': 'sweet',
+  'butterscotch': 'sweet',
+  'cocoa': 'sweet',
+  'cashmere': 'sweet',
+  'delightful': 'sweet',
+  'honey': 'sweet',
+  'caramel': 'sweet',
+  'pumpkin': 'earthy',
+  'ginger': 'earthy',
+  'spice': 'earthy',
+  'cinnamon': 'earthy',
+  'nutmeg': 'earthy',
+  'clove': 'earthy',
+};
+
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -120,6 +195,19 @@ export default function ProductManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'images' | 'seo'>('basic');
   const [successMessage, setSuccessMessage] = useState('');
+  const [showOrganizeModal, setShowOrganizeModal] = useState(false);
+  const [isOrganizing, setIsOrganizing] = useState(false);
+  const [organizePreview, setOrganizePreview] = useState<{
+    id: string;
+    title: string;
+    currentType: string | null;
+    newType: string;
+    currentTags: string[];
+    newTags: string[];
+    hasChanges: boolean;
+  }[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<string>('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -414,6 +502,197 @@ export default function ProductManagement() {
     setSelectedProduct(null);
   };
 
+  // Auto-detect product type and tags from title
+  const detectProductInfo = (title: string): { type: string; tags: string[] } => {
+    const lowerTitle = title.toLowerCase();
+    let detectedType = '';
+    const detectedTags: Set<string> = new Set();
+
+    // Check for product type keywords (longest match first)
+    const sortedKeywords = Object.keys(PRODUCT_TYPE_KEYWORDS).sort((a, b) => b.length - a.length);
+    for (const keyword of sortedKeywords) {
+      if (lowerTitle.includes(keyword)) {
+        const info = PRODUCT_TYPE_KEYWORDS[keyword];
+        if (!detectedType) {
+          detectedType = info.type;
+        }
+        info.tags.forEach(tag => detectedTags.add(tag));
+        break; // Only match the first (longest) product type
+      }
+    }
+
+    // Check for scent keywords
+    for (const [keyword, scentTag] of Object.entries(SCENT_KEYWORDS)) {
+      if (lowerTitle.includes(keyword)) {
+        detectedTags.add(scentTag);
+      }
+    }
+
+    // Check for "calm down girl" collection
+    if (lowerTitle.includes('calm down girl')) {
+      detectedTags.add('calm-down-girl');
+    }
+
+    return {
+      type: detectedType || 'OTHER',
+      tags: Array.from(detectedTags)
+    };
+  };
+
+  // Generate preview of organization changes
+  const generateOrganizePreview = () => {
+    const preview = products.map(product => {
+      const detected = detectProductInfo(product.title);
+      const currentTags = product.tags || [];
+      const newTags = [...new Set([...currentTags, ...detected.tags])];
+      
+      const hasChanges = 
+        (detected.type && detected.type !== product.product_type) ||
+        newTags.length !== currentTags.length ||
+        !newTags.every(t => currentTags.includes(t));
+
+      return {
+        id: product.id,
+        title: product.title,
+        currentType: product.product_type,
+        newType: detected.type || product.product_type || 'OTHER',
+        currentTags: currentTags,
+        newTags: newTags,
+        hasChanges
+      };
+    });
+
+    setOrganizePreview(preview);
+    setShowOrganizeModal(true);
+  };
+
+  // Apply organization changes
+  const applyOrganization = async () => {
+    const changedProducts = organizePreview.filter(p => p.hasChanges);
+    if (changedProducts.length === 0) {
+      setSuccessMessage('No changes to apply');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+
+    setIsOrganizing(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const product of changedProducts) {
+      try {
+        const response = await fetch(`/api/admin/products/${product.id}/organize`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_type: product.newType,
+            tags: product.newTags
+          })
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        console.error('Error updating product:', error);
+        errorCount++;
+      }
+    }
+
+    setIsOrganizing(false);
+    setShowOrganizeModal(false);
+    
+    if (errorCount === 0) {
+      setSuccessMessage(`Successfully organized ${successCount} products!`);
+    } else {
+      setSuccessMessage(`Organized ${successCount} products (${errorCount} failed)`);
+    }
+    setTimeout(() => setSuccessMessage(''), 5000);
+    
+    // Refresh products list
+    fetchProducts();
+  };
+
+  // Bulk update selected products
+  const handleBulkAction = async () => {
+    if (!bulkAction || selectedProducts.size === 0) return;
+
+    const [action, value] = bulkAction.split(':');
+    
+    if (action === 'status') {
+      for (const productId of selectedProducts) {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          try {
+            await fetch(`/api/admin/products/${productId}/organize`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: value })
+            });
+          } catch (error) {
+            console.error('Error updating product status:', error);
+          }
+        }
+      }
+    } else if (action === 'tag') {
+      for (const productId of selectedProducts) {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          const newTags = [...new Set([...(product.tags || []), value])];
+          try {
+            await fetch(`/api/admin/products/${productId}/organize`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tags: newTags })
+            });
+          } catch (error) {
+            console.error('Error updating product tags:', error);
+          }
+        }
+      }
+    } else if (action === 'type') {
+      for (const productId of selectedProducts) {
+        try {
+          await fetch(`/api/admin/products/${productId}/organize`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_type: value })
+          });
+        } catch (error) {
+          console.error('Error updating product type:', error);
+        }
+      }
+    }
+
+    setSuccessMessage(`Updated ${selectedProducts.size} products`);
+    setTimeout(() => setSuccessMessage(''), 3000);
+    setSelectedProducts(new Set());
+    setBulkAction('');
+    fetchProducts();
+  };
+
+  const toggleProductSelection = (productId: string) => {
+    const newSelection = new Set(selectedProducts);
+    if (newSelection.has(productId)) {
+      newSelection.delete(productId);
+    } else {
+      newSelection.add(productId);
+    }
+    setSelectedProducts(newSelection);
+  };
+
+  const selectAllProducts = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set());
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)));
+    }
+  };
+
   // Filter products
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -450,13 +729,22 @@ export default function ProductManagement() {
             {products.length} total • {products.filter(p => p.status === 'active').length} active
           </p>
         </div>
-        <button
-          onClick={handleCreate}
-          className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors shadow-lg"
-        >
-          <Plus className="h-5 w-5" />
-          Add Product
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={generateOrganizePreview}
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-lg"
+          >
+            <Wand2 className="h-5 w-5" />
+            Auto-Organize
+          </button>
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors shadow-lg"
+          >
+            <Plus className="h-5 w-5" />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -966,21 +1254,228 @@ export default function ProductManagement() {
         </div>
       )}
 
+      {/* Bulk Actions Bar */}
+      {selectedProducts.size > 0 && (
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-purple-600" />
+            <span className="font-medium text-purple-900 dark:text-purple-100">
+              {selectedProducts.size} product{selectedProducts.size > 1 ? 's' : ''} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <select
+              value={bulkAction}
+              onChange={(e) => setBulkAction(e.target.value)}
+              className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+            >
+              <option value="">Select action...</option>
+              <optgroup label="Change Status">
+                <option value="status:active">Set Active</option>
+                <option value="status:draft">Set Draft</option>
+                <option value="status:archived">Set Archived</option>
+              </optgroup>
+              <optgroup label="Add Tag">
+                <option value="tag:calm-down-girl">Add: calm-down-girl</option>
+                <option value="tag:herbal">Add: herbal</option>
+                <option value="tag:floral">Add: floral</option>
+                <option value="tag:citrus">Add: citrus</option>
+                <option value="tag:woodsy">Add: woodsy</option>
+                <option value="tag:fresh">Add: fresh</option>
+                <option value="tag:sweet">Add: sweet</option>
+                <option value="tag:earthy">Add: earthy</option>
+              </optgroup>
+              <optgroup label="Set Product Type">
+                <option value="type:CANDLE">Set Type: CANDLE</option>
+                <option value="type:ROOM SPRAY">Set Type: ROOM SPRAY</option>
+                <option value="type:BODY BUTTER">Set Type: BODY BUTTER</option>
+                <option value="type:BODY OIL">Set Type: BODY OIL</option>
+                <option value="type:BAR SOAP">Set Type: BAR SOAP</option>
+                <option value="type:LOTION">Set Type: LOTION</option>
+                <option value="type:FOAMING BODY SCRUB">Set Type: FOAMING BODY SCRUB</option>
+                <option value="type:WAX MELT">Set Type: WAX MELT</option>
+                <option value="type:CLOTHING">Set Type: CLOTHING</option>
+              </optgroup>
+            </select>
+            <button
+              onClick={handleBulkAction}
+              disabled={!bulkAction}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Apply
+            </button>
+            <button
+              onClick={() => setSelectedProducts(new Set())}
+              className="px-4 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Organize Modal */}
+      {showOrganizeModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gradient-to-r from-purple-500 to-pink-500">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Wand2 className="h-5 w-5" />
+                Auto-Organize Products
+              </h3>
+              <button 
+                onClick={() => setShowOrganizeModal(false)} 
+                className="p-2 hover:bg-white/20 rounded-lg text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Review the suggested changes below. Products will be automatically categorized based on their titles.
+              </p>
+              
+              <div className="mb-4 flex gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span>Will be updated ({organizePreview.filter(p => p.hasChanges).length})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                  <span>No changes ({organizePreview.filter(p => !p.hasChanges).length})</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                {organizePreview.map((product) => (
+                  <div 
+                    key={product.id}
+                    className={`p-4 rounded-lg border ${
+                      product.hasChanges 
+                        ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20' 
+                        : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {product.title}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-500">Type: </span>
+                            {product.currentType !== product.newType ? (
+                              <>
+                                <span className="line-through text-gray-400">{product.currentType || 'None'}</span>
+                                <span className="text-green-600 font-medium ml-2">→ {product.newType}</span>
+                              </>
+                            ) : (
+                              <span className="text-gray-700 dark:text-gray-300">{product.newType || 'None'}</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Tags: </span>
+                            <div className="inline-flex flex-wrap gap-1 mt-1">
+                              {product.newTags.map(tag => (
+                                <span 
+                                  key={tag}
+                                  className={`px-2 py-0.5 rounded-full text-xs ${
+                                    product.currentTags.includes(tag)
+                                      ? 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                      : 'bg-green-200 text-green-700 dark:bg-green-800 dark:text-green-200'
+                                  }`}
+                                >
+                                  {!product.currentTags.includes(tag) && '+ '}
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {product.hasChanges && (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-between items-center gap-3 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="text-sm text-gray-500">
+                {organizePreview.filter(p => p.hasChanges).length} products will be updated
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowOrganizeModal(false)}
+                  className="px-6 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={applyOrganization}
+                  disabled={isOrganizing || organizePreview.filter(p => p.hasChanges).length === 0}
+                  className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                >
+                  {isOrganizing ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Organizing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="h-4 w-4" />
+                      Apply Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Products Table */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
+              <th className="px-4 py-3 text-left">
+                <input
+                  type="checkbox"
+                  checked={selectedProducts.size === filteredProducts.length && filteredProducts.length > 0}
+                  onChange={selectAllProducts}
+                  className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                />
+              </th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Product</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Type / Tags</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Inventory</th>
               <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Price</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y dark:divide-gray-800">
             {filteredProducts.map((product) => (
-              <tr key={product.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <tr 
+                key={product.id} 
+                className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                  selectedProducts.has(product.id) ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                }`}
+              >
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.has(product.id)}
+                    onChange={() => toggleProductSelection(product.id)}
+                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                  />
+                </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     {product.images?.[0]?.url ? (
@@ -1000,9 +1495,31 @@ export default function ProductManagement() {
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{product.title}</p>
                       <p className="text-sm text-gray-500">
-                        {product.product_type || 'No type'} • SKU: {product.variants?.[0]?.sku || 'N/A'}
+                        SKU: {product.variants?.[0]?.sku || 'N/A'}
                       </p>
                     </div>
+                  </div>
+                </td>
+                <td className="px-4 py-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {product.product_type || 'No type'}
+                    </span>
+                    {product.tags && product.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {product.tags.slice(0, 3).map(tag => (
+                          <span 
+                            key={tag}
+                            className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full text-xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {product.tags.length > 3 && (
+                          <span className="text-xs text-gray-400">+{product.tags.length - 3}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-3">
@@ -1022,17 +1539,6 @@ export default function ProductManagement() {
                       Featured
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`text-sm font-medium ${
-                    (product.variants?.[0]?.inventory_quantity || 0) === 0
-                      ? 'text-red-600'
-                      : (product.variants?.[0]?.inventory_quantity || 0) < 5
-                      ? 'text-orange-600'
-                      : 'text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {product.variants?.[0]?.inventory_quantity || 0} in stock
-                  </span>
                 </td>
                 <td className="px-4 py-3">
                   <div>

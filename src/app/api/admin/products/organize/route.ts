@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
 
     for (const product of products || []) {
       const title = product.title.toLowerCase();
-      const currentTags = product.tags || [];
-      const newTags = new Set(currentTags);
+      const currentTags: string[] = Array.isArray(product.tags) ? product.tags.map(String) : [];
+      const newTags = new Set<string>(currentTags);
       let productType = product.product_type;
 
       // Calm Down Girl collection - products with "calm down girl" in the title
