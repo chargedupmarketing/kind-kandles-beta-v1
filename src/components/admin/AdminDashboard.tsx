@@ -88,14 +88,14 @@ export default function AdminDashboard() {
       defaultOpen: true,
       items: [
         {
-          id: 'fulfillment' as AdminSection,
-          label: 'Order Fulfillment',
-          icon: ClipboardList,
-        },
-        {
           id: 'orders' as AdminSection,
           label: 'All Orders',
           icon: ShoppingCart,
+        },
+        {
+          id: 'fulfillment' as AdminSection,
+          label: 'Order Fulfillment',
+          icon: ClipboardList,
         },
         {
           id: 'products' as AdminSection,
