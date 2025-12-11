@@ -31,14 +31,16 @@ const Header = () => {
       dropdown: [
         {
           name: 'Collections',
-          href: '#',
+          href: '',
+          isHeader: true,
           submenu: [
             { name: 'Everything Calm Down Girl', href: '/collections/calm-down-girl' },
           ]
         },
         {
           name: 'Candles',
-          href: '/collections/candles',
+          href: '',
+          isHeader: true,
           submenu: [
             { name: 'Shop All Candles', href: '/collections/candles/all' },
             { name: 'Citrus', href: '/collections/candles/citrus' },
@@ -52,7 +54,8 @@ const Header = () => {
         },
         {
           name: 'Skincare',
-          href: '/collections/skincare',
+          href: '',
+          isHeader: true,
           submenu: [
             { name: 'Foaming Body Scrub', href: '/collections/skincare/foaming-body-scrub' },
             { name: 'Body Spray Mist', href: '/collections/skincare/body-spray-mist' },
@@ -201,17 +204,30 @@ const Header = () => {
                     <div className="py-1">
                       {item.dropdown.map((dropdownItem) => (
                         <div key={dropdownItem.name} className="relative group hover:bg-pink-50 dark:hover:bg-slate-700 transition-colors duration-200">
-                          <Link
-                            href={dropdownItem.href}
-                            className={`block px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-pink-50 dark:hover:bg-slate-700 hover:text-pink-600 dark:hover:text-pink-400 ${
-                              dropdownItem.submenu ? 'flex items-center justify-between' : ''
-                            }`}
-                          >
-                            {dropdownItem.name}
-                            {dropdownItem.submenu && (
-                              <ChevronDown className="ml-1 h-3 w-3 rotate-[-90deg]" />
-                            )}
-                          </Link>
+                          {dropdownItem.isHeader ? (
+                            <span
+                              className={`block px-4 py-2 text-sm text-gray-700 dark:text-slate-200 cursor-default ${
+                                dropdownItem.submenu ? 'flex items-center justify-between font-semibold' : ''
+                              }`}
+                            >
+                              {dropdownItem.name}
+                              {dropdownItem.submenu && (
+                                <ChevronDown className="ml-1 h-3 w-3 rotate-[-90deg]" />
+                              )}
+                            </span>
+                          ) : (
+                            <Link
+                              href={dropdownItem.href}
+                              className={`block px-4 py-2 text-sm text-gray-700 dark:text-slate-200 hover:bg-pink-50 dark:hover:bg-slate-700 hover:text-pink-600 dark:hover:text-pink-400 ${
+                                dropdownItem.submenu ? 'flex items-center justify-between' : ''
+                              }`}
+                            >
+                              {dropdownItem.name}
+                              {dropdownItem.submenu && (
+                                <ChevronDown className="ml-1 h-3 w-3 rotate-[-90deg]" />
+                              )}
+                            </Link>
+                          )}
                           {dropdownItem.submenu && (
                             <div className="absolute left-full top-0 -ml-2 pl-3 w-48 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black dark:ring-slate-600 ring-opacity-5 dark:ring-opacity-20 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500 delay-200">
                               <div className="py-1">
