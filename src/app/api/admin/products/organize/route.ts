@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 
 // POST /api/admin/products/organize - Organize products by adding tags based on title patterns
+// Updated: Dec 11, 2025
 export async function POST(request: NextRequest) {
   try {
     const supabase = createServerClient();
