@@ -29,7 +29,6 @@ import {
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
-import MaintenanceMode from './MaintenanceMode';
 import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
@@ -44,8 +43,10 @@ import PromotionsManagement from './PromotionsManagement';
 import FeaturedProductsManagement from './FeaturedProductsManagement';
 import BlogManagement from './BlogManagement';
 import UserManagement from './UserManagement';
+import AdminSettings from './AdminSettings';
+import AIAssistant from './AIAssistant';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'maintenance' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -164,16 +165,23 @@ export default function AdminDashboard() {
           icon: Cog,
         },
         {
-          id: 'maintenance' as AdminSection,
-          label: 'Maintenance Mode',
+          id: 'admin-settings' as AdminSection,
+          label: 'Admin Settings',
           icon: Settings,
-          badge: isMaintenanceMode ? 'ON' : undefined,
+          badge: isMaintenanceMode ? 'MAINT' : undefined,
           badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
         },
         {
           id: 'users' as AdminSection,
           label: 'Admin Users',
           icon: UserCog,
+        },
+        {
+          id: 'ai-assistant' as AdminSection,
+          label: 'AI Assistant',
+          icon: Shield,
+          badge: 'NEW',
+          badgeColor: 'bg-purple-500'
         },
       ]
     }
@@ -201,8 +209,6 @@ export default function AdminDashboard() {
         return <BlogManagement />;
       case 'menu':
         return <MenuManagement />;
-      case 'maintenance':
-        return <MaintenanceMode />;
       case 'contacts':
         return <ContactSubmissions />;
       case 'survey':
@@ -213,6 +219,10 @@ export default function AdminDashboard() {
         return <SettingsPanel />;
       case 'users':
         return <UserManagement />;
+      case 'admin-settings':
+        return <AdminSettings />;
+      case 'ai-assistant':
+        return <AIAssistant />;
       default:
         return <AnalyticsDashboard />;
     }
