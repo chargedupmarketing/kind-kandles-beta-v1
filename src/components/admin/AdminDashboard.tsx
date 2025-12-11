@@ -45,8 +45,9 @@ import BlogManagement from './BlogManagement';
 import UserManagement from './UserManagement';
 import AdminSettings from './AdminSettings';
 import AIAssistant from './AIAssistant';
+import EmailManagement from './EmailManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant';
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
@@ -117,6 +118,11 @@ export default function AdminDashboard() {
           id: 'featured' as AdminSection,
           label: 'Featured Products',
           icon: Star,
+        },
+        {
+          id: 'email-templates' as AdminSection,
+          label: 'Email Templates',
+          icon: Mail,
         },
         {
           id: 'blog' as AdminSection,
@@ -205,6 +211,8 @@ export default function AdminDashboard() {
         return <PromotionsManagement />;
       case 'featured':
         return <FeaturedProductsManagement />;
+      case 'email-templates':
+        return <EmailManagement />;
       case 'blog':
         return <BlogManagement />;
       case 'menu':
