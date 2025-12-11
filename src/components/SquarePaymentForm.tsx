@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, ShippingAddress, CartItem } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/localStore';
@@ -37,87 +37,47 @@ export default function SquarePaymentForm({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [card, setCard] = useState<any>(null);
+  const [isCardContainerReady, setIsCardContainerReady] = useState(false);
   const cardContainerRef = useRef<HTMLDivElement>(null);
   const paymentsRef = useRef<any>(null);
+  const initAttemptedRef = useRef(false);
 
+  // Mark container as ready after mount
   useEffect(() => {
-    // Small delay to ensure DOM is ready
+    // Wait for next tick to ensure DOM is ready
     const timer = setTimeout(() => {
-      initializeSquare();
+      setIsCardContainerReady(true);
     }, 100);
-    
-    return () => {
-      clearTimeout(timer);
-      // Cleanup
-      if (card) {
-        card.destroy();
-      }
-    };
+    return () => clearTimeout(timer);
   }, []);
 
-  const initializeSquare = async () => {
+  const initializePayments = useCallback(async (config: { applicationId: string; locationId: string }) => {
     try {
-      // Fetch config first to determine environment
-      const configResponse = await fetch('/api/checkout/square-config');
-      const config = await configResponse.json();
-      
-      // Load Square Web Payments SDK
-      if (!window.Square) {
-        const script = document.createElement('script');
-        // Use production or sandbox URL based on environment
-        const sdkUrl = config.environment === 'production'
-          ? 'https://web.squarecdn.com/v1/square.js'
-          : 'https://sandbox.web.squarecdn.com/v1/square.js';
-        script.src = sdkUrl;
-        script.async = true;
-        script.onload = () => initializePayments();
-        script.onerror = () => setError('Failed to load Square payment SDK');
-        document.body.appendChild(script);
-      } else {
-        await initializePayments();
-      }
-    } catch (err) {
-      console.error('Error initializing Square:', err);
-      setError('Failed to initialize payment form');
-      setIsLoading(false);
-    }
-  };
-
-  const initializePayments = async () => {
-    try {
-      // Fetch Square configuration from API
-      const configResponse = await fetch('/api/checkout/square-config');
-      const config = await configResponse.json();
-
-      console.log('Square config:', config);
-
-      if (!config.applicationId || !config.locationId) {
-        setError('Square is not configured. Please contact support.');
+      // Double-check the container exists
+      const container = document.getElementById('card-container');
+      if (!container) {
+        console.error('Card container still not found');
+        setError('Payment form container not found. Please refresh the page.');
         setIsLoading(false);
         return;
       }
 
       if (!window.Square) {
-        setError('Square SDK not loaded');
+        console.error('Square SDK not available');
+        setError('Square SDK not loaded. Please refresh the page.');
         setIsLoading(false);
         return;
       }
 
-      // Wait for the card container to be in the DOM
-      const cardContainer = document.getElementById('card-container');
-      if (!cardContainer) {
-        console.error('Card container not found, retrying...');
-        // Retry after a short delay
-        setTimeout(() => initializePayments(), 200);
-        return;
-      }
-
+      console.log('Initializing Square payments with config:', config);
       const payments = await window.Square.payments(config.applicationId, config.locationId);
       paymentsRef.current = payments;
 
       // Create card payment method
       const cardInstance = await payments.card();
+      console.log('Card instance created, attaching to container...');
       await cardInstance.attach('#card-container');
+      console.log('Card attached successfully');
       setCard(cardInstance);
       setIsLoading(false);
     } catch (err) {
@@ -125,7 +85,83 @@ export default function SquarePaymentForm({
       setError('Failed to initialize payment form. Please refresh the page.');
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  const loadSquareSDK = useCallback(async () => {
+    if (initAttemptedRef.current) return;
+    initAttemptedRef.current = true;
+
+    try {
+      // Fetch config first
+      console.log('Fetching Square config...');
+      const configResponse = await fetch('/api/checkout/square-config');
+      const config = await configResponse.json();
+      console.log('Square config received:', config);
+
+      if (!config.applicationId || !config.locationId) {
+        setError('Square is not configured. Please contact support.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Determine SDK URL based on environment
+      const sdkUrl = config.environment === 'production'
+        ? 'https://web.squarecdn.com/v1/square.js'
+        : 'https://sandbox.web.squarecdn.com/v1/square.js';
+
+      // Check if SDK is already loaded
+      if (window.Square) {
+        console.log('Square SDK already loaded');
+        await initializePayments(config);
+        return;
+      }
+
+      // Load the SDK
+      console.log('Loading Square SDK from:', sdkUrl);
+      const script = document.createElement('script');
+      script.src = sdkUrl;
+      script.async = true;
+      
+      script.onload = async () => {
+        console.log('Square SDK loaded successfully');
+        // Wait a bit for Square to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await initializePayments(config);
+      };
+      
+      script.onerror = () => {
+        console.error('Failed to load Square SDK');
+        setError('Failed to load payment SDK. Please check your internet connection.');
+        setIsLoading(false);
+      };
+
+      document.head.appendChild(script);
+    } catch (err) {
+      console.error('Error in loadSquareSDK:', err);
+      setError('Failed to initialize payment system.');
+      setIsLoading(false);
+    }
+  }, [initializePayments]);
+
+  // Start loading when container is ready
+  useEffect(() => {
+    if (isCardContainerReady && !card && !initAttemptedRef.current) {
+      loadSquareSDK();
+    }
+  }, [isCardContainerReady, card, loadSquareSDK]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (card) {
+        try {
+          card.destroy();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
+    };
+  }, [card]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,22 +264,12 @@ export default function SquarePaymentForm({
     }
   };
 
-  if (error && !card) {
-    return (
-      <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5" />
-          <span>{error}</span>
-        </div>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 text-sm underline"
-        >
-          Try again
-        </button>
-      </div>
-    );
-  }
+  const handleRetry = () => {
+    setError(null);
+    setIsLoading(true);
+    initAttemptedRef.current = false;
+    loadSquareSDK();
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -259,10 +285,13 @@ export default function SquarePaymentForm({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           Card Information
         </label>
-        <div className="relative">
+        <div className="relative min-h-[100px]">
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg z-10">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+            <div className="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-700 rounded-lg border z-10">
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+                <span className="text-sm text-gray-500">Loading payment form...</span>
+              </div>
             </div>
           )}
           <div 
@@ -274,15 +303,24 @@ export default function SquarePaymentForm({
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
-          <AlertCircle className="h-5 w-5" />
-          <span>{error}</span>
+        <div className="flex items-start gap-2 p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg">
+          <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="block mt-2 text-sm underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       )}
 
       <button
         type="submit"
-        disabled={!card || isProcessing}
+        disabled={!card || isProcessing || isLoading}
         className="w-full bg-pink-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         {isProcessing ? (
@@ -312,4 +350,3 @@ export default function SquarePaymentForm({
     </form>
   );
 }
-
