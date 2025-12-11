@@ -21,6 +21,16 @@ export const metadata: Metadata = {
   authors: [{ name: "My Kind Kandles & Boutique" }],
   creator: "My Kind Kandles & Boutique",
   publisher: "My Kind Kandles & Boutique",
+  icons: {
+    icon: [
+      { url: '/logos/logo.ico', sizes: 'any' },
+      { url: '/logos/logo.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [
+      { url: '/logos/logo.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/logos/logo.ico',
+  },
   formatDetection: {
     email: false,
     address: false,
