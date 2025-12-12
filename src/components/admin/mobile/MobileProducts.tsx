@@ -365,7 +365,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                             {formatCurrency(product.price)}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${stockStatus.color}`}>
-                            {product.inventory_quantity} in stock
+                            {product.inventory_quantity ?? 0} in stock
                           </span>
                         </div>
                       </div>
