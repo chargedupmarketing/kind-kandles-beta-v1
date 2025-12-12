@@ -1,9 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
+import jwt from 'jsonwebtoken';
+import { logAuditEvent } from '@/lib/auditLog';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// Helper to verify user role from JWT
+async function verifyUserRole(request: NextRequest): Promise<{ 
+  authorized: boolean; 
+  user?: { id: string; email: string; role: string; subLevels: string[] };
+  error?: string;
+}> {
+  const token = request.cookies.get('admin-token')?.value;
+  
+  if (!token) {
+    return { authorized: false, error: 'Not authenticated' };
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as {
+      userId: string;
+      email: string;
+      role: string;
+    };
+
+    // Fetch user with sub-levels
+    const { data: user, error } = await supabase
+      .from('admin_users')
+      .select(`
+        id,
+        email,
+        role,
+        user_sub_level_assignments(
+          sub_levels:user_sub_levels(name)
+        )
+      `)
+      .eq('id', decoded.userId)
+      .single();
+
+    if (error || !user) {
+      return { authorized: false, error: 'User not found' };
+    }
+
+    // Extract sub-level names
+    const subLevels = user.user_sub_level_assignments?.map(
+      (a: { sub_levels: { name: string } }) => a.sub_levels.name.toLowerCase()
+    ) || [];
+
+    // Check if user is super_admin or has developer sub-level
+    const isSuperAdmin = user.role === 'super_admin';
+    const isDeveloper = subLevels.includes('developer');
+
+    if (!isSuperAdmin && !isDeveloper) {
+      return { authorized: false, error: 'Insufficient permissions. Only Super Admins and Developers can send test emails.' };
+    }
+
+    return { 
+      authorized: true, 
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role,
+        subLevels 
+      } 
+    };
+  } catch {
+    return { authorized: false, error: 'Invalid or expired token' };
+  }
+}
 
 // POST /api/admin/email-templates/test - Send test email
 export async function POST(request: NextRequest) {
   try {
+    // Verify user has permission (Super Admin or Developer)
+    const authResult = await verifyUserRole(request);
+    if (!authResult.authorized) {
+      return NextResponse.json({ error: authResult.error }, { status: 403 });
+    }
+
     const { to, subject, html_content, variables } = await request.json();
 
     if (!to || !subject || !html_content) {
@@ -101,6 +179,21 @@ export async function POST(request: NextRequest) {
       console.error('Resend error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    // Log the test email action
+    await logAuditEvent({
+      action: 'test_email_sent',
+      resource: 'email_templates',
+      resourceId: null,
+      userId: authResult.user?.id,
+      userEmail: authResult.user?.email,
+      userRole: authResult.user?.role,
+      details: {
+        recipient: to,
+        subject: processedSubject,
+      },
+      request,
+    });
 
     return NextResponse.json({ success: true, message: `Test email sent to ${to}` });
   } catch (error) {

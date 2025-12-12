@@ -25,9 +25,15 @@ import {
   Star,
   Gift,
   Bell,
-  X
+  X,
+  TestTube,
+  Save,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import EmailEditor from './EmailEditor';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface EmailTemplate {
   id: string;
@@ -76,6 +82,9 @@ const TEMPLATE_ICONS: Record<string, typeof Mail> = {
 };
 
 export default function EmailManagement() {
+  const { isSuperAdmin, isDeveloper } = useAdmin();
+  const canTestEmails = isSuperAdmin || isDeveloper;
+  
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,9 +95,21 @@ export default function EmailManagement() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Test email panel state
+  const [showTestPanel, setShowTestPanel] = useState(false);
+  const [testEmail, setTestEmail] = useState('');
+  const [testTemplateId, setTestTemplateId] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
+    // Load saved default test email
+    const savedEmail = localStorage.getItem('admin_test_email');
+    if (savedEmail) {
+      setTestEmail(savedEmail);
+    }
   }, []);
 
   const fetchTemplates = async () => {
@@ -205,6 +226,74 @@ export default function EmailManagement() {
     }, 3000);
   };
 
+  // Send test email
+  const handleSendTestEmail = async () => {
+    if (!testEmail || !testTemplateId) {
+      setErrorMessage('Please select a template and enter a recipient email');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(testEmail)) {
+      setErrorMessage('Please enter a valid email address');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    const selectedTestTemplate = templates.find(t => t.id === testTemplateId);
+    if (!selectedTestTemplate) {
+      setErrorMessage('Template not found');
+      setTimeout(() => setErrorMessage(''), 3000);
+      return;
+    }
+
+    setIsSendingTest(true);
+
+    try {
+      const response = await fetch('/api/admin/email-templates/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: testEmail,
+          subject: selectedTestTemplate.subject,
+          html_content: selectedTestTemplate.html_content,
+          variables: {},
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage(`Test email sent to ${testEmail}`);
+        // Save as default if checkbox is checked
+        if (saveAsDefault) {
+          localStorage.setItem('admin_test_email', testEmail);
+        }
+      } else {
+        setErrorMessage(data.error || 'Failed to send test email');
+      }
+    } catch (error) {
+      console.error('Error sending test email:', error);
+      setErrorMessage('Failed to send test email');
+    } finally {
+      setIsSendingTest(false);
+      setTimeout(() => {
+        setSuccessMessage('');
+        setErrorMessage('');
+      }, 3000);
+    }
+  };
+
+  // Clear saved default email
+  const handleClearDefaultEmail = () => {
+    localStorage.removeItem('admin_test_email');
+    setTestEmail('');
+    setSuccessMessage('Default test email cleared');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
   // Filter templates
   const filteredTemplates = templates.filter(t => {
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -255,14 +344,164 @@ export default function EmailManagement() {
             Manage email templates for notifications and marketing
           </p>
         </div>
-        <button
-          onClick={handleCreateNew}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors shadow-lg text-sm sm:text-base"
-        >
-          <Plus className="h-5 w-5" />
-          <span className="sm:inline">Create Template</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {canTestEmails && (
+            <button
+              onClick={() => setShowTestPanel(!showTestPanel)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 rounded-lg transition-colors shadow-lg text-sm sm:text-base ${
+                showTestPanel 
+                  ? 'bg-amber-600 text-white hover:bg-amber-700' 
+                  : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50 border border-amber-300 dark:border-amber-700'
+              }`}
+            >
+              <TestTube className="h-5 w-5" />
+              <span className="hidden sm:inline">Test Emails</span>
+            </button>
+          )}
+          <button
+            onClick={handleCreateNew}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors shadow-lg text-sm sm:text-base"
+          >
+            <Plus className="h-5 w-5" />
+            <span className="sm:inline">Create Template</span>
+          </button>
+        </div>
       </div>
+
+      {/* Test Email Panel - Super Admin & Developer Only */}
+      {canTestEmails && showTestPanel && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl border border-amber-200 dark:border-amber-800 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-800/50">
+                <TestTube className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  Test Email Center
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200">
+                    Super Admin / Developer
+                  </span>
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Send test emails to verify template rendering
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTestPanel(false)}
+              className="p-1.5 hover:bg-amber-200 dark:hover:bg-amber-800/50 rounded-lg transition-colors"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Template Selector */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Select Template
+              </label>
+              <select
+                value={testTemplateId}
+                onChange={(e) => setTestTemplateId(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 text-sm"
+              >
+                <option value="">Choose a template...</option>
+                <optgroup label="Transactional">
+                  {templates.filter(t => t.category === 'transactional').map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Marketing">
+                  {templates.filter(t => t.category === 'marketing').map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Custom">
+                  {templates.filter(t => t.category === 'custom').map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Recipient Email */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Recipient Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="email"
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  placeholder="test@example.com"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 text-sm"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="saveDefault"
+                  checked={saveAsDefault}
+                  onChange={(e) => setSaveAsDefault(e.target.checked)}
+                  className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <label htmlFor="saveDefault" className="text-xs text-gray-600 dark:text-gray-400">
+                  Save as default test email
+                </label>
+                {localStorage.getItem('admin_test_email') && (
+                  <button
+                    onClick={handleClearDefaultEmail}
+                    className="text-xs text-red-600 hover:text-red-700 ml-auto"
+                  >
+                    Clear saved
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Send Button */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 invisible">
+                Action
+              </label>
+              <button
+                onClick={handleSendTestEmail}
+                disabled={isSendingTest || !testEmail || !testTemplateId}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              >
+                {isSendingTest ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send Test Email
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                Subject will be prefixed with [TEST]
+              </p>
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="mt-4 p-3 bg-amber-100/50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-700">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-amber-800 dark:text-amber-200">
+                <strong>How it works:</strong> Test emails use sample data for template variables (e.g., customer_name becomes &quot;Test Customer&quot;, order_number becomes &quot;KK-TEST-12345&quot;). This helps you verify the email layout and styling before sending to real customers.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="space-y-3">
