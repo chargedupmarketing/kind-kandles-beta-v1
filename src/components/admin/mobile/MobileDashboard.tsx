@@ -13,9 +13,11 @@ import {
   ChevronRight,
   Truck,
   Users,
-  Star
+  Star,
+  Calendar,
+  ChevronDown
 } from 'lucide-react';
-import { hapticMedium } from '@/lib/haptics';
+import { hapticLight, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
 
 interface MobileDashboardProps {
@@ -24,12 +26,12 @@ interface MobileDashboardProps {
 }
 
 interface DashboardStats {
-  todayOrders: number;
-  todayRevenue: number;
+  periodOrders: number;
+  periodRevenue: number;
   pendingOrders: number;
   lowStockCount: number;
-  todayOrdersTrend: number;
-  todayRevenueTrend: number;
+  ordersTrend: number;
+  revenueTrend: number;
 }
 
 interface RecentOrder {
@@ -41,14 +43,70 @@ interface RecentOrder {
   created_at: string;
 }
 
+type DateRange = 'today' | 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+
+interface DateRangeOption {
+  id: DateRange;
+  label: string;
+  shortLabel: string;
+}
+
+const dateRangeOptions: DateRangeOption[] = [
+  { id: 'today', label: 'Today', shortLabel: 'Today' },
+  { id: 'yesterday', label: 'Yesterday', shortLabel: 'Yesterday' },
+  { id: 'week', label: 'This Week', shortLabel: '7 Days' },
+  { id: 'month', label: 'This Month', shortLabel: '30 Days' },
+  { id: 'quarter', label: 'This Quarter', shortLabel: '90 Days' },
+  { id: 'year', label: 'This Year', shortLabel: 'Year' },
+];
+
+function getDateRangeParams(range: DateRange): { startDate: string; endDate: string } {
+  const now = new Date();
+  const endDate = new Date(now);
+  let startDate = new Date(now);
+
+  switch (range) {
+    case 'today':
+      startDate.setHours(0, 0, 0, 0);
+      break;
+    case 'yesterday':
+      startDate.setDate(startDate.getDate() - 1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setDate(endDate.getDate() - 1);
+      endDate.setHours(23, 59, 59, 999);
+      break;
+    case 'week':
+      startDate.setDate(startDate.getDate() - 7);
+      break;
+    case 'month':
+      startDate.setDate(startDate.getDate() - 30);
+      break;
+    case 'quarter':
+      startDate.setDate(startDate.getDate() - 90);
+      break;
+    case 'year':
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      break;
+    default:
+      startDate.setHours(0, 0, 0, 0);
+  }
+
+  return {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString(),
+  };
+}
+
 export default function MobileDashboard({ onNavigate, pendingOrderCount }: MobileDashboardProps) {
+  const [dateRange, setDateRange] = useState<DateRange>('today');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
-    todayOrders: 0,
-    todayRevenue: 0,
+    periodOrders: 0,
+    periodRevenue: 0,
     pendingOrders: pendingOrderCount,
     lowStockCount: 0,
-    todayOrdersTrend: 0,
-    todayRevenueTrend: 0,
+    ordersTrend: 0,
+    revenueTrend: 0,
   });
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +114,11 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      // Fetch overview stats
+      const { startDate, endDate } = getDateRangeParams(dateRange);
+      
+      // Fetch overview stats with date range
       const [overviewRes, ordersRes, lowStockRes] = await Promise.all([
-        fetch('/api/analytics/overview'),
+        fetch(`/api/analytics/overview?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`),
         fetch('/api/orders?limit=5&sort=created_at&order=desc'),
         fetch('/api/analytics/low-stock'),
       ]);
@@ -68,12 +128,12 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       const lowStock = await lowStockRes.json();
 
       setStats({
-        todayOrders: overview.todayOrders || 0,
-        todayRevenue: overview.todayRevenue || 0,
+        periodOrders: overview.todayOrders || overview.periodOrders || 0,
+        periodRevenue: overview.todayRevenue || overview.periodRevenue || 0,
         pendingOrders: overview.pendingOrders || pendingOrderCount,
         lowStockCount: lowStock.count || 0,
-        todayOrdersTrend: overview.ordersTrend || 0,
-        todayRevenueTrend: overview.revenueTrend || 0,
+        ordersTrend: overview.ordersTrend || 0,
+        revenueTrend: overview.revenueTrend || 0,
       });
 
       setRecentOrders(orders.orders || []);
@@ -83,7 +143,14 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       setLoading(false);
       setRefreshing(false);
     }
-  }, [pendingOrderCount]);
+  }, [pendingOrderCount, dateRange]);
+
+  const handleDateRangeChange = (range: DateRange) => {
+    hapticLight();
+    setDateRange(range);
+    setShowDatePicker(false);
+    setLoading(true);
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -153,6 +220,14 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
     );
   }
 
+  const currentRangeLabel = dateRangeOptions.find(opt => opt.id === dateRange)?.label || 'Today';
+  const periodLabel = dateRange === 'today' ? "Today's" : 
+                      dateRange === 'yesterday' ? "Yesterday's" :
+                      dateRange === 'week' ? "This Week's" :
+                      dateRange === 'month' ? "This Month's" :
+                      dateRange === 'quarter' ? "This Quarter's" :
+                      dateRange === 'year' ? "This Year's" : "Period";
+
   return (
     <div className="p-4 space-y-4">
       {/* Pull to Refresh Indicator */}
@@ -163,8 +238,52 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
         </div>
       )}
 
-      {/* Refresh Button */}
-      <div className="flex justify-end">
+      {/* Date Range Selector & Refresh */}
+      <div className="flex items-center justify-between">
+        {/* Date Range Picker */}
+        <div className="relative">
+          <button
+            onClick={() => {
+              hapticLight();
+              setShowDatePicker(!showDatePicker);
+            }}
+            className="flex items-center space-x-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+          >
+            <Calendar className="h-4 w-4 text-teal-400" />
+            <span className="text-sm font-medium text-white">{currentRangeLabel}</span>
+            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showDatePicker && (
+            <>
+              <div 
+                className="fixed inset-0 z-40"
+                onClick={() => setShowDatePicker(false)}
+              />
+              <div className="absolute left-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden animate-fade-in">
+                {dateRangeOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => handleDateRangeChange(option.id)}
+                    className={`w-full px-4 py-3 text-left text-sm transition-colors flex items-center justify-between ${
+                      dateRange === option.id
+                        ? 'bg-teal-600 text-white'
+                        : 'text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    <span>{option.label}</span>
+                    {dateRange === option.id && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Refresh Button */}
         <button
           onClick={handleRefresh}
           disabled={refreshing}
@@ -177,38 +296,38 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Today's Orders */}
+        {/* Period Orders */}
         <button
           onClick={() => onNavigate('orders')}
           className="bg-slate-800 rounded-xl p-4 text-left hover:bg-slate-700/80 transition-colors active:scale-98"
         >
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400 font-medium">Today&apos;s Orders</span>
+            <span className="text-xs text-slate-400 font-medium">{periodLabel} Orders</span>
             <ShoppingCart className="h-4 w-4 text-blue-400" />
           </div>
           <div className="flex items-end justify-between">
-            <span className="text-2xl font-bold text-white">{stats.todayOrders}</span>
-            {stats.todayOrdersTrend !== 0 && (
-              <div className={`flex items-center text-xs ${stats.todayOrdersTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {stats.todayOrdersTrend > 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
-                {Math.abs(stats.todayOrdersTrend)}%
+            <span className="text-2xl font-bold text-white">{stats.periodOrders}</span>
+            {stats.ordersTrend !== 0 && (
+              <div className={`flex items-center text-xs ${stats.ordersTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {stats.ordersTrend > 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                {Math.abs(stats.ordersTrend)}%
               </div>
             )}
           </div>
         </button>
 
-        {/* Today's Revenue */}
+        {/* Period Revenue */}
         <div className="bg-slate-800 rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-400 font-medium">Today&apos;s Revenue</span>
+            <span className="text-xs text-slate-400 font-medium">{periodLabel} Revenue</span>
             <DollarSign className="h-4 w-4 text-green-400" />
           </div>
           <div className="flex items-end justify-between">
-            <span className="text-2xl font-bold text-white">{formatCurrency(stats.todayRevenue)}</span>
-            {stats.todayRevenueTrend !== 0 && (
-              <div className={`flex items-center text-xs ${stats.todayRevenueTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {stats.todayRevenueTrend > 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
-                {Math.abs(stats.todayRevenueTrend)}%
+            <span className="text-2xl font-bold text-white">{formatCurrency(stats.periodRevenue)}</span>
+            {stats.revenueTrend !== 0 && (
+              <div className={`flex items-center text-xs ${stats.revenueTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {stats.revenueTrend > 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                {Math.abs(stats.revenueTrend)}%
               </div>
             )}
           </div>
