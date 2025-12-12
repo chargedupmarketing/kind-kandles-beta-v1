@@ -195,6 +195,9 @@ export default function ProductManagement() {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'images' | 'seo'>('basic');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
   const [showOrganizeModal, setShowOrganizeModal] = useState(false);
   const [isOrganizing, setIsOrganizing] = useState(false);
   const [organizePreview, setOrganizePreview] = useState<{
@@ -367,6 +370,83 @@ export default function ProductManagement() {
       ...formData,
       images: formData.images.filter((_, i) => i !== index)
     });
+  };
+
+  const moveImage = (index: number, direction: 'up' | 'down') => {
+    const newImages = [...formData.images];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= newImages.length) return;
+    
+    [newImages[index], newImages[newIndex]] = [newImages[newIndex], newImages[index]];
+    setFormData({ ...formData, images: newImages });
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImage(true);
+    setUploadError('');
+    setUploadProgress(0);
+
+    const totalFiles = files.length;
+    let uploadedCount = 0;
+    const newImages: { url: string; alt_text: string }[] = [];
+
+    for (const file of Array.from(files)) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError(`${file.name} is too large. Max size is 5MB.`);
+        continue;
+      }
+
+      // Validate file type
+      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+        setUploadError(`${file.name} is not a valid image type.`);
+        continue;
+      }
+
+      try {
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+        formDataUpload.append('folder', 'products');
+
+        const response = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formDataUpload
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.url) {
+          newImages.push({
+            url: data.url,
+            alt_text: formData.title || file.name.split('.')[0]
+          });
+        } else {
+          setUploadError(data.error || `Failed to upload ${file.name}`);
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        setUploadError(`Failed to upload ${file.name}`);
+      }
+
+      uploadedCount++;
+      setUploadProgress(Math.round((uploadedCount / totalFiles) * 100));
+    }
+
+    if (newImages.length > 0) {
+      setFormData({
+        ...formData,
+        images: [...formData.images, ...newImages]
+      });
+    }
+
+    setIsUploadingImage(false);
+    setUploadProgress(0);
+    
+    // Reset the file input
+    e.target.value = '';
   };
 
   const handleSave = async () => {
@@ -1160,9 +1240,67 @@ export default function ProductManagement() {
               {/* Images Tab */}
               {activeTab === 'images' && (
                 <div className="space-y-6">
+                  {/* Upload from Device */}
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Add Image URL
+                      Upload from Device
+                    </label>
+                    <div 
+                      className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                        isUploadingImage 
+                          ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20' 
+                          : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 hover:bg-pink-50/50 dark:hover:bg-pink-900/10'
+                      }`}
+                    >
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+                        multiple
+                        onChange={handleFileUpload}
+                        disabled={isUploadingImage}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      {isUploadingImage ? (
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin rounded-full h-10 w-10 border-3 border-pink-600 border-t-transparent mb-2" />
+                          <p className="text-pink-600 font-medium">Uploading...</p>
+                          {uploadProgress > 0 && (
+                            <p className="text-sm text-gray-500 mt-1">{uploadProgress}% complete</p>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <Upload className="h-10 w-10 mx-auto text-gray-400 mb-2" />
+                          <p className="text-gray-600 dark:text-gray-400 font-medium">
+                            Click or drag images here
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            JPEG, PNG, WebP, GIF • Max 5MB each
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    {uploadError && (
+                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {uploadError}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Or add by URL */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-3 bg-white dark:bg-gray-900 text-gray-500">or add by URL</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Image URL
                     </label>
                     <div className="flex gap-2">
                       <input
@@ -1181,44 +1319,65 @@ export default function ProductManagement() {
                         <Plus className="h-5 w-5" />
                       </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Tip: Upload images to a service like Imgur, Cloudinary, or use Supabase Storage
-                    </p>
                   </div>
 
                   {/* Image Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {formData.images.map((image, index) => (
-                      <div key={index} className="relative group aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                        <img
-                          src={image.url}
-                          alt={image.alt_text || formData.title}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Product Images ({formData.images.length})
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {formData.images.map((image, index) => (
+                        <div key={index} className="relative group aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+                          <img
+                            src={image.url}
+                            alt={image.alt_text || formData.title}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => moveImage(index, 'up')}
+                              disabled={index === 0}
+                              className="p-2 bg-white/90 text-gray-700 rounded-lg hover:bg-white disabled:opacity-30"
+                              title="Move left"
+                            >
+                              <GripVertical className="h-4 w-4 rotate-90" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                              title="Remove"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveImage(index, 'down')}
+                              disabled={index === formData.images.length - 1}
+                              className="p-2 bg-white/90 text-gray-700 rounded-lg hover:bg-white disabled:opacity-30"
+                              title="Move right"
+                            >
+                              <GripVertical className="h-4 w-4 -rotate-90" />
+                            </button>
+                          </div>
+                          {index === 0 && (
+                            <span className="absolute top-2 left-2 bg-pink-600 text-white text-xs px-2 py-1 rounded">
+                              Main
+                            </span>
+                          )}
                         </div>
-                        {index === 0 && (
-                          <span className="absolute top-2 left-2 bg-pink-600 text-white text-xs px-2 py-1 rounded">
-                            Main
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {formData.images.length === 0 && (
-                      <div className="col-span-full flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg text-gray-400">
-                        <ImagePlus className="h-12 w-12 mb-2" />
-                        <p>No images added yet</p>
-                        <p className="text-sm">Add image URLs above</p>
-                      </div>
-                    )}
+                      ))}
+                      
+                      {formData.images.length === 0 && (
+                        <div className="col-span-full flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg text-gray-400">
+                          <ImagePlus className="h-12 w-12 mb-2" />
+                          <p>No images added yet</p>
+                          <p className="text-sm">Upload images or add URLs above</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
