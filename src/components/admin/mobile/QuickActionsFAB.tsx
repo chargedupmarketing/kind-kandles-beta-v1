@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, X, Package, Truck, ShoppingCart, QrCode } from 'lucide-react';
+import { Plus, X, Package, Truck, ShoppingCart } from 'lucide-react';
 import { hapticLight, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
 
@@ -24,26 +24,26 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
   const actions: QuickAction[] = [
     {
       id: 'add-product',
-      label: 'Add Product',
+      label: 'Product',
       icon: Package,
       color: 'text-purple-400',
-      bgColor: 'bg-purple-500/20',
+      bgColor: 'bg-purple-600',
       section: 'products',
     },
     {
       id: 'quick-ship',
-      label: 'Quick Ship',
+      label: 'Ship',
       icon: Truck,
       color: 'text-blue-400',
-      bgColor: 'bg-blue-500/20',
+      bgColor: 'bg-blue-600',
       section: 'fulfillment',
     },
     {
       id: 'view-orders',
-      label: 'View Orders',
+      label: 'Orders',
       icon: ShoppingCart,
       color: 'text-green-400',
-      bgColor: 'bg-green-500/20',
+      bgColor: 'bg-green-600',
       section: 'orders',
     },
   ];
@@ -64,13 +64,13 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
 
       {/* FAB Container */}
-      <div className="fixed right-4 bottom-20 z-50 flex flex-col-reverse items-end space-y-reverse space-y-3">
+      <div className="fixed right-3 bottom-[72px] z-50 flex flex-col-reverse items-end space-y-reverse space-y-2">
         {/* Action Buttons */}
         {isOpen && actions.map((action, index) => {
           const Icon = action.icon;
@@ -78,19 +78,17 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
             <button
               key={action.id}
               onClick={() => handleAction(action)}
-              className="flex items-center space-x-3 animate-fade-in-up"
+              className="flex items-center space-x-2 animate-fade-in-up"
               style={{ 
-                animationDelay: `${index * 50}ms`,
+                animationDelay: `${index * 40}ms`,
                 animationFillMode: 'backwards'
               }}
             >
-              {/* Label */}
-              <span className="px-3 py-1.5 bg-slate-800 text-white text-sm font-medium rounded-lg shadow-lg whitespace-nowrap">
+              <span className="px-2.5 py-1 bg-slate-800/90 text-white text-xs font-medium rounded-lg shadow-lg">
                 {action.label}
               </span>
-              {/* Icon Button */}
-              <div className={`p-3 rounded-full shadow-lg ${action.bgColor} border border-slate-700`}>
-                <Icon className={`h-5 w-5 ${action.color}`} />
+              <div className={`p-2.5 rounded-full shadow-lg ${action.bgColor}`}>
+                <Icon className="h-4 w-4 text-white" />
               </div>
             </button>
           );
@@ -99,17 +97,13 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
         {/* Main FAB */}
         <button
           onClick={handleToggle}
-          className={`p-4 rounded-full shadow-lg transition-all duration-300 ${
+          className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
             isOpen 
               ? 'bg-slate-700 rotate-45' 
-              : 'bg-teal-600 hover:bg-teal-700'
+              : 'bg-teal-600 active:bg-teal-700'
           }`}
         >
-          {isOpen ? (
-            <X className="h-6 w-6 text-white" />
-          ) : (
-            <Plus className="h-6 w-6 text-white" />
-          )}
+          <Plus className="h-5 w-5 text-white" />
         </button>
       </div>
     </>

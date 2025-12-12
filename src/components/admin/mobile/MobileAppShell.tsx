@@ -124,37 +124,37 @@ export default function MobileAppShell({
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col">
-      {/* Mobile Header */}
-      <header className="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 safe-area-top">
-        <div className="px-4 py-3">
+      {/* Compact Mobile Header */}
+      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 safe-area-top">
+        <div className="px-3 py-2">
           <div className="flex items-center justify-between">
             {/* Logo & Title */}
             <div className="flex items-center space-x-2">
-              <div className="p-1.5 bg-teal-900/50 rounded-lg">
-                <Shield className="h-5 w-5 text-teal-400" />
+              <div className="p-1 bg-gradient-to-br from-teal-500/30 to-teal-600/10 rounded-lg">
+                <Shield className="h-4 w-4 text-teal-400" />
               </div>
               <div>
-                <h1 className="text-sm font-bold text-white">Kind Kandles</h1>
-                <p className="text-xs text-slate-400">Command Center</p>
+                <h1 className="text-xs font-bold text-white leading-none">Kind Kandles</h1>
+                <p className="text-[10px] text-slate-500">Admin</p>
               </div>
             </div>
 
             {/* Right Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1">
               {/* Maintenance Mode Badge */}
               {isMaintenanceMode && (
-                <div className="flex items-center space-x-1 bg-red-900/50 text-red-300 px-2 py-1 rounded-full">
-                  <AlertTriangle className="h-3 w-3" />
-                  <span className="text-xs font-medium">MAINT</span>
+                <div className="flex items-center space-x-0.5 bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full">
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                  <span className="text-[9px] font-bold">MAINT</span>
                 </div>
               )}
 
               {/* Notifications */}
-              <button className="relative p-2 hover:bg-slate-700 rounded-lg transition-colors">
-                <Bell className="h-5 w-5 text-slate-400" />
+              <button className="relative p-1.5 hover:bg-slate-800 rounded-lg transition-colors">
+                <Bell className="h-4 w-4 text-slate-400" />
                 {pendingOrderCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    {pendingOrderCount > 9 ? '9+' : pendingOrderCount}
+                  <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                    {pendingOrderCount > 9 ? '!' : pendingOrderCount}
                   </span>
                 )}
               </button>
@@ -163,9 +163,9 @@ export default function MobileAppShell({
               <div className="relative">
                 <button 
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors"
                 >
-                  <User className="h-5 w-5 text-slate-400" />
+                  <User className="h-4 w-4 text-slate-400" />
                 </button>
 
                 {showUserMenu && (
@@ -174,21 +174,21 @@ export default function MobileAppShell({
                       className="fixed inset-0 z-40"
                       onClick={() => setShowUserMenu(false)}
                     />
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
-                      <div className="p-3 border-b border-slate-700">
-                        <p className="text-sm font-medium text-white truncate">
+                    <div className="absolute right-0 top-full mt-1 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                      <div className="px-3 py-2 border-b border-slate-700">
+                        <p className="text-xs font-medium text-white truncate">
                           {user?.name || user?.email || 'Admin'}
                         </p>
-                        <p className="text-xs text-slate-400 capitalize">
+                        <p className="text-[10px] text-slate-500 capitalize">
                           {user?.role?.replace('_', ' ') || 'Admin'}
                         </p>
                       </div>
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center space-x-2 px-3 py-2.5 text-red-400 hover:bg-slate-700/50 transition-colors"
+                        className="w-full flex items-center space-x-2 px-3 py-2 text-red-400 hover:bg-slate-700/50 transition-colors"
                       >
-                        <LogOut className="h-4 w-4" />
-                        <span className="text-sm">Logout</span>
+                        <LogOut className="h-3.5 w-3.5" />
+                        <span className="text-xs">Logout</span>
                       </button>
                     </div>
                   </>
@@ -200,7 +200,7 @@ export default function MobileAppShell({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto pb-20">
+      <main className="flex-1 overflow-auto pb-16">
         {renderContent()}
       </main>
 
