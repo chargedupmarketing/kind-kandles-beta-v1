@@ -67,15 +67,15 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
   const imageUrl = product.images?.[0]?.url || '/placeholder-product.jpg';
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
       <div 
-        className="bg-slate-800 w-full max-h-[85vh] rounded-t-2xl overflow-hidden animate-slide-up"
+        className="bg-white w-full max-h-[85vh] rounded-t-2xl overflow-hidden animate-slide-up shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-slate-700 rounded-lg overflow-hidden">
+            <div className="w-12 h-12 bg-gray-100 rounded-lg overflow-hidden">
               <img
                 src={imageUrl}
                 alt={product.title}
@@ -86,17 +86,17 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
               />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white truncate max-w-[200px]">
+              <h2 className="text-sm font-semibold text-gray-900 truncate max-w-[200px]">
                 {product.title}
               </h2>
-              <p className="text-xs text-slate-400">Quick Edit</p>
+              <p className="text-xs text-gray-500">Quick Edit</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-slate-400" />
+            <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
@@ -104,29 +104,29 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
         <div className="p-4 space-y-5 overflow-auto max-h-[60vh]">
           {/* Price */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Price
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white text-lg font-medium focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-lg font-medium focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Compare at Price */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Compare at Price (optional)
             </label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="number"
                 step="0.01"
@@ -134,23 +134,23 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
                 value={compareAtPrice}
                 onChange={(e) => setCompareAtPrice(e.target.value)}
                 placeholder="Original price"
-                className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-slate-500"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder-gray-400"
               />
             </div>
           </div>
 
           {/* Stock Quantity */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Stock Quantity
             </label>
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => handleQuantityChange(-1)}
                 disabled={quantity === 0}
-                className="p-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                className="p-3 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
               >
-                <Minus className="h-5 w-5 text-white" />
+                <Minus className="h-5 w-5 text-gray-700" />
               </button>
               <div className="flex-1 text-center">
                 <input
@@ -158,27 +158,27 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
                   min="0"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full text-center py-3 bg-slate-700 border border-slate-600 rounded-lg text-white text-2xl font-bold focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full text-center py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 text-2xl font-bold focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 />
               </div>
               <button
                 onClick={() => handleQuantityChange(1)}
-                className="p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors"
+                className="p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                <Plus className="h-5 w-5 text-white" />
+                <Plus className="h-5 w-5 text-gray-700" />
               </button>
             </div>
             {quantity === 0 && (
-              <p className="text-xs text-red-400 mt-2">Product will show as out of stock</p>
+              <p className="text-xs text-red-600 mt-2">Product will show as out of stock</p>
             )}
             {quantity > 0 && quantity <= 5 && (
-              <p className="text-xs text-amber-400 mt-2">Low stock warning will be shown</p>
+              <p className="text-xs text-amber-600 mt-2">Low stock warning will be shown</p>
             )}
           </div>
 
           {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Status
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -194,9 +194,9 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
                       ? s === 'active'
                         ? 'bg-green-600 text-white'
                         : s === 'draft'
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-slate-600 text-white'
-                      : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-gray-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
                   {s}
@@ -207,25 +207,25 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
 
           {/* Error */}
           {error && (
-            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-gray-200 bg-gray-50">
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
+              className="flex-1 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors text-sm font-medium"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-600/50 text-white rounded-lg transition-colors text-sm font-medium"
+              className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg transition-colors text-sm font-medium"
             >
               {loading ? (
                 <>
@@ -245,4 +245,3 @@ export default function QuickEditProduct({ product, onClose, onSuccess }: QuickE
     </div>
   );
 }
-

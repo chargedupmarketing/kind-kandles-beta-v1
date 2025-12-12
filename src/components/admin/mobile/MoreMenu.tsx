@@ -58,6 +58,7 @@ interface MenuItem {
   label: string;
   icon: typeof Users;
   color: string;
+  bgColor: string;
   description?: string;
   badge?: string;
   badgeColor?: string;
@@ -76,44 +77,45 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
       id: 'store',
       label: 'Store',
       items: [
-        { id: 'customers', label: 'Customers', icon: Users, color: 'text-green-400 bg-green-500/20' },
-        { id: 'shipping', label: 'Shipping', icon: Truck, color: 'text-purple-400 bg-purple-500/20' },
-        { id: 'fulfillment', label: 'Fulfill', icon: ClipboardList, color: 'text-blue-400 bg-blue-500/20' },
-        { id: 'reviews', label: 'Reviews', icon: Star, color: 'text-amber-400 bg-amber-500/20' },
-        { id: 'discounts', label: 'Discounts', icon: Tag, color: 'text-pink-400 bg-pink-500/20' },
+        { id: 'customers', label: 'Customers', icon: Users, color: 'text-green-600', bgColor: 'bg-green-50' },
+        { id: 'shipping', label: 'Shipping', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+        { id: 'fulfillment', label: 'Fulfill', icon: ClipboardList, color: 'text-blue-600', bgColor: 'bg-blue-50' },
+        { id: 'reviews', label: 'Reviews', icon: Star, color: 'text-amber-600', bgColor: 'bg-amber-50' },
+        { id: 'discounts', label: 'Discounts', icon: Tag, color: 'text-pink-600', bgColor: 'bg-pink-50' },
       ],
     },
     {
       id: 'website',
       label: 'Website',
       items: [
-        { id: 'promotions', label: 'Promos', icon: Megaphone, color: 'text-orange-400 bg-orange-500/20' },
-        { id: 'featured', label: 'Featured', icon: Star, color: 'text-yellow-400 bg-yellow-500/20' },
-        { id: 'email-templates', label: 'Emails', icon: Mail, color: 'text-cyan-400 bg-cyan-500/20' },
-        { id: 'blog', label: 'Blog', icon: FileText, color: 'text-indigo-400 bg-indigo-500/20' },
-        { id: 'menu', label: 'Nav', icon: Menu, color: 'text-slate-400 bg-slate-500/20' },
-        { id: 'files', label: 'Files', icon: HardDrive, color: 'text-emerald-400 bg-emerald-500/20' },
+        { id: 'promotions', label: 'Promos', icon: Megaphone, color: 'text-orange-600', bgColor: 'bg-orange-50' },
+        { id: 'featured', label: 'Featured', icon: Star, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
+        { id: 'email-templates', label: 'Emails', icon: Mail, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
+        { id: 'blog', label: 'Blog', icon: FileText, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
+        { id: 'menu', label: 'Nav', icon: Menu, color: 'text-gray-600', bgColor: 'bg-gray-100' },
+        { id: 'files', label: 'Files', icon: HardDrive, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
       ],
     },
     {
       id: 'engagement',
       label: 'Engage',
       items: [
-        { id: 'contacts', label: 'Contacts', icon: MessageSquare, color: 'text-teal-400 bg-teal-500/20' },
-        { id: 'survey', label: 'Survey', icon: Gift, color: 'text-rose-400 bg-rose-500/20' },
-        { id: 'stories', label: 'Stories', icon: BookOpen, color: 'text-violet-400 bg-violet-500/20' },
+        { id: 'contacts', label: 'Contacts', icon: MessageSquare, color: 'text-teal-600', bgColor: 'bg-teal-50' },
+        { id: 'survey', label: 'Survey', icon: Gift, color: 'text-rose-600', bgColor: 'bg-rose-50' },
+        { id: 'stories', label: 'Stories', icon: BookOpen, color: 'text-violet-600', bgColor: 'bg-violet-50' },
       ],
     },
     {
       id: 'system',
       label: 'System',
       items: [
-        { id: 'settings', label: 'Settings', icon: Cog, color: 'text-slate-400 bg-slate-500/20' },
+        { id: 'settings', label: 'Settings', icon: Cog, color: 'text-gray-600', bgColor: 'bg-gray-100' },
         { 
           id: 'admin-settings', 
           label: 'Admin', 
           icon: Settings, 
-          color: 'text-red-400 bg-red-500/20',
+          color: 'text-red-600',
+          bgColor: 'bg-red-50',
           badge: isMaintenanceMode ? '!' : undefined,
           badgeColor: 'bg-red-500'
         },
@@ -121,21 +123,24 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
           id: 'users', 
           label: 'Users', 
           icon: UserCog, 
-          color: 'text-blue-400 bg-blue-500/20',
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
           requiresSuperAdmin: true
         },
         { 
           id: 'sub-levels', 
           label: 'Teams', 
           icon: UsersRound, 
-          color: 'text-purple-400 bg-purple-500/20',
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
           requiresPermission: 'manage_sub_levels'
         },
         { 
           id: 'ai-assistant', 
           label: 'AI', 
           icon: Sparkles, 
-          color: 'text-teal-400 bg-gradient-to-br from-teal-500/30 to-purple-500/30',
+          color: 'text-teal-600',
+          bgColor: 'bg-gradient-to-br from-teal-50 to-purple-50',
           badge: '✨',
           badgeColor: 'bg-purple-500'
         },
@@ -174,16 +179,16 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
 
   if (selectedSection) {
     return (
-      <div className="flex flex-col h-full">
-        <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 px-3 py-2 border-b border-slate-800">
+      <div className="flex flex-col h-full bg-gray-50">
+        <div className="sticky top-0 bg-white z-10 px-3 py-2 border-b border-gray-200 shadow-sm">
           <div className="flex items-center space-x-2">
             <button
               onClick={handleBack}
-              className="p-1.5 -ml-1 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 -ml-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <ChevronLeft className="h-5 w-5 text-slate-400" />
+              <ChevronLeft className="h-5 w-5 text-gray-600" />
             </button>
-            <h2 className="text-sm font-semibold text-white capitalize">
+            <h2 className="text-sm font-semibold text-gray-900 capitalize">
               {selectedSection.replace(/-/g, ' ')}
             </h2>
           </div>
@@ -196,37 +201,37 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Compact Search Toggle */}
-      <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 border-b border-slate-800">
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm">
         {showSearch ? (
           <div className="px-3 py-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full pl-8 pr-8 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-teal-500 text-sm"
+                className="w-full pl-8 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-teal-500 text-sm"
               />
               <button
                 onClick={() => { setShowSearch(false); setSearchQuery(''); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-700 rounded"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded"
               >
-                <X className="h-3.5 w-3.5 text-slate-400" />
+                <X className="h-3.5 w-3.5 text-gray-500" />
               </button>
             </div>
           </div>
         ) : (
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">All Features</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">All Features</span>
             <button
               onClick={() => setShowSearch(true)}
-              className="p-1.5 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <Search className="h-4 w-4 text-slate-500" />
+              <Search className="h-4 w-4 text-gray-500" />
             </button>
           </div>
         )}
@@ -236,13 +241,13 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
       <div className="flex-1 overflow-auto p-3 space-y-4">
         {searchFilteredCategories.length === 0 ? (
           <div className="text-center py-12">
-            <Search className="h-10 w-10 text-slate-600 mx-auto mb-2" />
-            <p className="text-xs text-slate-500">No features found</p>
+            <Search className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+            <p className="text-xs text-gray-500">No features found</p>
           </div>
         ) : (
           searchFilteredCategories.map((category) => (
             <div key={category.id}>
-              <h3 className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2 px-1">
+              <h3 className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-2 px-1">
                 {category.label}
               </h3>
               <div className="grid grid-cols-4 gap-2">
@@ -256,8 +261,8 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
                       onClick={() => handleItemClick(item.id)}
                       className={`relative flex flex-col items-center p-2.5 rounded-xl transition-all active:scale-95 ${
                         isActive
-                          ? 'bg-teal-600/20 border border-teal-500/30'
-                          : 'bg-slate-800/50 active:bg-slate-700/80 border border-transparent'
+                          ? 'bg-teal-50 border-2 border-teal-500'
+                          : 'bg-white border border-gray-100 shadow-sm active:bg-gray-50'
                       }`}
                     >
                       {item.badge && (
@@ -265,11 +270,11 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
                           {item.badge}
                         </span>
                       )}
-                      <div className={`p-2 rounded-lg mb-1 ${item.color}`}>
-                        <Icon className="h-4 w-4" />
+                      <div className={`p-2 rounded-lg mb-1 ${item.bgColor}`}>
+                        <Icon className={`h-4 w-4 ${item.color}`} />
                       </div>
                       <span className={`text-[10px] font-medium text-center leading-tight ${
-                        isActive ? 'text-teal-300' : 'text-slate-400'
+                        isActive ? 'text-teal-700' : 'text-gray-600'
                       }`}>
                         {item.label}
                       </span>
@@ -284,4 +289,3 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
     </div>
   );
 }
-

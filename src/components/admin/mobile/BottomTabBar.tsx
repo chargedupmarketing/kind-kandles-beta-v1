@@ -29,30 +29,30 @@ export default function BottomTabBar({
       id: 'home',
       label: 'Home',
       icon: BarChart3,
-      activeColor: 'text-teal-400',
-      activeBg: 'bg-teal-500/20',
+      activeColor: 'text-teal-600',
+      activeBg: 'bg-teal-50',
     },
     {
       id: 'orders',
       label: 'Orders',
       icon: ShoppingCart,
-      activeColor: 'text-blue-400',
-      activeBg: 'bg-blue-500/20',
+      activeColor: 'text-blue-600',
+      activeBg: 'bg-blue-50',
       badge: pendingOrderCount,
     },
     {
       id: 'products',
       label: 'Products',
       icon: Package,
-      activeColor: 'text-purple-400',
-      activeBg: 'bg-purple-500/20',
+      activeColor: 'text-purple-600',
+      activeBg: 'bg-purple-50',
     },
     {
       id: 'more',
       label: 'More',
       icon: MoreHorizontal,
-      activeColor: 'text-slate-300',
-      activeBg: 'bg-slate-500/20',
+      activeColor: 'text-gray-700',
+      activeBg: 'bg-gray-100',
     },
   ];
 
@@ -62,7 +62,7 @@ export default function BottomTabBar({
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 z-50 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom shadow-lg">
       <div className="flex items-center justify-around h-14 px-2">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -82,7 +82,7 @@ export default function BottomTabBar({
               <div className="relative">
                 <Icon 
                   className={`h-5 w-5 transition-colors ${
-                    isActive ? tab.activeColor : 'text-slate-500'
+                    isActive ? tab.activeColor : 'text-gray-400'
                   }`}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
@@ -97,7 +97,7 @@ export default function BottomTabBar({
 
               {/* Label */}
               <span className={`text-[10px] mt-0.5 font-medium transition-colors ${
-                isActive ? tab.activeColor : 'text-slate-500'
+                isActive ? tab.activeColor : 'text-gray-400'
               }`}>
                 {tab.label}
               </span>
@@ -108,4 +108,3 @@ export default function BottomTabBar({
     </nav>
   );
 }
-

@@ -141,7 +141,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
     const qty = quantity ?? 0;
     if (qty === 0) return { color: 'bg-red-500 text-white', label: '0' };
     if (qty <= 5) return { color: 'bg-amber-500 text-white', label: String(qty) };
-    return { color: 'bg-green-500/20 text-green-400', label: String(qty) };
+    return { color: 'bg-green-100 text-green-700', label: String(qty) };
   };
 
   const sortOptions: { id: SortOption; label: string; short: string }[] = [
@@ -152,18 +152,18 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Compact Header */}
-      <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 border-b border-slate-800">
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between px-3 py-2">
           {/* View Mode & Sort */}
           <div className="flex items-center space-x-2">
             {/* View Toggle */}
-            <div className="flex items-center bg-slate-800/80 rounded-lg p-0.5">
+            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
               <button
                 onClick={() => handleViewModeChange('grid')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-slate-700 text-white' : 'text-slate-500'
+                  viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
                 }`}
               >
                 <Grid className="h-4 w-4" />
@@ -171,7 +171,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
               <button
                 onClick={() => handleViewModeChange('list')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-slate-700 text-white' : 'text-slate-500'
+                  viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
                 }`}
               >
                 <List className="h-4 w-4" />
@@ -182,7 +182,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             <div className="relative">
               <button
                 onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center space-x-1 px-2 py-1.5 bg-slate-800/80 rounded-lg text-xs text-slate-400"
+                className="flex items-center space-x-1 px-2 py-1.5 bg-gray-100 rounded-lg text-xs text-gray-600"
               >
                 <SortAsc className="h-3.5 w-3.5" />
                 <span>{sortOptions.find(s => s.id === sortBy)?.short}</span>
@@ -195,7 +195,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setShowSortMenu(false)}
                   />
-                  <div className="absolute left-0 top-full mt-1 w-36 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+                  <div className="absolute left-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
                     {sortOptions.map((option) => (
                       <button
                         key={option.id}
@@ -203,7 +203,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                         className={`w-full px-3 py-2 text-left text-xs transition-colors ${
                           sortBy === option.id
                             ? 'bg-teal-600 text-white'
-                            : 'text-slate-300 hover:bg-slate-700'
+                            : 'text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         {option.label}
@@ -219,7 +219,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-1.5 rounded-lg transition-colors ${
-              showSearch ? 'bg-teal-600 text-white' : 'bg-slate-800/80 text-slate-400'
+              showSearch ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600'
             }`}
           >
             <Search className="h-4 w-4" />
@@ -230,14 +230,14 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
         {showSearch && (
           <div className="px-3 pb-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full pl-8 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
           </div>
@@ -249,21 +249,21 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
         {loading && products.length === 0 ? (
           <div className={`p-3 ${viewMode === 'grid' ? 'grid grid-cols-3 gap-2' : 'space-y-2'}`}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="bg-slate-800/50 rounded-lg overflow-hidden animate-pulse">
+              <div key={i} className="bg-white rounded-lg overflow-hidden animate-pulse shadow-sm">
                 {viewMode === 'grid' ? (
                   <>
-                    <div className="aspect-square bg-slate-700" />
+                    <div className="aspect-square bg-gray-200" />
                     <div className="p-2">
-                      <div className="h-3 w-full bg-slate-700 rounded mb-1" />
-                      <div className="h-3 w-10 bg-slate-700 rounded" />
+                      <div className="h-3 w-full bg-gray-200 rounded mb-1" />
+                      <div className="h-3 w-10 bg-gray-200 rounded" />
                     </div>
                   </>
                 ) : (
                   <div className="flex items-center p-2">
-                    <div className="w-12 h-12 bg-slate-700 rounded-lg" />
+                    <div className="w-12 h-12 bg-gray-200 rounded-lg" />
                     <div className="ml-2 flex-1">
-                      <div className="h-3 w-full bg-slate-700 rounded mb-1" />
-                      <div className="h-3 w-16 bg-slate-700 rounded" />
+                      <div className="h-3 w-full bg-gray-200 rounded mb-1" />
+                      <div className="h-3 w-16 bg-gray-200 rounded" />
                     </div>
                   </div>
                 )}
@@ -272,9 +272,9 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           </div>
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <Package className="h-12 w-12 text-slate-600 mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-1">No products found</h3>
-            <p className="text-xs text-slate-500 text-center">
+            <Package className="h-12 w-12 text-gray-300 mb-3" />
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">No products found</h3>
+            <p className="text-xs text-gray-500 text-center">
               {searchQuery ? 'Try different search' : 'Add products to get started'}
             </p>
           </div>
@@ -282,7 +282,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           <div className="p-3">
             {refreshing && (
               <div className="flex items-center justify-center py-1 mb-2">
-                <RefreshCw className="h-4 w-4 text-teal-400 animate-spin" />
+                <RefreshCw className="h-4 w-4 text-teal-600 animate-spin" />
               </div>
             )}
 
@@ -296,10 +296,10 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     <button
                       key={product.id}
                       onClick={() => handleQuickEdit(product)}
-                      className="bg-slate-800/50 rounded-lg overflow-hidden text-left active:scale-[0.98] transition-transform"
+                      className="bg-white rounded-lg overflow-hidden text-left active:scale-[0.98] transition-transform shadow-sm border border-gray-100"
                     >
                       {/* Image */}
-                      <div className="relative aspect-square bg-slate-700">
+                      <div className="relative aspect-square bg-gray-100">
                         <img
                           src={imageUrl}
                           alt={product.title}
@@ -313,17 +313,17 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                           {stockStatus.label}
                         </span>
                         {/* Edit Icon */}
-                        <div className="absolute top-1 right-1 p-1 bg-black/50 rounded">
-                          <Edit2 className="h-2.5 w-2.5 text-white" />
+                        <div className="absolute top-1 right-1 p-1 bg-white/80 rounded shadow-sm">
+                          <Edit2 className="h-2.5 w-2.5 text-gray-600" />
                         </div>
                       </div>
 
                       {/* Info */}
                       <div className="p-2">
-                        <h3 className="text-[10px] font-medium text-white line-clamp-2 leading-tight mb-1">
+                        <h3 className="text-[10px] font-medium text-gray-900 line-clamp-2 leading-tight mb-1">
                           {product.title}
                         </h3>
-                        <span className="text-xs font-bold text-white">
+                        <span className="text-xs font-bold text-gray-900">
                           {formatCurrency(product.price)}
                         </span>
                       </div>
@@ -341,10 +341,10 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     <button
                       key={product.id}
                       onClick={() => handleQuickEdit(product)}
-                      className="w-full bg-slate-800/50 rounded-lg p-2 flex items-center text-left active:scale-[0.99] transition-transform"
+                      className="w-full bg-white rounded-lg p-2 flex items-center text-left active:scale-[0.99] transition-transform shadow-sm border border-gray-100"
                     >
                       {/* Image */}
-                      <div className="relative w-12 h-12 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                         <img
                           src={imageUrl}
                           alt={product.title}
@@ -357,11 +357,11 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
 
                       {/* Info */}
                       <div className="ml-2.5 flex-1 min-w-0">
-                        <h3 className="text-xs font-medium text-white truncate">
+                        <h3 className="text-xs font-medium text-gray-900 truncate">
                           {product.title}
                         </h3>
                         <div className="flex items-center space-x-2 mt-0.5">
-                          <span className="text-xs font-bold text-white">
+                          <span className="text-xs font-bold text-gray-900">
                             {formatCurrency(product.price)}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${stockStatus.color}`}>
@@ -371,7 +371,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                       </div>
 
                       {/* Edit */}
-                      <Edit2 className="h-4 w-4 text-slate-500 ml-2" />
+                      <Edit2 className="h-4 w-4 text-gray-400 ml-2" />
                     </button>
                   );
                 })}
@@ -383,7 +383,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="w-full py-2.5 mt-3 text-xs text-teal-400 hover:text-teal-300 font-medium"
+                className="w-full py-2.5 mt-3 text-xs text-teal-600 hover:text-teal-700 font-medium"
               >
                 {loading ? 'Loading...' : 'Load more'}
               </button>

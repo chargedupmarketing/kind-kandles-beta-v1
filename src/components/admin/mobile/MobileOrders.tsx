@@ -160,7 +160,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
       case 'cancelled':
         return { bg: 'bg-red-500', text: 'text-white', icon: XCircle, label: 'X' };
       default:
-        return { bg: 'bg-slate-500', text: 'text-white', icon: Package, label: '?' };
+        return { bg: 'bg-gray-500', text: 'text-white', icon: Package, label: '?' };
     }
   };
 
@@ -173,9 +173,9 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-gray-50">
       {/* Compact Header */}
-      <div className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-10 border-b border-slate-800">
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm">
         {/* Status Filter Pills */}
         <div className="flex items-center px-3 py-2 space-x-1 overflow-x-auto scrollbar-hide">
           {statusFilters.map((filter) => (
@@ -185,7 +185,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
                 filterStatus === filter.id
                   ? 'bg-teal-600 text-white shadow-sm'
-                  : 'bg-slate-800/80 text-slate-400 active:bg-slate-700'
+                  : 'bg-gray-100 text-gray-600 active:bg-gray-200'
               }`}
             >
               {filter.label}
@@ -196,7 +196,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-1.5 rounded-full transition-colors ${
-              showSearch ? 'bg-teal-600 text-white' : 'bg-slate-800/80 text-slate-400'
+              showSearch ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600'
             }`}
           >
             <Search className="h-4 w-4" />
@@ -207,14 +207,14 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
         {showSearch && (
           <div className="px-3 pb-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search orders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full pl-8 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:ring-1 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
           </div>
@@ -226,20 +226,20 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
         {loading && orders.length === 0 ? (
           <div className="p-3 space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="bg-slate-800/50 rounded-lg p-3 animate-pulse">
+              <div key={i} className="bg-white rounded-lg p-3 animate-pulse shadow-sm">
                 <div className="flex justify-between mb-1.5">
-                  <div className="h-3.5 w-28 bg-slate-700 rounded" />
-                  <div className="h-3.5 w-14 bg-slate-700 rounded" />
+                  <div className="h-3.5 w-28 bg-gray-200 rounded" />
+                  <div className="h-3.5 w-14 bg-gray-200 rounded" />
                 </div>
-                <div className="h-3 w-20 bg-slate-700 rounded" />
+                <div className="h-3 w-20 bg-gray-200 rounded" />
               </div>
             ))}
           </div>
         ) : orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <Package className="h-12 w-12 text-slate-600 mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-1">No orders found</h3>
-            <p className="text-xs text-slate-500 text-center">
+            <Package className="h-12 w-12 text-gray-300 mb-3" />
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">No orders found</h3>
+            <p className="text-xs text-gray-500 text-center">
               {searchQuery || filterStatus !== 'all'
                 ? 'Try different filters'
                 : 'Orders appear here'}
@@ -249,7 +249,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
           <div className="p-3 space-y-2">
             {refreshing && (
               <div className="flex items-center justify-center py-1">
-                <RefreshCw className="h-4 w-4 text-teal-400 animate-spin" />
+                <RefreshCw className="h-4 w-4 text-teal-600 animate-spin" />
               </div>
             )}
 
@@ -260,7 +260,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
               return (
                 <div
                   key={order.id}
-                  className="bg-slate-800/50 rounded-lg overflow-hidden"
+                  className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100"
                 >
                   {/* Compact Order Row */}
                   <button
@@ -275,14 +275,14 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                     {/* Order Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-white truncate pr-2">
+                        <span className="text-sm font-medium text-gray-900 truncate pr-2">
                           {order.customer_name || 'Unknown'}
                         </span>
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-sm font-bold text-gray-900">
                           {formatCurrency(order.total || 0)}
                         </span>
                       </div>
-                      <div className="flex items-center text-[10px] text-slate-500 mt-0.5">
+                      <div className="flex items-center text-[10px] text-gray-500 mt-0.5">
                         <span>#{order.order_number?.slice(-6)}</span>
                         <span className="mx-1">•</span>
                         <span>{formatTimeAgo(order.created_at)}</span>
@@ -296,18 +296,18 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                     </div>
 
                     {/* Expand Indicator */}
-                    <ChevronDown className={`h-4 w-4 text-slate-500 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`h-4 w-4 text-gray-400 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="px-3 pb-3 border-t border-slate-700/50">
+                    <div className="px-3 pb-3 border-t border-gray-100">
                       {/* Contact Info */}
                       <div className="pt-2 space-y-1.5">
                         {order.customer_email && (
                           <a
                             href={`mailto:${order.customer_email}`}
-                            className="flex items-center space-x-2 text-xs text-slate-400 hover:text-teal-400"
+                            className="flex items-center space-x-2 text-xs text-gray-600 hover:text-teal-600"
                           >
                             <Mail className="h-3 w-3" />
                             <span className="truncate">{order.customer_email}</span>
@@ -316,14 +316,14 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                         {order.customer_phone && (
                           <a
                             href={`tel:${order.customer_phone}`}
-                            className="flex items-center space-x-2 text-xs text-slate-400 hover:text-teal-400"
+                            className="flex items-center space-x-2 text-xs text-gray-600 hover:text-teal-600"
                           >
                             <Phone className="h-3 w-3" />
                             <span>{order.customer_phone}</span>
                           </a>
                         )}
                         {order.shipping_address && (
-                          <div className="flex items-start space-x-2 text-xs text-slate-500">
+                          <div className="flex items-start space-x-2 text-xs text-gray-500">
                             <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                             <span className="line-clamp-1">
                               {[
@@ -354,7 +354,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                             e.stopPropagation();
                             onNavigate('orders');
                           }}
-                          className="flex items-center justify-center space-x-1 px-3 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-xs font-medium"
+                          className="flex items-center justify-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium"
                         >
                           <span>Details</span>
                           <ChevronRight className="h-3.5 w-3.5" />
@@ -371,7 +371,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="w-full py-2.5 text-xs text-teal-400 hover:text-teal-300 font-medium"
+                className="w-full py-2.5 text-xs text-teal-600 hover:text-teal-700 font-medium"
               >
                 {loading ? 'Loading...' : 'Load more'}
               </button>

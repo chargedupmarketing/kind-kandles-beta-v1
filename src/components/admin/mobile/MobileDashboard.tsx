@@ -180,7 +180,7 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       case 'shipped': return 'bg-purple-500 text-white';
       case 'delivered': return 'bg-green-500 text-white';
       case 'cancelled': return 'bg-red-500 text-white';
-      default: return 'bg-slate-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
   };
 
@@ -189,17 +189,17 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       <div className="p-3 space-y-3">
         <div className="grid grid-cols-2 gap-2">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-slate-800/50 rounded-lg p-3 animate-pulse">
-              <div className="h-3 w-12 bg-slate-700 rounded mb-2" />
-              <div className="h-6 w-16 bg-slate-700 rounded" />
+            <div key={i} className="bg-white rounded-lg p-3 animate-pulse shadow-sm">
+              <div className="h-3 w-12 bg-gray-200 rounded mb-2" />
+              <div className="h-6 w-16 bg-gray-200 rounded" />
             </div>
           ))}
         </div>
-        <div className="bg-slate-800/50 rounded-lg p-3 animate-pulse">
-          <div className="h-4 w-24 bg-slate-700 rounded mb-3" />
+        <div className="bg-white rounded-lg p-3 animate-pulse shadow-sm">
+          <div className="h-4 w-24 bg-gray-200 rounded mb-3" />
           {[1, 2, 3].map((i) => (
-            <div key={i} className="py-2 border-t border-slate-700/50 first:border-0">
-              <div className="h-3 w-full bg-slate-700 rounded" />
+            <div key={i} className="py-2 border-t border-gray-100 first:border-0">
+              <div className="h-3 w-full bg-gray-200 rounded" />
             </div>
           ))}
         </div>
@@ -214,14 +214,14 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       {/* Refresh Indicator */}
       {refreshing && (
         <div className="flex items-center justify-center py-1">
-          <RefreshCw className="h-4 w-4 text-teal-400 animate-spin" />
+          <RefreshCw className="h-4 w-4 text-teal-600 animate-spin" />
         </div>
       )}
 
       {/* Compact Header Row */}
       <div className="flex items-center justify-between">
         {/* Date Range Pills */}
-        <div className="flex items-center space-x-1 bg-slate-800/50 rounded-lg p-0.5">
+        <div className="flex items-center space-x-1 bg-white rounded-lg p-0.5 shadow-sm border border-gray-100">
           {dateRangeOptions.slice(0, 4).map((option) => (
             <button
               key={option.id}
@@ -229,7 +229,7 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
               className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                 dateRange === option.id
                   ? 'bg-teal-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-gray-500 hover:text-gray-700'
               }`}
             >
               {option.shortLabel}
@@ -240,7 +240,7 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
@@ -251,76 +251,84 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
         {/* Orders */}
         <button
           onClick={() => onNavigate('orders')}
-          className="bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/20 rounded-lg p-3 text-left active:scale-[0.98] transition-transform"
+          className="bg-white border border-blue-100 rounded-lg p-3 text-left active:scale-[0.98] transition-transform shadow-sm"
         >
           <div className="flex items-center justify-between mb-1">
-            <ShoppingCart className="h-4 w-4 text-blue-400" />
+            <div className="p-1.5 bg-blue-50 rounded-lg">
+              <ShoppingCart className="h-4 w-4 text-blue-600" />
+            </div>
             {stats.ordersTrend !== 0 && (
-              <span className={`flex items-center text-[10px] font-medium ${stats.ordersTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`flex items-center text-[10px] font-medium ${stats.ordersTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {stats.ordersTrend > 0 ? <TrendingUp className="h-2.5 w-2.5 mr-0.5" /> : <TrendingDown className="h-2.5 w-2.5 mr-0.5" />}
                 {Math.abs(stats.ordersTrend)}%
               </span>
             )}
           </div>
-          <div className="text-xl font-bold text-white">{stats.periodOrders}</div>
-          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Orders</div>
+          <div className="text-xl font-bold text-gray-900">{stats.periodOrders}</div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wide">Orders</div>
         </button>
 
         {/* Revenue */}
-        <div className="bg-gradient-to-br from-green-600/20 to-green-600/5 border border-green-500/20 rounded-lg p-3">
+        <div className="bg-white border border-green-100 rounded-lg p-3 shadow-sm">
           <div className="flex items-center justify-between mb-1">
-            <DollarSign className="h-4 w-4 text-green-400" />
+            <div className="p-1.5 bg-green-50 rounded-lg">
+              <DollarSign className="h-4 w-4 text-green-600" />
+            </div>
             {stats.revenueTrend !== 0 && (
-              <span className={`flex items-center text-[10px] font-medium ${stats.revenueTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`flex items-center text-[10px] font-medium ${stats.revenueTrend > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {stats.revenueTrend > 0 ? <TrendingUp className="h-2.5 w-2.5 mr-0.5" /> : <TrendingDown className="h-2.5 w-2.5 mr-0.5" />}
                 {Math.abs(stats.revenueTrend)}%
               </span>
             )}
           </div>
-          <div className="text-xl font-bold text-white">{formatCurrency(stats.periodRevenue)}</div>
-          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Revenue</div>
+          <div className="text-xl font-bold text-gray-900">{formatCurrency(stats.periodRevenue)}</div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wide">Revenue</div>
         </div>
 
         {/* Pending */}
         <button
           onClick={() => onNavigate('fulfillment')}
-          className={`rounded-lg p-3 text-left active:scale-[0.98] transition-transform ${
+          className={`rounded-lg p-3 text-left active:scale-[0.98] transition-transform shadow-sm ${
             stats.pendingOrders > 0 
-              ? 'bg-gradient-to-br from-amber-600/30 to-amber-600/5 border border-amber-500/30' 
-              : 'bg-slate-800/50 border border-slate-700/50'
+              ? 'bg-amber-50 border border-amber-200' 
+              : 'bg-white border border-gray-100'
           }`}
         >
           <div className="flex items-center justify-between mb-1">
-            <Clock className={`h-4 w-4 ${stats.pendingOrders > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+            <div className={`p-1.5 rounded-lg ${stats.pendingOrders > 0 ? 'bg-amber-100' : 'bg-gray-100'}`}>
+              <Clock className={`h-4 w-4 ${stats.pendingOrders > 0 ? 'text-amber-600' : 'text-gray-500'}`} />
+            </div>
             {stats.pendingOrders > 0 && (
-              <span className="flex items-center text-[10px] font-medium text-amber-400">
+              <span className="flex items-center text-[10px] font-medium text-amber-600">
                 <Zap className="h-2.5 w-2.5 mr-0.5" />
                 Action
               </span>
             )}
           </div>
-          <div className={`text-xl font-bold ${stats.pendingOrders > 0 ? 'text-amber-400' : 'text-white'}`}>
+          <div className={`text-xl font-bold ${stats.pendingOrders > 0 ? 'text-amber-600' : 'text-gray-900'}`}>
             {stats.pendingOrders}
           </div>
-          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Pending</div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wide">Pending</div>
         </button>
 
         {/* Low Stock */}
         <button
           onClick={() => onNavigate('products')}
-          className={`rounded-lg p-3 text-left active:scale-[0.98] transition-transform ${
+          className={`rounded-lg p-3 text-left active:scale-[0.98] transition-transform shadow-sm ${
             stats.lowStockCount > 10 
-              ? 'bg-gradient-to-br from-red-600/30 to-red-600/5 border border-red-500/30' 
-              : 'bg-slate-800/50 border border-slate-700/50'
+              ? 'bg-red-50 border border-red-200' 
+              : 'bg-white border border-gray-100'
           }`}
         >
           <div className="flex items-center justify-between mb-1">
-            <AlertTriangle className={`h-4 w-4 ${stats.lowStockCount > 10 ? 'text-red-400' : 'text-slate-500'}`} />
+            <div className={`p-1.5 rounded-lg ${stats.lowStockCount > 10 ? 'bg-red-100' : 'bg-gray-100'}`}>
+              <AlertTriangle className={`h-4 w-4 ${stats.lowStockCount > 10 ? 'text-red-600' : 'text-gray-500'}`} />
+            </div>
           </div>
-          <div className={`text-xl font-bold ${stats.lowStockCount > 10 ? 'text-red-400' : 'text-white'}`}>
+          <div className={`text-xl font-bold ${stats.lowStockCount > 10 ? 'text-red-600' : 'text-gray-900'}`}>
             {stats.lowStockCount}
           </div>
-          <div className="text-[10px] text-slate-400 uppercase tracking-wide">Low Stock</div>
+          <div className="text-[10px] text-gray-500 uppercase tracking-wide">Low Stock</div>
         </button>
       </div>
 
@@ -328,41 +336,41 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
       <div className="flex items-center space-x-2">
         <button
           onClick={() => onNavigate('fulfillment')}
-          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-purple-600/20 border border-purple-500/30 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-purple-50 border border-purple-200 rounded-lg active:scale-[0.98] transition-transform"
         >
-          <Truck className="h-4 w-4 text-purple-400" />
-          <span className="text-xs font-medium text-purple-300">Ship</span>
+          <Truck className="h-4 w-4 text-purple-600" />
+          <span className="text-xs font-medium text-purple-700">Ship</span>
         </button>
         <button
           onClick={() => onNavigate('products')}
-          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-blue-600/20 border border-blue-500/30 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-blue-50 border border-blue-200 rounded-lg active:scale-[0.98] transition-transform"
         >
-          <Package className="h-4 w-4 text-blue-400" />
-          <span className="text-xs font-medium text-blue-300">Stock</span>
+          <Package className="h-4 w-4 text-blue-600" />
+          <span className="text-xs font-medium text-blue-700">Stock</span>
         </button>
         <button
           onClick={() => onNavigate('customers')}
-          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-green-600/20 border border-green-500/30 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-green-50 border border-green-200 rounded-lg active:scale-[0.98] transition-transform"
         >
-          <Users className="h-4 w-4 text-green-400" />
-          <span className="text-xs font-medium text-green-300">CRM</span>
+          <Users className="h-4 w-4 text-green-600" />
+          <span className="text-xs font-medium text-green-700">CRM</span>
         </button>
         <button
           onClick={() => onNavigate('reviews')}
-          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-amber-600/20 border border-amber-500/30 rounded-lg active:scale-[0.98] transition-transform"
+          className="flex-1 flex items-center justify-center space-x-1.5 py-2.5 bg-amber-50 border border-amber-200 rounded-lg active:scale-[0.98] transition-transform"
         >
-          <Star className="h-4 w-4 text-amber-400" />
-          <span className="text-xs font-medium text-amber-300">Reviews</span>
+          <Star className="h-4 w-4 text-amber-600" />
+          <span className="text-xs font-medium text-amber-700">Reviews</span>
         </button>
       </div>
 
       {/* Recent Orders - Compact List */}
-      <div className="bg-slate-800/30 rounded-lg overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-700/50">
-          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wide">Recent Orders</span>
+      <div className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+          <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Recent Orders</span>
           <button
             onClick={() => onNavigate('orders')}
-            className="flex items-center text-[10px] text-teal-400 font-medium"
+            className="flex items-center text-[10px] text-teal-600 font-medium"
           >
             View all
             <ChevronRight className="h-3 w-3" />
@@ -371,8 +379,8 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
 
         {recentOrders.length === 0 ? (
           <div className="py-8 text-center">
-            <ShoppingCart className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-            <p className="text-xs text-slate-500">No recent orders</p>
+            <ShoppingCart className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+            <p className="text-xs text-gray-500">No recent orders</p>
           </div>
         ) : (
           <div>
@@ -380,8 +388,8 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
               <button
                 key={order.id}
                 onClick={() => onNavigate('orders')}
-                className={`w-full flex items-center justify-between px-3 py-2 hover:bg-slate-700/30 transition-colors ${
-                  index !== recentOrders.length - 1 ? 'border-b border-slate-700/30' : ''
+                className={`w-full flex items-center justify-between px-3 py-2 hover:bg-gray-50 transition-colors ${
+                  index !== recentOrders.length - 1 ? 'border-b border-gray-50' : ''
                 }`}
               >
                 <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -389,15 +397,15 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
                     {order.status?.charAt(0).toUpperCase()}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-medium text-white truncate">
+                    <div className="text-xs font-medium text-gray-900 truncate">
                       {order.customer_name || 'Unknown'}
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-[10px] text-gray-500">
                       #{order.order_number?.slice(-4)} • {formatTimeAgo(order.created_at)}
                     </div>
                   </div>
                 </div>
-                <span className="text-xs font-semibold text-white ml-2">
+                <span className="text-xs font-semibold text-gray-900 ml-2">
                   {formatCurrencyFull(order.total || 0)}
                 </span>
               </button>

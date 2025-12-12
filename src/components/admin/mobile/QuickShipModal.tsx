@@ -110,22 +110,22 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
       <div 
-        className="bg-slate-800 w-full max-h-[85vh] rounded-t-2xl overflow-hidden animate-slide-up"
+        className="bg-white w-full max-h-[85vh] rounded-t-2xl overflow-hidden animate-slide-up shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-white">Quick Ship</h2>
-            <p className="text-sm text-slate-400">Order #{order.order_number}</p>
+            <h2 className="text-lg font-semibold text-gray-900">Quick Ship</h2>
+            <p className="text-sm text-gray-500">Order #{order.order_number}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-slate-400" />
+            <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
@@ -134,11 +134,11 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
           {step === 'rates' && (
             <div className="space-y-4">
               {/* Shipping To */}
-              <div className="bg-slate-700/50 rounded-lg p-3">
-                <p className="text-xs text-slate-400 mb-1">Shipping to</p>
-                <p className="text-sm text-white font-medium">{order.customer_name}</p>
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <p className="text-xs text-gray-500 mb-1">Shipping to</p>
+                <p className="text-sm text-gray-900 font-medium">{order.customer_name}</p>
                 {order.shipping_address && (
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-gray-600">
                     {[
                       order.shipping_address.line1,
                       order.shipping_address.city,
@@ -151,26 +151,26 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
 
               {/* Rate Selection */}
               <div>
-                <p className="text-sm font-medium text-white mb-3">Select shipping method</p>
+                <p className="text-sm font-medium text-gray-900 mb-3">Select shipping method</p>
                 <div className="space-y-2">
                   {rates.map((rate) => (
                     <button
                       key={rate.id}
                       onClick={() => handleSelectRate(rate)}
-                      className="w-full flex items-center justify-between p-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors text-left"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-slate-600 rounded-lg">
-                          <Truck className="h-5 w-5 text-slate-300" />
+                        <div className="p-2 bg-white border border-gray-200 rounded-lg">
+                          <Truck className="h-5 w-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-white">{rate.carrier}</p>
-                          <p className="text-xs text-slate-400">{rate.service}</p>
+                          <p className="text-sm font-medium text-gray-900">{rate.carrier}</p>
+                          <p className="text-xs text-gray-500">{rate.service}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-white">{formatCurrency(rate.price)}</p>
-                        <p className="text-xs text-slate-400">{rate.estimated_days} days</p>
+                        <p className="text-sm font-bold text-gray-900">{formatCurrency(rate.price)}</p>
+                        <p className="text-xs text-gray-500">{rate.estimated_days} days</p>
                       </div>
                     </button>
                   ))}
@@ -182,28 +182,28 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
           {step === 'confirm' && selectedRate && (
             <div className="space-y-4">
               {/* Summary */}
-              <div className="bg-slate-700/50 rounded-lg p-4">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-400">Carrier</span>
-                  <span className="text-sm text-white font-medium">{selectedRate.carrier}</span>
+                  <span className="text-sm text-gray-500">Carrier</span>
+                  <span className="text-sm text-gray-900 font-medium">{selectedRate.carrier}</span>
                 </div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-400">Service</span>
-                  <span className="text-sm text-white font-medium">{selectedRate.service}</span>
+                  <span className="text-sm text-gray-500">Service</span>
+                  <span className="text-sm text-gray-900 font-medium">{selectedRate.service}</span>
                 </div>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-slate-400">Delivery</span>
-                  <span className="text-sm text-white font-medium">{selectedRate.estimated_days} business days</span>
+                  <span className="text-sm text-gray-500">Delivery</span>
+                  <span className="text-sm text-gray-900 font-medium">{selectedRate.estimated_days} business days</span>
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-slate-600">
-                  <span className="text-sm font-medium text-white">Shipping Cost</span>
-                  <span className="text-lg font-bold text-white">{formatCurrency(selectedRate.price)}</span>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                  <span className="text-sm font-medium text-gray-900">Shipping Cost</span>
+                  <span className="text-lg font-bold text-gray-900">{formatCurrency(selectedRate.price)}</span>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  <p className="text-sm text-red-400">{error}</p>
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
@@ -211,14 +211,14 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
               <div className="flex space-x-3">
                 <button
                   onClick={() => setStep('rates')}
-                  className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="flex-1 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors text-sm font-medium"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleConfirmShip}
                   disabled={loading}
-                  className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white rounded-lg transition-colors text-sm font-medium"
+                  className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   {loading ? (
                     <>
@@ -238,14 +238,14 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
 
           {step === 'success' && (
             <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-400" />
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Label Created!</h3>
-              <p className="text-sm text-slate-400 mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Label Created!</h3>
+              <p className="text-sm text-gray-500 mb-4">
                 Tracking: {trackingNumber}
               </p>
-              <p className="text-sm text-slate-400 mb-6">
+              <p className="text-sm text-gray-500 mb-6">
                 The customer will receive a shipping notification email.
               </p>
               <button
@@ -261,4 +261,3 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
     </div>
   );
 }
-

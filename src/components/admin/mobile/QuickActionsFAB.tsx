@@ -26,7 +26,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
       id: 'add-product',
       label: 'Product',
       icon: Package,
-      color: 'text-purple-400',
+      color: 'text-white',
       bgColor: 'bg-purple-600',
       section: 'products',
     },
@@ -34,7 +34,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
       id: 'quick-ship',
       label: 'Ship',
       icon: Truck,
-      color: 'text-blue-400',
+      color: 'text-white',
       bgColor: 'bg-blue-600',
       section: 'fulfillment',
     },
@@ -42,7 +42,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
       id: 'view-orders',
       label: 'Orders',
       icon: ShoppingCart,
-      color: 'text-green-400',
+      color: 'text-white',
       bgColor: 'bg-green-600',
       section: 'orders',
     },
@@ -64,7 +64,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
       {/* Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -84,7 +84,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
                 animationFillMode: 'backwards'
               }}
             >
-              <span className="px-2.5 py-1 bg-slate-800/90 text-white text-xs font-medium rounded-lg shadow-lg">
+              <span className="px-2.5 py-1 bg-white text-gray-700 text-xs font-medium rounded-lg shadow-lg border border-gray-100">
                 {action.label}
               </span>
               <div className={`p-2.5 rounded-full shadow-lg ${action.bgColor}`}>
@@ -99,7 +99,7 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
           onClick={handleToggle}
           className={`p-3 rounded-full shadow-lg transition-all duration-200 ${
             isOpen 
-              ? 'bg-slate-700 rotate-45' 
+              ? 'bg-gray-600 rotate-45' 
               : 'bg-teal-600 active:bg-teal-700'
           }`}
         >
@@ -109,4 +109,3 @@ export default function QuickActionsFAB({ onAction }: QuickActionsFABProps) {
     </>
   );
 }
-
