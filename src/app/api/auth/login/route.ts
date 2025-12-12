@@ -322,9 +322,12 @@ export async function POST(request: NextRequest) {
       response.cookies.set('admin-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: SESSION_TIMEOUT_MS / 1000,
-        path: '/'
+        path: '/',
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: '.kindkandlesboutique.com'
+        })
       });
       
       loginAttempts.delete(clientId);
@@ -349,9 +352,12 @@ export async function POST(request: NextRequest) {
       response.cookies.set('admin-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: SESSION_TIMEOUT_MS / 1000,
-        path: '/'
+        path: '/',
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: '.kindkandlesboutique.com'
+        })
       });
       
       loginAttempts.delete(clientId);

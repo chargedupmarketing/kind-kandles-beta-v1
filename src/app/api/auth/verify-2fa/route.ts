@@ -192,9 +192,13 @@ export async function POST(request: NextRequest) {
     response.cookies.set('admin-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed from 'strict' to allow subdomain redirects
       maxAge: SESSION_TIMEOUT_MS / 1000,
-      path: '/'
+      path: '/',
+      // Set domain to allow cookie sharing between main domain and subdomains
+      ...(process.env.NODE_ENV === 'production' && {
+        domain: '.kindkandlesboutique.com' // Leading dot allows subdomains
+      })
     });
     
     // Clean up old OTP codes for this user
