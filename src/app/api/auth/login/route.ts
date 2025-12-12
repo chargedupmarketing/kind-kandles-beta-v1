@@ -4,6 +4,8 @@ import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
 import { Resend } from 'resend';
 
+import crypto from 'crypto';
+
 // Rate limiting storage (in production, use Redis or database)
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 
@@ -15,6 +17,7 @@ const RATE_LIMIT_MAX_ATTEMPTS = parseInt(process.env.RATE_LIMIT_MAX_ATTEMPTS || 
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'); // 15 minutes
 const SESSION_TIMEOUT_MS = parseInt(process.env.SESSION_TIMEOUT_MS || '3600000'); // 1 hour
 const OTP_EXPIRY_MINUTES = 10;
+const TRUSTED_DEVICE_DAYS = 30; // Remember device for 30 days
 
 // Only initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -232,7 +235,35 @@ export async function POST(request: NextRequest) {
       // Database user found - check if 2FA is enabled (default: true)
       const requires2FA = dbUser.two_factor_enabled !== false;
       
-      if (requires2FA && isSupabaseConfigured()) {
+      // Check for trusted device cookie
+      const trustedDeviceToken = request.cookies.get('trusted-device')?.value;
+      let isTrustedDevice = false;
+      
+      if (trustedDeviceToken && isSupabaseConfigured()) {
+        const supabase = createServerClient();
+        
+        // Check if this device is trusted for this user
+        const { data: trustedDevice } = await supabase
+          .from('trusted_devices')
+          .select('*')
+          .eq('user_id', dbUser.id)
+          .eq('device_token', trustedDeviceToken)
+          .gt('expires_at', new Date().toISOString())
+          .single();
+        
+        if (trustedDevice) {
+          isTrustedDevice = true;
+          console.log('Trusted device found, skipping 2FA');
+          
+          // Update last used timestamp
+          await supabase
+            .from('trusted_devices')
+            .update({ last_used_at: new Date().toISOString() })
+            .eq('id', trustedDevice.id);
+        }
+      }
+      
+      if (requires2FA && !isTrustedDevice && isSupabaseConfigured()) {
         const supabase = createServerClient();
         
         // Generate OTP

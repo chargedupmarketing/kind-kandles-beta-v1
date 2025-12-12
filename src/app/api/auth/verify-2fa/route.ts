@@ -1,14 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
 const SESSION_TIMEOUT_MS = parseInt(process.env.SESSION_TIMEOUT_MS || '3600000'); // 1 hour
 const MAX_OTP_ATTEMPTS = 3;
+const TRUSTED_DEVICE_DAYS = 30; // Remember device for 30 days
 
 interface Verify2FARequest {
   userId: string;
   code: string;
+  rememberDevice?: boolean; // New option to remember this device
+}
+
+// Parse device name from user agent
+function parseDeviceName(userAgent: string): string {
+  // Check for mobile devices
+  if (/iPhone/i.test(userAgent)) return 'iPhone';
+  if (/iPad/i.test(userAgent)) return 'iPad';
+  if (/Android/i.test(userAgent)) {
+    if (/Mobile/i.test(userAgent)) return 'Android Phone';
+    return 'Android Tablet';
+  }
+  
+  // Check for desktop browsers
+  if (/Windows/i.test(userAgent)) {
+    if (/Edge/i.test(userAgent)) return 'Windows (Edge)';
+    if (/Chrome/i.test(userAgent)) return 'Windows (Chrome)';
+    if (/Firefox/i.test(userAgent)) return 'Windows (Firefox)';
+    return 'Windows';
+  }
+  if (/Macintosh/i.test(userAgent)) {
+    if (/Safari/i.test(userAgent) && !/Chrome/i.test(userAgent)) return 'Mac (Safari)';
+    if (/Chrome/i.test(userAgent)) return 'Mac (Chrome)';
+    if (/Firefox/i.test(userAgent)) return 'Mac (Firefox)';
+    return 'Mac';
+  }
+  if (/Linux/i.test(userAgent)) return 'Linux';
+  
+  return 'Unknown Device';
 }
 
 // Create JWT token with role and sub-levels
@@ -45,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
     
     const body: Verify2FARequest = await request.json();
-    const { userId, code } = body;
+    const { userId, code, rememberDevice = true } = body; // Default to remembering device
     
     // Validate input
     if (!userId || !code) {
@@ -201,12 +232,55 @@ export async function POST(request: NextRequest) {
       })
     });
     
+    // If rememberDevice is true, create a trusted device token
+    if (rememberDevice) {
+      const deviceToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + TRUSTED_DEVICE_DAYS * 24 * 60 * 60 * 1000);
+      
+      // Get device info from user agent
+      const userAgent = request.headers.get('user-agent') || 'Unknown';
+      const deviceName = parseDeviceName(userAgent);
+      
+      // Store trusted device in database
+      await supabase
+        .from('trusted_devices')
+        .insert({
+          user_id: userId,
+          device_token: deviceToken,
+          device_name: deviceName,
+          user_agent: userAgent.substring(0, 500), // Limit length
+          expires_at: expiresAt.toISOString(),
+          last_used_at: new Date().toISOString()
+        });
+      
+      // Set trusted device cookie (30 days)
+      response.cookies.set('trusted-device', deviceToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: TRUSTED_DEVICE_DAYS * 24 * 60 * 60, // 30 days in seconds
+        path: '/',
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: '.kindkandlesboutique.com'
+        })
+      });
+      
+      console.log(`Trusted device saved for user ${userId}, expires ${expiresAt.toISOString()}`);
+    }
+    
     // Clean up old OTP codes for this user
     await supabase
       .from('two_factor_codes')
       .delete()
       .eq('user_id', userId)
       .neq('id', otpRecord.id);
+    
+    // Clean up expired trusted devices for this user
+    await supabase
+      .from('trusted_devices')
+      .delete()
+      .eq('user_id', userId)
+      .lt('expires_at', new Date().toISOString());
     
     return response;
     
