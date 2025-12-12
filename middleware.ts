@@ -30,7 +30,11 @@ async function verifyToken(token: string): Promise<TokenPayload | null> {
 // Routes that require super_admin role
 const SUPER_ADMIN_ONLY_ROUTES = [
   '/api/admin/users',
-  '/api/admin/database',
+  '/api/admin/database'
+];
+
+// Public admin routes (no auth required)
+const PUBLIC_ADMIN_ROUTES = [
   '/api/admin/seed-super-admin'
 ];
 
@@ -82,6 +86,11 @@ export async function middleware(request: NextRequest) {
 
   // Handle API route protection
   if (pathname.startsWith('/api/admin/')) {
+    // Allow public admin routes without authentication
+    if (matchesRoute(pathname, PUBLIC_ADMIN_ROUTES)) {
+      return NextResponse.next();
+    }
+    
     const adminToken = request.cookies.get('admin-token')?.value;
     
     if (!adminToken) {
