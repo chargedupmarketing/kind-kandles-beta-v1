@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
 import { jwtVerify } from 'jose';
 import { logAuditEvent } from '@/lib/auditLog';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long');
 
 // Helper to verify user role from JWT
+// Uses the role and subLevels directly from the JWT payload (already verified when token was issued)
 async function verifyUserRole(request: NextRequest): Promise<{ 
   authorized: boolean; 
   user?: { id: string; email: string; role: string; subLevels: string[] };
@@ -25,43 +20,19 @@ async function verifyUserRole(request: NextRequest): Promise<{
 
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    const decoded = payload as {
-      userId: string;
-      email: string;
-      role: string;
-    };
+    
+    const userId = payload.userId as string;
+    const email = payload.email as string;
+    const role = payload.role as string;
+    const subLevels = (payload.subLevels as string[]) || [];
 
-    // Fetch user with sub-levels
-    const { data: user, error } = await supabase
-      .from('admin_users')
-      .select(`
-        id,
-        email,
-        role,
-        user_sub_level_assignments(
-          sub_levels:user_sub_levels(name)
-        )
-      `)
-      .eq('id', decoded.userId)
-      .single();
-
-    if (error || !user) {
-      return { authorized: false, error: 'User not found' };
+    if (!userId || !email || !role) {
+      return { authorized: false, error: 'Invalid token payload' };
     }
 
-    // Extract sub-level names
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const subLevels = user.user_sub_level_assignments?.map((a: any) => {
-      const subLevel = a.sub_levels;
-      if (subLevel && typeof subLevel.name === 'string') {
-        return subLevel.name.toLowerCase();
-      }
-      return '';
-    }).filter(Boolean) || [];
-
     // Check if user is super_admin or has developer sub-level
-    const isSuperAdmin = user.role === 'super_admin';
-    const isDeveloper = subLevels.includes('developer');
+    const isSuperAdmin = role === 'super_admin';
+    const isDeveloper = subLevels.some(sl => sl.toLowerCase() === 'developer');
 
     if (!isSuperAdmin && !isDeveloper) {
       return { authorized: false, error: 'Insufficient permissions. Only Super Admins and Developers can send test emails.' };
@@ -70,9 +41,9 @@ async function verifyUserRole(request: NextRequest): Promise<{
     return { 
       authorized: true, 
       user: { 
-        id: user.id, 
-        email: user.email, 
-        role: user.role,
+        id: userId, 
+        email: email, 
+        role: role,
         subLevels 
       } 
     };
