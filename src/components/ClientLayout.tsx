@@ -78,8 +78,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     );
   }
 
-  // For admin dashboard, render without header/footer/banner
-  if (isAdminDashboard) {
+  // For all restricted/admin pages, render without header/footer/banner
+  if (isAdminPage) {
     return (
       <div className="relative">
         {children}
