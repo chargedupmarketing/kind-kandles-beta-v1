@@ -24,7 +24,8 @@ import {
   Truck,
   Star,
   Gift,
-  Bell
+  Bell,
+  X
 } from 'lucide-react';
 import EmailEditor from './EmailEditor';
 
@@ -84,6 +85,7 @@ export default function EmailManagement() {
   const [isCreating, setIsCreating] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -221,65 +223,76 @@ export default function EmailManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin text-pink-600" />
+        <RefreshCw className="h-8 w-8 animate-spin text-teal-600" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Success/Error Messages */}
       {successMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <CheckCircle className="h-5 w-5" />
-          {successMessage}
+        <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-green-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm sm:text-base">{successMessage}</span>
         </div>
       )}
       {errorMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <XCircle className="h-5 w-5" />
-          {errorMessage}
+        <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <XCircle className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm sm:text-base">{errorMessage}</span>
         </div>
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Mail className="h-7 w-7 text-pink-600" />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2 sm:gap-3">
+            <Mail className="h-6 w-6 sm:h-7 sm:w-7 text-teal-600" />
             Email Templates
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage email templates for order notifications, newsletters, and marketing campaigns
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+            Manage email templates for notifications and marketing
           </p>
         </div>
         <button
           onClick={handleCreateNew}
-          className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition-colors shadow-lg"
+          className="flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors shadow-lg text-sm sm:text-base"
         >
           <Plus className="h-5 w-5" />
-          Create Template
+          <span className="sm:inline">Create Template</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search templates..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
-          />
+      <div className="space-y-3">
+        {/* Search and Filter Toggle */}
+        <div className="flex gap-2 sm:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search templates..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="sm:hidden flex items-center gap-2 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200"
+          >
+            <Filter className="h-5 w-5" />
+          </button>
         </div>
-        <div className="flex gap-2">
+        
+        {/* Category Filters - Always visible on desktop, toggleable on mobile */}
+        <div className={`flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 ${showFilters ? 'flex' : 'hidden sm:flex'}`}>
           <button
             onClick={() => setFilterCategory('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            className={`flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
               filterCategory === 'all'
-                ? 'bg-pink-600 text-white'
+                ? 'bg-teal-600 text-white'
                 : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
           >
@@ -291,9 +304,9 @@ export default function EmailManagement() {
               <button
                 key={key}
                 onClick={() => setFilterCategory(key)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`flex-shrink-0 px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm whitespace-nowrap ${
                   filterCategory === key
-                    ? `bg-${info.color}-600 text-white`
+                    ? 'bg-teal-600 text-white'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
@@ -307,7 +320,7 @@ export default function EmailManagement() {
       {/* Template Categories */}
       {filterCategory === 'all' ? (
         // Show grouped view
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => {
             if (categoryTemplates.length === 0) return null;
             const info = CATEGORY_INFO[category as keyof typeof CATEGORY_INFO];
@@ -315,16 +328,16 @@ export default function EmailManagement() {
 
             return (
               <div key={category}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-2 rounded-lg bg-${info.color}-100 dark:bg-${info.color}-900/30`}>
-                    <CategoryIcon className={`h-5 w-5 text-${info.color}-600 dark:text-${info.color}-400`} />
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
+                    <CategoryIcon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 dark:text-slate-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">{info.label}</h3>
-                    <p className="text-sm text-gray-500">{info.description}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">{info.label}</h3>
+                    <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">{info.description}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                   {categoryTemplates.map((template) => (
                     <TemplateCard
                       key={template.id}
@@ -342,7 +355,7 @@ export default function EmailManagement() {
         </div>
       ) : (
         // Show flat view for filtered category
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filteredTemplates.map((template) => (
             <TemplateCard
               key={template.id}
@@ -357,16 +370,16 @@ export default function EmailManagement() {
       )}
 
       {filteredTemplates.length === 0 && (
-        <div className="text-center py-16">
-          <Mail className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No templates found</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="text-center py-12 sm:py-16 px-4">
+          <Mail className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-medium text-gray-900 dark:text-white mb-2">No templates found</h3>
+          <p className="text-sm text-gray-500 mb-4">
             {searchQuery ? 'Try adjusting your search' : 'Get started by creating your first template'}
           </p>
           {!searchQuery && (
             <button
               onClick={handleCreateNew}
-              className="inline-flex items-center gap-2 bg-pink-600 text-white px-6 py-3 rounded-lg hover:bg-pink-700 transition-colors"
+              className="inline-flex items-center gap-2 bg-teal-600 text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors"
             >
               <Plus className="h-5 w-5" />
               Create Template
@@ -408,45 +421,45 @@ function TemplateCard({
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg bg-${info.color}-100 dark:bg-${info.color}-900/30`}>
-              <TemplateIcon className={`h-5 w-5 text-${info.color}-600 dark:text-${info.color}-400`} />
+      <div className="p-3 sm:p-4">
+        <div className="flex items-start justify-between mb-2 sm:mb-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-slate-700 flex-shrink-0">
+              <TemplateIcon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 dark:text-slate-400" />
             </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">{template.name}</h4>
-              <span className={`text-xs px-2 py-0.5 rounded-full bg-${info.color}-100 text-${info.color}-700 dark:bg-${info.color}-900/30 dark:text-${info.color}-300`}>
+            <div className="min-w-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">{template.name}</h4>
+              <span className="text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                 {info.label}
               </span>
             </div>
           </div>
-          <div className="relative">
+          <div className="relative flex-shrink-0 ml-2">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              className="p-1.5 sm:p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
             >
               <MoreVertical className="h-5 w-5 text-gray-400" />
             </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 top-8 z-20 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1">
+                <div className="absolute right-0 top-8 z-20 w-44 sm:w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border dark:border-gray-700 py-1">
                   <button
                     onClick={() => { onEdit(template); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 sm:py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
                   >
                     <Edit2 className="h-4 w-4" /> Edit Template
                   </button>
                   <button
                     onClick={() => { onDuplicate(template); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 sm:py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
                   >
                     <Copy className="h-4 w-4" /> Duplicate
                   </button>
                   <button
                     onClick={() => { onToggleActive(template); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 sm:py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 text-slate-700 dark:text-slate-200"
                   >
                     {template.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     {template.is_active ? 'Deactivate' : 'Activate'}
@@ -454,7 +467,7 @@ function TemplateCard({
                   <hr className="my-1 dark:border-gray-700" />
                   <button
                     onClick={() => { onDelete(template); setShowMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                    className="w-full px-4 py-2.5 sm:py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                   >
                     <Trash2 className="h-4 w-4" /> Delete
                   </button>
@@ -464,7 +477,7 @@ function TemplateCard({
           </div>
         </div>
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-1">
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-2 sm:mb-3 line-clamp-1">
           {template.description || template.subject}
         </p>
 
@@ -482,7 +495,7 @@ function TemplateCard({
           </div>
           <button
             onClick={() => onEdit(template)}
-            className="text-sm text-pink-600 hover:text-pink-700 font-medium"
+            className="text-xs sm:text-sm text-teal-600 hover:text-teal-700 font-medium py-1 px-2 -mr-2"
           >
             Edit →
           </button>
@@ -491,4 +504,3 @@ function TemplateCard({
     </div>
   );
 }
-

@@ -18,7 +18,9 @@ import {
   Star,
   Package,
   Clock,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 
@@ -61,6 +63,7 @@ export default function CustomerManagement() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [sortBy, setSortBy] = useState<'total_spent' | 'total_orders' | 'created_at'>('total_spent');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCustomers();
@@ -139,64 +142,64 @@ export default function CustomerManagement() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-teal-600 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Customers</h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Customers</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             {customers.length} total customers
           </p>
         </div>
         <button
           onClick={exportToCSV}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2.5 sm:py-2 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors text-sm"
         >
           <Download className="h-4 w-4" />
           Export CSV
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="h-5 w-5 text-blue-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Total Customers</span>
+      {/* Stats - Scrollable on mobile */}
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:overflow-visible">
+        <div className="flex-shrink-0 w-36 sm:w-auto bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Mail className="h-5 w-5 text-green-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Newsletter Subscribers</span>
+        <div className="flex-shrink-0 w-36 sm:w-auto bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Subscribed</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.marketing}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.marketing}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="h-5 w-5 text-pink-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</span>
+        <div className="flex-shrink-0 w-36 sm:w-auto bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Revenue</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalRevenue)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.totalRevenue)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="h-5 w-5 text-purple-600" />
-            <span className="text-sm text-gray-600 dark:text-gray-400">Avg. Customer Value</span>
+        <div className="flex-shrink-0 w-36 sm:w-auto bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-1 sm:mb-2">
+            <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+            <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Avg Value</span>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.avgValue)}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{formatPrice(stats.avgValue)}</p>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filters - Stack on mobile */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
@@ -204,7 +207,7 @@ export default function CustomerManagement() {
             placeholder="Search by email or name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
+            className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
           />
         </div>
         <select
@@ -214,7 +217,7 @@ export default function CustomerManagement() {
             setSortBy(field as any);
             setSortOrder(order as any);
           }}
-          className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
+          className="px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
         >
           <option value="total_spent-desc">Highest Spenders</option>
           <option value="total_spent-asc">Lowest Spenders</option>
@@ -225,55 +228,55 @@ export default function CustomerManagement() {
         </select>
       </div>
 
-      {/* Customer Detail Drawer */}
+      {/* Customer Detail Drawer - Full screen on mobile */}
       {selectedCustomer && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex justify-end">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-lg h-full overflow-y-auto shadow-xl">
-            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b dark:border-gray-700 p-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">Customer Details</h3>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-stretch sm:justify-end">
+          <div className="bg-white dark:bg-gray-900 w-full sm:max-w-lg h-[95vh] sm:h-full overflow-y-auto shadow-xl rounded-t-2xl sm:rounded-none">
+            <div className="sticky top-0 bg-white dark:bg-gray-900 border-b dark:border-gray-700 p-4 flex items-center justify-between z-10">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Customer Details</h3>
               <button
                 onClick={() => setSelectedCustomer(null)}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 text-slate-600 dark:text-slate-300" />
               </button>
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-5">
               {/* Customer Info */}
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
                     {(selectedCustomer.first_name?.[0] || selectedCustomer.email[0]).toUpperCase()}
                   </div>
-                  <div>
-                    <h4 className="text-xl font-bold">
+                  <div className="min-w-0">
+                    <h4 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate">
                       {selectedCustomer.first_name || selectedCustomer.last_name 
                         ? `${selectedCustomer.first_name || ''} ${selectedCustomer.last_name || ''}`.trim()
                         : 'No Name'}
                     </h4>
-                    <p className="text-gray-600 dark:text-gray-400">{selectedCustomer.email}</p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm truncate">{selectedCustomer.email}</p>
                   </div>
                 </div>
 
                 {/* Contact Info */}
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-3">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 space-y-2.5 sm:space-y-3">
                   <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <a href={`mailto:${selectedCustomer.email}`} className="text-blue-600 hover:underline">
+                    <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <a href={`mailto:${selectedCustomer.email}`} className="text-blue-600 hover:underline text-sm truncate">
                       {selectedCustomer.email}
                     </a>
                   </div>
                   {selectedCustomer.phone && (
                     <div className="flex items-center gap-3">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <a href={`tel:${selectedCustomer.phone}`} className="text-blue-600 hover:underline">
+                      <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <a href={`tel:${selectedCustomer.phone}`} className="text-blue-600 hover:underline text-sm">
                         {selectedCustomer.phone}
                       </a>
                     </div>
                   )}
                   <div className="flex items-center gap-3">
-                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Customer since {new Date(selectedCustomer.created_at).toLocaleDateString()}
                     </span>
@@ -281,24 +284,24 @@ export default function CustomerManagement() {
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-pink-600">{formatPrice(selectedCustomer.total_spent)}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-3 sm:p-4 text-center">
+                    <p className="text-xl sm:text-2xl font-bold text-teal-600">{formatPrice(selectedCustomer.total_spent)}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Spent</p>
                   </div>
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{selectedCustomer.total_orders}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Orders</p>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 text-center">
+                    <p className="text-xl sm:text-2xl font-bold text-blue-600">{selectedCustomer.total_orders}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Orders</p>
                   </div>
                 </div>
 
                 {/* Marketing Status */}
-                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <div className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                    <span>Newsletter Subscription</span>
+                    <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <span className="text-sm">Newsletter</span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  <span className={`px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${
                     selectedCustomer.accepts_marketing
                       ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                       : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-400'
@@ -310,12 +313,12 @@ export default function CustomerManagement() {
                 {/* Tags */}
                 {selectedCustomer.tags && selectedCustomer.tags.length > 0 && (
                   <div>
-                    <h5 className="text-sm font-medium mb-2">Tags</h5>
+                    <h5 className="text-sm font-medium mb-2 text-slate-900 dark:text-white">Tags</h5>
                     <div className="flex flex-wrap gap-2">
                       {selectedCustomer.tags.map(tag => (
                         <span
                           key={tag.id}
-                          className="px-3 py-1 rounded-full text-sm font-medium"
+                          className="px-2.5 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
                           style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
                         >
                           {tag.name}
@@ -327,7 +330,7 @@ export default function CustomerManagement() {
 
                 {/* Order History */}
                 <div>
-                  <h5 className="text-sm font-medium mb-3">Order History</h5>
+                  <h5 className="text-sm font-medium mb-3 text-slate-900 dark:text-white">Order History</h5>
                   {selectedCustomer.orders && selectedCustomer.orders.length > 0 ? (
                     <div className="space-y-2">
                       {selectedCustomer.orders.map(order => (
@@ -335,19 +338,19 @@ export default function CustomerManagement() {
                           key={order.id}
                           className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
                         >
-                          <div>
-                            <p className="font-medium">{order.order_number}</p>
-                            <p className="text-sm text-gray-500">
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm text-slate-900 dark:text-white">{order.order_number}</p>
+                            <p className="text-xs text-gray-500">
                               {new Date(order.created_at).toLocaleDateString()} • {order.items_count} items
                             </p>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold">{formatPrice(order.total)}</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                              order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                              order.status === 'processing' ? 'bg-purple-100 text-purple-700' :
-                              'bg-yellow-100 text-yellow-700'
+                          <div className="text-right flex-shrink-0 ml-2">
+                            <p className="font-semibold text-sm text-slate-900 dark:text-white">{formatPrice(order.total)}</p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              order.status === 'delivered' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                              order.status === 'shipped' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                              order.status === 'processing' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                              'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                             }`}>
                               {order.status}
                             </span>
@@ -356,15 +359,15 @@ export default function CustomerManagement() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-center py-4">No orders yet</p>
+                    <p className="text-gray-500 text-center py-4 text-sm">No orders yet</p>
                   )}
                 </div>
 
                 {/* Notes */}
                 {selectedCustomer.notes && (
                   <div>
-                    <h5 className="text-sm font-medium mb-2">Notes</h5>
-                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-sm">
+                    <h5 className="text-sm font-medium mb-2 text-slate-900 dark:text-white">Notes</h5>
+                    <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg text-sm text-slate-700 dark:text-slate-300">
                       {selectedCustomer.notes}
                     </div>
                   </div>
@@ -375,83 +378,165 @@ export default function CustomerManagement() {
         </div>
       )}
 
-      {/* Customers Table */}
+      {/* Customers - Desktop Table / Mobile Cards */}
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Customer</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Orders</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Total Spent</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Last Order</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y dark:divide-gray-800">
-            {filteredCustomers.map((customer) => (
-              <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <table className="w-full">
+            <thead className="bg-gray-50 dark:bg-gray-800">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Customer</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Orders</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Total Spent</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Last Order</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y dark:divide-gray-800">
+              {filteredCustomers.map((customer) => (
+                <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
+                        {(customer.first_name?.[0] || customer.email[0]).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {customer.first_name || customer.last_name 
+                            ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
+                            : 'No Name'}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">{customer.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-4 w-4 text-gray-400" />
+                      <span className="font-medium text-slate-900 dark:text-white">{customer.total_orders}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="font-semibold text-teal-600">{formatPrice(customer.total_spent)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {customer.last_order_at 
+                        ? new Date(customer.last_order_at).toLocaleDateString()
+                        : 'Never'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {customer.accepts_marketing ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs">
+                        <Mail className="h-3 w-3" />
+                        Subscribed
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full text-xs">
+                        Not Subscribed
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => fetchCustomerDetails(customer.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-slate-700 dark:text-slate-200"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-700">
+          {filteredCustomers.map((customer) => {
+            const isExpanded = expandedCustomerId === customer.id;
+            
+            return (
+              <div key={customer.id} className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
                       {(customer.first_name?.[0] || customer.email[0]).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
                         {customer.first_name || customer.last_name 
                           ? `${customer.first_name || ''} ${customer.last_name || ''}`.trim()
                           : 'No Name'}
                       </p>
-                      <p className="text-sm text-gray-500">{customer.email}</p>
+                      <p className="text-xs text-gray-500 truncate">{customer.email}</p>
                     </div>
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium">{customer.total_orders}</span>
+                  <div className="text-right ml-2 flex-shrink-0">
+                    <p className="font-semibold text-teal-600 text-sm">{formatPrice(customer.total_spent)}</p>
+                    <p className="text-xs text-gray-500">{customer.total_orders} orders</p>
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="font-semibold text-pink-600">{formatPrice(customer.total_spent)}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {customer.last_order_at 
-                      ? new Date(customer.last_order_at).toLocaleDateString()
-                      : 'Never'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  {customer.accepts_marketing ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs">
-                      <Mail className="h-3 w-3" />
-                      Subscribed
-                    </span>
+                </div>
+
+                <button
+                  onClick={() => setExpandedCustomerId(isExpanded ? null : customer.id)}
+                  className="w-full flex items-center justify-center gap-1 mt-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                >
+                  {isExpanded ? (
+                    <>
+                      <ChevronUp className="h-4 w-4" />
+                      Hide details
+                    </>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 rounded-full text-xs">
-                      Not Subscribed
-                    </span>
+                    <>
+                      <ChevronDown className="h-4 w-4" />
+                      Show details
+                    </>
                   )}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-2">
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Newsletter</span>
+                      {customer.accepts_marketing ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-full text-xs">
+                          <Mail className="h-3 w-3" />
+                          Subscribed
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Not Subscribed</span>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500">Last Order</span>
+                      <span className="text-slate-700 dark:text-slate-300">
+                        {customer.last_order_at 
+                          ? new Date(customer.last_order_at).toLocaleDateString()
+                          : 'Never'}
+                      </span>
+                    </div>
                     <button
                       onClick={() => fetchCustomerDetails(customer.id)}
-                      className="flex items-center gap-1 px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 active:bg-teal-800 text-sm font-medium"
                     >
                       <Eye className="h-4 w-4" />
-                      View
+                      View Full Details
                     </button>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
         {filteredCustomers.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-4">
             <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">No customers found</p>
           </div>
@@ -460,4 +545,3 @@ export default function CustomerManagement() {
     </div>
   );
 }
-

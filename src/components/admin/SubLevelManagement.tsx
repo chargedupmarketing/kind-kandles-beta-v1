@@ -11,7 +11,8 @@ import {
   Lock,
   Save,
   X,
-  AlertTriangle
+  AlertTriangle,
+  MoreVertical
 } from 'lucide-react';
 
 interface SubLevel {
@@ -32,6 +33,7 @@ export default function SubLevelManagement() {
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
 
   const canManage = hasPermission('manage_sub_levels');
 
@@ -119,6 +121,7 @@ export default function SubLevelManagement() {
       if (response.ok) {
         setSubLevels(subLevels.filter(sl => sl.id !== id));
         setSuccess('Sub-level deleted successfully');
+        setMobileMenuOpen(null);
         setTimeout(() => setSuccess(''), 3000);
       } else {
         const data = await response.json();
@@ -133,6 +136,7 @@ export default function SubLevelManagement() {
     setEditingId(subLevel.id);
     setFormData({ name: subLevel.name, description: subLevel.description || '' });
     setIsCreating(false);
+    setMobileMenuOpen(null);
   };
 
   const cancelEdit = () => {
@@ -151,9 +155,9 @@ export default function SubLevelManagement() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             Teams & Sub-Levels
@@ -165,7 +169,7 @@ export default function SubLevelManagement() {
         {canManage && !isCreating && !editingId && (
           <button
             onClick={() => setIsCreating(true)}
-            className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+            className="flex items-center justify-center gap-2 bg-teal-600 text-white px-4 py-2.5 sm:py-2 rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors text-sm"
           >
             <Plus className="h-5 w-5" />
             Add Sub-Level
@@ -175,65 +179,65 @@ export default function SubLevelManagement() {
 
       {/* Success Message */}
       {success && (
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <p className="text-green-700 dark:text-green-300">{success}</p>
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 sm:p-4">
+          <p className="text-sm text-green-700 dark:text-green-300">{success}</p>
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-700 dark:text-red-300">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4">
+          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
         </div>
       )}
 
-      {/* Create Form */}
+      {/* Create Form - Full width card on mobile */}
       {isCreating && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Create New Sub-Level
           </h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-full px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
                 placeholder="e.g., Marketing Team"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
+                className="w-full px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
                 placeholder="Optional description..."
                 rows={2}
               />
             </div>
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-              >
-                <Save className="h-4 w-4" />
-                Create
-              </button>
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
               >
                 <X className="h-4 w-4" />
                 Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex items-center justify-center gap-2 bg-teal-600 text-white px-4 py-2.5 sm:py-2 rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors"
+              >
+                <Save className="h-4 w-4" />
+                Create
               </button>
             </div>
           </form>
@@ -246,70 +250,70 @@ export default function SubLevelManagement() {
           {subLevels.map((subLevel) => (
             <div
               key={subLevel.id}
-              className="p-4 sm:p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
             >
               {editingId === subLevel.id ? (
                 // Edit Form
                 <form onSubmit={(e) => { e.preventDefault(); handleUpdate(subLevel.id); }} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Name *
                     </label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-full px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                       Description
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:border-gray-600"
+                      className="w-full px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
                       rows={2}
                     />
                   </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
-                    >
-                      <Save className="h-4 w-4" />
-                      Save
-                    </button>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
                     <button
                       type="button"
                       onClick={cancelEdit}
-                      className="flex items-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      className="flex items-center justify-center gap-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2.5 sm:py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
                       <X className="h-4 w-4" />
                       Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex items-center justify-center gap-2 bg-teal-600 text-white px-4 py-2.5 sm:py-2 rounded-lg hover:bg-teal-700 active:bg-teal-800 transition-colors"
+                    >
+                      <Save className="h-4 w-4" />
+                      Save
                     </button>
                   </div>
                 </form>
               ) : (
                 // Display View
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg ${
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className={`p-2 sm:p-3 rounded-lg flex-shrink-0 ${
                       subLevel.is_system 
                         ? 'bg-purple-100 dark:bg-purple-900/30' 
                         : 'bg-teal-100 dark:bg-teal-900/30'
                     }`}>
                       {subLevel.is_system ? (
-                        <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 dark:text-purple-400" />
                       ) : (
-                        <Users className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600 dark:text-teal-400" />
                       )}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
                           {subLevel.name}
                         </h3>
                         {subLevel.is_system && (
@@ -319,17 +323,18 @@ export default function SubLevelManagement() {
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 line-clamp-2">
                         {subLevel.description || 'No description'}
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 hidden sm:block">
                         Slug: {subLevel.slug}
                       </p>
                     </div>
                   </div>
                   
+                  {/* Desktop Actions */}
                   {canManage && !subLevel.is_system && (
-                    <div className="flex items-center gap-2 sm:ml-4">
+                    <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={() => startEdit(subLevel)}
                         className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
@@ -347,10 +352,45 @@ export default function SubLevelManagement() {
                     </div>
                   )}
                   
+                  {/* Mobile Actions Menu */}
+                  {canManage && !subLevel.is_system && (
+                    <div className="sm:hidden relative flex-shrink-0">
+                      <button
+                        onClick={() => setMobileMenuOpen(mobileMenuOpen === subLevel.id ? null : subLevel.id)}
+                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                      >
+                        <MoreVertical className="h-5 w-5" />
+                      </button>
+                      
+                      {mobileMenuOpen === subLevel.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setMobileMenuOpen(null)}
+                          />
+                          <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-slate-200 dark:border-slate-600 z-20 py-1">
+                            <button
+                              onClick={() => startEdit(subLevel)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600 flex items-center gap-2"
+                            >
+                              <Edit2 className="h-4 w-4" /> Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(subLevel.id, subLevel.name)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                            >
+                              <Trash2 className="h-4 w-4" /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  
                   {subLevel.is_system && (
-                    <div className="text-sm text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                    <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 flex-shrink-0">
                       <AlertTriangle className="h-4 w-4" />
-                      Protected
+                      <span className="hidden sm:inline">Protected</span>
                     </div>
                   )}
                 </div>
@@ -369,4 +409,3 @@ export default function SubLevelManagement() {
     </div>
   );
 }
-

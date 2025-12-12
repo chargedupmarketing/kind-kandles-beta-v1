@@ -23,7 +23,9 @@ import {
   Users,
   MessageSquare,
   BookOpen,
-  Star
+  Star,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 interface DatabaseStats {
@@ -64,6 +66,7 @@ export default function AdminSettings() {
   const [isExporting, setIsExporting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     // Load maintenance settings from localStorage
@@ -238,79 +241,79 @@ export default function AdminSettings() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Success/Error Messages */}
       {successMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <CheckCircle className="h-5 w-5" />
-          {successMessage}
+        <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-green-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm sm:text-base">{successMessage}</span>
         </div>
       )}
       {errorMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
-          <XCircle className="h-5 w-5" />
-          {errorMessage}
+        <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-red-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
+          <XCircle className="h-5 w-5 flex-shrink-0" />
+          <span className="text-sm sm:text-base">{errorMessage}</span>
         </div>
       )}
 
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Settings</h2>
-        <p className="text-slate-600 dark:text-slate-400">System configuration and database management</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">Admin Settings</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">System configuration and database management</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b dark:border-gray-700">
+      {/* Tabs - Scrollable on mobile */}
+      <div className="flex overflow-x-auto border-b dark:border-gray-700 -mx-3 px-3 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('maintenance')}
-          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 -mb-px ${
+          className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap text-sm sm:text-base ${
             activeTab === 'maintenance'
-              ? 'text-pink-600 border-pink-600'
+              ? 'text-teal-600 border-teal-600'
               : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
           }`}
         >
           <Shield className="h-4 w-4" />
-          Maintenance Mode
+          Maintenance
         </button>
         {isSuperAdmin && (
           <button
             onClick={() => setActiveTab('database')}
-            className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 -mb-px ${
+            className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap text-sm sm:text-base ${
               activeTab === 'database'
-                ? 'text-pink-600 border-pink-600'
+                ? 'text-teal-600 border-teal-600'
                 : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
             }`}
           >
             <Database className="h-4 w-4" />
-            Database Management
+            Database
           </button>
         )}
       </div>
 
       {/* Maintenance Mode Tab */}
       {activeTab === 'maintenance' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Current Status */}
-          <div className={`rounded-lg p-6 border-2 ${
+          <div className={`rounded-lg p-4 sm:p-6 border-2 ${
             isMaintenanceMode 
               ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' 
               : 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
           }`}>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-start sm:items-center gap-3">
               {isMaintenanceMode ? (
-                <AlertTriangle className="h-8 w-8 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 dark:text-red-400 flex-shrink-0" />
               ) : (
-                <Shield className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 dark:text-green-400 flex-shrink-0" />
               )}
               <div>
-                <h3 className={`text-xl font-semibold ${
+                <h3 className={`text-base sm:text-xl font-semibold ${
                   isMaintenanceMode 
                     ? 'text-red-800 dark:text-red-300' 
                     : 'text-green-800 dark:text-green-300'
                 }`}>
                   {isMaintenanceMode ? 'Maintenance Mode ACTIVE' : 'Site is LIVE'}
                 </h3>
-                <p className={`${
+                <p className={`text-sm ${
                   isMaintenanceMode 
                     ? 'text-red-600 dark:text-red-400' 
                     : 'text-green-600 dark:text-green-400'
@@ -325,25 +328,25 @@ export default function AdminSettings() {
           </div>
 
           {/* Toggle Maintenance Mode */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Maintenance Mode Control</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Maintenance Mode Control</h3>
             
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-slate-900 dark:text-slate-100">Enable Maintenance Mode</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  When enabled, only users with the access code can view the site
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-medium text-slate-900 dark:text-slate-100 text-sm sm:text-base">Enable Maintenance Mode</p>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                  Only users with access code can view the site
                 </p>
               </div>
               
               <button
                 onClick={handleToggleMaintenanceMode}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                className={`relative inline-flex h-7 w-12 sm:h-6 sm:w-11 items-center rounded-full transition-colors flex-shrink-0 ${
                   isMaintenanceMode ? 'bg-red-600' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-5 w-5 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform ${
                     isMaintenanceMode ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -352,53 +355,55 @@ export default function AdminSettings() {
           </div>
 
           {/* Access Code Management */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Access Code Management</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Access Code Management</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                   Current Access Code
                 </label>
-                <div className="flex items-center space-x-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <div className="relative flex-1">
                     <input
                       type={showAccessCode ? 'text' : 'password'}
                       value={newAccessCode}
                       onChange={(e) => setNewAccessCode(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 pr-10"
+                      className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 pr-10 text-base"
                       placeholder="Enter access code"
                     />
                     <button
                       type="button"
                       onClick={() => setShowAccessCode(!showAccessCode)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 p-1"
                     >
                       {showAccessCode ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <button
-                    onClick={generateRandomCode}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Generate</span>
-                  </button>
-                  <button
-                    onClick={handleUpdateAccessCode}
-                    className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
-                  >
-                    <Save className="h-4 w-4" />
-                    <span>Update</span>
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={generateRandomCode}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg transition-colors text-sm"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Generate</span>
+                    </button>
+                    <button
+                      onClick={handleUpdateAccessCode}
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors text-sm"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Update</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Maintenance Message Settings */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Maintenance Page Settings</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Maintenance Page Settings</h3>
             
             <div className="space-y-4">
               <div>
@@ -409,7 +414,7 @@ export default function AdminSettings() {
                   value={maintenanceMessage}
                   onChange={(e) => setMaintenanceMessage(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-base"
                   placeholder="We are currently performing scheduled maintenance..."
                 />
               </div>
@@ -422,14 +427,14 @@ export default function AdminSettings() {
                   type="text"
                   value={estimatedTime}
                   onChange={(e) => setEstimatedTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-base"
                   placeholder="e.g., 2 hours"
                 />
               </div>
 
               <button
                 onClick={handleSaveMaintenanceSettings}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors"
               >
                 <Save className="h-4 w-4" />
                 <span>Save Settings</span>
@@ -441,131 +446,188 @@ export default function AdminSettings() {
 
       {/* Database Management Tab - Super Admin Only */}
       {activeTab === 'database' && isSuperAdmin && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Warning Banner */}
-          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-bold text-red-800 dark:text-red-300">Danger Zone</h3>
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                  The actions below are <strong>irreversible</strong>. Always export your data before deleting. 
-                  Deleted data cannot be recovered.
+                <h3 className="font-bold text-red-800 dark:text-red-300 text-sm sm:text-base">Danger Zone</h3>
+                <p className="text-xs sm:text-sm text-red-600 dark:text-red-400 mt-1">
+                  Actions below are <strong>irreversible</strong>. Always export your data before deleting.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Database Stats Overview */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {/* Database Stats Overview - Scrollable on mobile */}
+          <div className="flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0 sm:grid sm:grid-cols-3 lg:grid-cols-6 sm:gap-4 sm:overflow-visible">
             {dataCategories.map((cat) => (
-              <div key={cat.id} className="bg-white dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
-                <div className={`p-2 rounded-lg bg-${cat.color}-100 dark:bg-${cat.color}-900/30 w-fit mb-2`}>
-                  <cat.icon className={`h-5 w-5 text-${cat.color}-600 dark:text-${cat.color}-400`} />
+              <div key={cat.id} className="flex-shrink-0 w-28 sm:w-auto bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 border border-slate-200 dark:border-slate-700">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-slate-100 dark:bg-slate-700 w-fit mb-2">
+                  <cat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600 dark:text-slate-400" />
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">{cat.count}</p>
-                <p className="text-sm text-slate-500">{cat.name}</p>
+                <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">{cat.count}</p>
+                <p className="text-xs sm:text-sm text-slate-500 truncate">{cat.name}</p>
               </div>
             ))}
           </div>
 
-          {/* Data Management Cards */}
-          <div className="space-y-4">
-            {dataCategories.map((cat) => (
-              <div key={cat.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-lg bg-${cat.color}-100 dark:bg-${cat.color}-900/30`}>
-                      <cat.icon className={`h-6 w-6 text-${cat.color}-600 dark:text-${cat.color}-400`} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 dark:text-white">{cat.name}</h3>
-                      <p className="text-sm text-slate-500">{cat.description}</p>
-                      <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-1">
-                        {cat.count} records
-                      </p>
+          {/* Data Management Cards - Collapsible on mobile */}
+          <div className="space-y-3 sm:space-y-4">
+            {dataCategories.map((cat) => {
+              const isExpanded = expandedCategory === cat.id;
+              const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+              
+              return (
+                <div key={cat.id} className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  {/* Card header - clickable on mobile */}
+                  <div 
+                    className={`p-4 sm:p-6 ${isMobile ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (typeof window !== 'undefined' && window.innerWidth < 640) {
+                        setExpandedCategory(isExpanded ? null : cat.id);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                        <div className="p-2 sm:p-3 rounded-lg bg-slate-100 dark:bg-slate-700 flex-shrink-0">
+                          <cat.icon className="h-5 w-5 sm:h-6 sm:w-6 text-slate-600 dark:text-slate-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">{cat.name}</h3>
+                          <p className="text-xs sm:text-sm text-slate-500 hidden sm:block">{cat.description}</p>
+                          <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 mt-0.5 sm:mt-1">
+                            {cat.count} records
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Desktop buttons */}
+                      <div className="hidden sm:flex items-center gap-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportData(cat.id);
+                          }}
+                          disabled={isExporting || cat.count === 0}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                        >
+                          <Download className="h-4 w-4" />
+                          Export CSV
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteTarget(deleteTarget === cat.id ? null : cat.id);
+                          }}
+                          disabled={cat.count === 0}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Wipe Data
+                        </button>
+                      </div>
+                      
+                      {/* Mobile expand indicator */}
+                      <div className="sm:hidden flex-shrink-0 ml-2">
+                        {isExpanded ? (
+                          <ChevronUp className="h-5 w-5 text-slate-400" />
+                        ) : (
+                          <ChevronDown className="h-5 w-5 text-slate-400" />
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => exportData(cat.id)}
-                      disabled={isExporting || cat.count === 0}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <Download className="h-4 w-4" />
-                      Export CSV
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(deleteTarget === cat.id ? null : cat.id)}
-                      disabled={cat.count === 0}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Wipe Data
-                    </button>
-                  </div>
-                </div>
-
-                {/* Delete Confirmation */}
-                {deleteTarget === cat.id && (
-                  <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                    <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                      <strong>Warning:</strong> This will permanently delete all {cat.name.toLowerCase()}. 
-                      Type <code className="bg-red-100 dark:bg-red-800 px-1 rounded">DELETE {cat.id.toUpperCase()}</code> to confirm.
-                    </p>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="text"
-                        value={deleteConfirmation}
-                        onChange={(e) => setDeleteConfirmation(e.target.value)}
-                        placeholder={`Type "DELETE ${cat.id.toUpperCase()}" to confirm`}
-                        className="flex-1 px-3 py-2 border border-red-300 dark:border-red-700 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
-                      />
-                      <button
-                        onClick={() => deleteData(cat.id)}
-                        disabled={isDeleting || deleteConfirmation !== `DELETE ${cat.id.toUpperCase()}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {isDeleting ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
+                  {/* Mobile expanded content */}
+                  <div className={`sm:hidden ${isExpanded ? 'block' : 'hidden'}`}>
+                    <div className="px-4 pb-4 space-y-2">
+                      <p className="text-xs text-slate-500">{cat.description}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => exportData(cat.id)}
+                          disabled={isExporting || cat.count === 0}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                        >
+                          <Download className="h-4 w-4" />
+                          Export
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(deleteTarget === cat.id ? null : cat.id)}
+                          disabled={cat.count === 0}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                        >
                           <Trash2 className="h-4 w-4" />
-                        )}
-                        Confirm Delete
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteTarget(null);
-                          setDeleteConfirmation('');
-                        }}
-                        className="px-4 py-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                      >
-                        Cancel
-                      </button>
+                          Wipe
+                        </button>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Delete Confirmation */}
+                  {deleteTarget === cat.id && (
+                    <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
+                      <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 mb-3">
+                        <strong>Warning:</strong> This will permanently delete all {cat.name.toLowerCase()}. 
+                        Type <code className="bg-red-100 dark:bg-red-800 px-1 rounded text-xs">DELETE {cat.id.toUpperCase()}</code> to confirm.
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                        <input
+                          type="text"
+                          value={deleteConfirmation}
+                          onChange={(e) => setDeleteConfirmation(e.target.value)}
+                          placeholder={`Type "DELETE ${cat.id.toUpperCase()}"`}
+                          className="flex-1 px-3 py-2.5 sm:py-2 border border-red-300 dark:border-red-700 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-sm"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => deleteData(cat.id)}
+                            disabled={isDeleting || deleteConfirmation !== `DELETE ${cat.id.toUpperCase()}`}
+                            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-red-700 hover:bg-red-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                          >
+                            {isDeleting ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                            <span className="sm:inline">Confirm</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setDeleteTarget(null);
+                              setDeleteConfirmation('');
+                            }}
+                            className="flex-1 sm:flex-none px-4 py-2.5 sm:py-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600 rounded-lg text-sm"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Export All Data */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                  <FileDown className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex-shrink-0">
+                  <FileDown className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 dark:text-white">Export All Data</h3>
-                  <p className="text-sm text-slate-500">Download a complete backup of all database tables</p>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-sm sm:text-base">Export All Data</h3>
+                  <p className="text-xs sm:text-sm text-slate-500">Download a complete backup of all database tables</p>
                 </div>
               </div>
               <button
                 onClick={() => exportData('all')}
                 disabled={isExporting}
-                className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50 transition-colors"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-lg disabled:opacity-50 transition-colors"
               >
                 <Download className="h-5 w-5" />
                 Export Full Backup
@@ -577,4 +639,3 @@ export default function AdminSettings() {
     </div>
   );
 }
-
