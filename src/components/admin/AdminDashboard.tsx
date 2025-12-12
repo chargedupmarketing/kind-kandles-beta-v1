@@ -28,7 +28,8 @@ import {
   UserCog,
   PanelLeft,
   UsersRound,
-  Truck
+  Truck,
+  HardDrive
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -52,8 +53,9 @@ import AIAssistant from './AIAssistant';
 import EmailManagement from './EmailManagement';
 import SubLevelManagement from './SubLevelManagement';
 import ShippingManagement from './ShippingManagement';
+import FileManagement from './FileManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -173,6 +175,11 @@ export default function AdminDashboard() {
           label: 'Navigation Menu',
           icon: Menu,
         },
+        {
+          id: 'files' as AdminSection,
+          label: 'File Storage',
+          icon: HardDrive,
+        },
       ]
     },
     {
@@ -268,6 +275,8 @@ export default function AdminDashboard() {
         return <BlogManagement />;
       case 'menu':
         return <MenuManagement />;
+      case 'files':
+        return <FileManagement />;
       case 'contacts':
         return <ContactSubmissions />;
       case 'survey':
