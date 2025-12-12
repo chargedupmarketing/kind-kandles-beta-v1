@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       const cloudinaryFormData = new FormData();
       cloudinaryFormData.append('file', dataUrl);
       cloudinaryFormData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      cloudinaryFormData.append('folder', 'kind-kandles/products');
+      cloudinaryFormData.append('folder', 'products');
 
       const cloudinaryResponse = await fetch(
         `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
