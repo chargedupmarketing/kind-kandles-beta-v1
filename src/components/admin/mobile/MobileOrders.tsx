@@ -61,7 +61,10 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
       const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
       
       const response = await fetch(
-        `/api/orders?page=${currentPage}&limit=20${statusParam}${searchParam}&sort=created_at&order=desc`
+        `/api/orders?page=${currentPage}&limit=20${statusParam}${searchParam}&sort=created_at&order=desc`,
+        {
+          headers: { 'Authorization': 'Bearer admin-token' }
+        }
       );
       const data = await response.json();
 

@@ -42,7 +42,9 @@ export default function MobileAppShell({
   useEffect(() => {
     const fetchPendingOrders = async () => {
       try {
-        const response = await fetch('/api/orders?status=pending&limit=1');
+        const response = await fetch('/api/orders?status=pending&limit=1', {
+          headers: { 'Authorization': 'Bearer admin-token' }
+        });
         const data = await response.json();
         setPendingOrderCount(data.total || 0);
       } catch (error) {
