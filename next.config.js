@@ -108,6 +108,35 @@ const nextConfig = {
     ];
   },
 
+  // Rewrites for admin subdomain
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // When accessing admin.kindkandlesboutique.com, rewrite to /restricted paths
+        {
+          source: '/',
+          has: [{ type: 'host', value: 'admin.kindkandlesboutique.com' }],
+          destination: '/restricted/login',
+        },
+        {
+          source: '/login',
+          has: [{ type: 'host', value: 'admin.kindkandlesboutique.com' }],
+          destination: '/restricted/login',
+        },
+        {
+          source: '/admin',
+          has: [{ type: 'host', value: 'admin.kindkandlesboutique.com' }],
+          destination: '/restricted/admin',
+        },
+        {
+          source: '/admin/:path*',
+          has: [{ type: 'host', value: 'admin.kindkandlesboutique.com' }],
+          destination: '/restricted/admin/:path*',
+        },
+      ],
+    };
+  },
+
   // Static optimization
   trailingSlash: false,
   poweredByHeader: false,

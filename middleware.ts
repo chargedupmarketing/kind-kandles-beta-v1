@@ -50,6 +50,15 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get('host') || '';
+  
+  // Handle admin subdomain
+  const isAdminSubdomain = hostname.startsWith('admin.');
+  
+  // Redirect admin subdomain root to login
+  if (isAdminSubdomain && pathname === '/') {
+    return NextResponse.redirect(new URL('/restricted/login', request.url));
+  }
 
   // Handle admin route protection
   if (pathname.startsWith('/restricted/admin')) {
