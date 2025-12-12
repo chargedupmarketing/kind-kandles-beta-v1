@@ -518,9 +518,16 @@ export default function SquarePaymentForm({
             </div>
           )}
 
-          {/* Row 2: PayPal & Cash App */}
+          {/* Row 2: Cash App Pay */}
+          {isCashAppPayAvailable && (
+            <div className="flex gap-3">
+              {/* Cash App Pay Container (Square handles the button) */}
+              <div id="cash-app-pay-container" className="flex-1 min-h-[48px]" />
+            </div>
+          )}
+
+          {/* PayPal - Hidden until client approves
           <div className="flex gap-3">
-            {/* PayPal Button */}
             <button
               type="button"
               onClick={handlePayPal}
@@ -532,24 +539,8 @@ export default function SquarePaymentForm({
               </svg>
               PayPal
             </button>
-
-            {/* Cash App Pay Container (Square handles the button) */}
-            {isCashAppPayAvailable ? (
-              <div id="cash-app-pay-container" className="flex-1 min-h-[48px]" />
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="flex-1 bg-[#00D632] text-white py-3 px-4 rounded-lg font-medium opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
-                title="Cash App Pay requires setup in Square Dashboard"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.625 16.875h-1.5v-1.5h-2.25v1.5h-1.5v-1.5h-.75v-1.5h.75v-4.5h-.75v-1.5h.75v-1.5h1.5v1.5h2.25v-1.5h1.5v1.5h.75v1.5h-.75v4.5h.75v1.5h-.75v1.5zm-1.5-7.5h-2.25v4.5h2.25v-4.5z"/>
-                </svg>
-                Cash App
-              </button>
-            )}
           </div>
+          */}
           
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
