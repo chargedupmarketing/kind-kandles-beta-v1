@@ -109,6 +109,11 @@ async function handleTrackingUpdate(trackingData: {
 
   if (currentStatus === 'DELIVERED') {
     updateData.delivered_date = trackingData.tracking_status.status_date;
+    
+    // Schedule review request email for 24 hours after delivery
+    if (shipment.order_id) {
+      await scheduleReviewRequest(supabase, shipment.order_id, shipment.id);
+    }
   }
 
   await supabase
@@ -223,6 +228,83 @@ async function sendTrackingNotification(
     console.log('Tracking notification sent to:', customerEmail);
   } catch (error) {
     console.error('Failed to send tracking notification:', error);
+  }
+}
+
+// Schedule a review request email 24 hours after delivery
+async function scheduleReviewRequest(
+  supabase: ReturnType<typeof createServerClient>,
+  orderId: string,
+  shipmentId: string
+) {
+  try {
+    // Check if a review request is already scheduled for this order
+    const { data: existingRequest } = await supabase
+      .from('scheduled_review_requests')
+      .select('id')
+      .eq('order_id', orderId)
+      .single();
+
+    if (existingRequest) {
+      console.log('Review request already scheduled for order:', orderId);
+      return;
+    }
+
+    // Schedule for 24 hours from now
+    const scheduledFor = new Date();
+    scheduledFor.setHours(scheduledFor.getHours() + 24);
+
+    // Create review token first
+    const { data: order } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          product_id,
+          product_name
+        )
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (!order || !order.order_items?.length) {
+      console.log('Order or order items not found for review request:', orderId);
+      return;
+    }
+
+    // Generate unique token
+    const crypto = await import('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Token expires in 7 days
+
+    const productIds = order.order_items.map((item: { product_id: string }) => item.product_id);
+
+    // Create review token
+    await supabase
+      .from('review_tokens')
+      .insert({
+        order_id: orderId,
+        customer_email: order.customer_email,
+        customer_name: order.customer_name || order.shipping_address?.name,
+        token,
+        product_ids: productIds,
+        expires_at: expiresAt.toISOString(),
+      });
+
+    // Schedule the review request
+    await supabase
+      .from('scheduled_review_requests')
+      .insert({
+        order_id: orderId,
+        shipment_id: shipmentId,
+        scheduled_for: scheduledFor.toISOString(),
+        status: 'pending',
+      });
+
+    console.log('Review request scheduled for order:', orderId, 'at', scheduledFor.toISOString());
+  } catch (error) {
+    console.error('Error scheduling review request:', error);
   }
 }
 

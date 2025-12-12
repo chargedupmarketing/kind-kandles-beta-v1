@@ -39,6 +39,7 @@ import ProductManagement from './ProductManagement';
 import OrderManagement from './OrderManagement';
 import OrderFulfillment from './OrderFulfillment';
 import CustomerManagement from './CustomerManagement';
+import ReviewManagement from './ReviewManagement';
 import DiscountManagement from './DiscountManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import SettingsPanel from './SettingsPanel';
@@ -52,7 +53,7 @@ import EmailManagement from './EmailManagement';
 import SubLevelManagement from './SubLevelManagement';
 import ShippingManagement from './ShippingManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -128,6 +129,11 @@ export default function AdminDashboard() {
           id: 'customers' as AdminSection,
           label: 'Customers',
           icon: Users,
+        },
+        {
+          id: 'reviews' as AdminSection,
+          label: 'Reviews',
+          icon: Star,
         },
         {
           id: 'discounts' as AdminSection,
@@ -248,6 +254,8 @@ export default function AdminDashboard() {
         return <OrderManagement />;
       case 'customers':
         return <CustomerManagement />;
+      case 'reviews':
+        return <ReviewManagement />;
       case 'discounts':
         return <DiscountManagement />;
       case 'promotions':
