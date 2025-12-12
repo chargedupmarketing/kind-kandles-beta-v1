@@ -60,7 +60,9 @@ export default function AdminLogin() {
           setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
         } else {
           // Direct login (no 2FA required)
-          router.push('/restricted/admin');
+          // Give the cookie time to be set before redirecting
+          await new Promise(resolve => setTimeout(resolve, 100));
+          window.location.href = '/restricted/admin';
         }
       } else {
         setError(data.error || 'Invalid credentials. Access denied.');
@@ -132,7 +134,10 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/restricted/admin');
+        // Give the cookie time to be set before redirecting
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Use window.location for a full page reload to ensure cookie is available
+        window.location.href = '/restricted/admin';
       } else {
         setError(data.error || 'Invalid verification code');
         if (data.remainingAttempts !== undefined) {
