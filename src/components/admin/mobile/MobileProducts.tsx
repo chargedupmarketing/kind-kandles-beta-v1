@@ -26,9 +26,9 @@ interface Product {
   handle: string;
   price: number;
   compare_at_price?: number;
-  inventory_quantity: number;
-  status: 'active' | 'draft' | 'archived';
-  images: { url: string }[];
+  inventory_quantity?: number;
+  status?: 'active' | 'draft' | 'archived';
+  images?: { url: string }[];
   type?: string;
   vendor?: string;
 }
@@ -69,7 +69,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           sortedProducts.sort((a: Product, b: Product) => b.price - a.price);
           break;
         case 'stock':
-          sortedProducts.sort((a: Product, b: Product) => a.inventory_quantity - b.inventory_quantity);
+          sortedProducts.sort((a: Product, b: Product) => (a.inventory_quantity ?? 0) - (b.inventory_quantity ?? 0));
           break;
       }
 
@@ -128,19 +128,20 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
     fetchProducts(true);
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | undefined | null) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount ?? 0);
   };
 
-  const getStockStatus = (quantity: number) => {
-    if (quantity === 0) return { color: 'bg-red-500 text-white', label: '0' };
-    if (quantity <= 5) return { color: 'bg-amber-500 text-white', label: quantity.toString() };
-    return { color: 'bg-green-500/20 text-green-400', label: quantity.toString() };
+  const getStockStatus = (quantity: number | undefined | null) => {
+    const qty = quantity ?? 0;
+    if (qty === 0) return { color: 'bg-red-500 text-white', label: '0' };
+    if (qty <= 5) return { color: 'bg-amber-500 text-white', label: String(qty) };
+    return { color: 'bg-green-500/20 text-green-400', label: String(qty) };
   };
 
   const sortOptions: { id: SortOption; label: string; short: string }[] = [

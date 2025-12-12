@@ -9,9 +9,9 @@ interface Product {
   title: string;
   price: number;
   compare_at_price?: number;
-  inventory_quantity: number;
-  status: 'active' | 'draft' | 'archived';
-  images: { url: string }[];
+  inventory_quantity?: number;
+  status?: 'active' | 'draft' | 'archived';
+  images?: { url: string }[];
 }
 
 interface QuickEditProductProps {
@@ -21,10 +21,10 @@ interface QuickEditProductProps {
 }
 
 export default function QuickEditProduct({ product, onClose, onSuccess }: QuickEditProductProps) {
-  const [price, setPrice] = useState(product.price.toString());
+  const [price, setPrice] = useState((product.price ?? 0).toString());
   const [compareAtPrice, setCompareAtPrice] = useState(product.compare_at_price?.toString() || '');
-  const [quantity, setQuantity] = useState(product.inventory_quantity);
-  const [status, setStatus] = useState(product.status);
+  const [quantity, setQuantity] = useState(product.inventory_quantity ?? 0);
+  const [status, setStatus] = useState(product.status ?? 'active');
   const [loading, setSaving] = useState(false);
   const [error, setError] = useState('');
 
