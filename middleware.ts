@@ -13,6 +13,48 @@ interface TokenPayload {
   subLevels?: string[];
 }
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 100; // Max requests per window for general API
+const RATE_LIMIT_AUTH_MAX = 10; // Max auth attempts per window
+
+// In-memory rate limiting (use Redis in production for distributed systems)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+function getRateLimitKey(request: NextRequest): string {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+             request.headers.get('x-real-ip') ||
+             'unknown';
+  return `${ip}:${request.nextUrl.pathname}`;
+}
+
+function checkRateLimit(key: string, maxRequests: number): { allowed: boolean; remaining: number; resetIn: number } {
+  const now = Date.now();
+  const record = rateLimitStore.get(key);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitStore.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: maxRequests - 1, resetIn: RATE_LIMIT_WINDOW_MS };
+  }
+  
+  if (record.count >= maxRequests) {
+    return { allowed: false, remaining: 0, resetIn: record.resetTime - now };
+  }
+  
+  record.count++;
+  return { allowed: true, remaining: maxRequests - record.count, resetIn: record.resetTime - now };
+}
+
+// Clean up old rate limit entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitStore.entries()) {
+    if (now > record.resetTime) {
+      rateLimitStore.delete(key);
+    }
+  }
+}, 60000); // Clean up every minute
+
 async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
@@ -51,6 +93,29 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hostname = request.headers.get('host') || '';
+  
+  // Rate limiting for API routes
+  if (pathname.startsWith('/api/')) {
+    const isAuthRoute = pathname.includes('/auth/');
+    const maxRequests = isAuthRoute ? RATE_LIMIT_AUTH_MAX : RATE_LIMIT_MAX_REQUESTS;
+    const rateLimitKey = getRateLimitKey(request);
+    const { allowed, remaining, resetIn } = checkRateLimit(rateLimitKey, maxRequests);
+    
+    if (!allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': maxRequests.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': Math.ceil(resetIn / 1000).toString(),
+            'Retry-After': Math.ceil(resetIn / 1000).toString(),
+          }
+        }
+      );
+    }
+  }
   
   // Handle admin subdomain
   const isAdminSubdomain = hostname.startsWith('admin.');
