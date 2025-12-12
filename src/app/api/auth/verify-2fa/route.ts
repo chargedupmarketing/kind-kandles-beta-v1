@@ -234,53 +234,70 @@ export async function POST(request: NextRequest) {
     
     // If rememberDevice is true, create a trusted device token
     if (rememberDevice) {
-      const deviceToken = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + TRUSTED_DEVICE_DAYS * 24 * 60 * 60 * 1000);
-      
-      // Get device info from user agent
-      const userAgent = request.headers.get('user-agent') || 'Unknown';
-      const deviceName = parseDeviceName(userAgent);
-      
-      // Store trusted device in database
-      await supabase
-        .from('trusted_devices')
-        .insert({
-          user_id: userId,
-          device_token: deviceToken,
-          device_name: deviceName,
-          user_agent: userAgent.substring(0, 500), // Limit length
-          expires_at: expiresAt.toISOString(),
-          last_used_at: new Date().toISOString()
-        });
-      
-      // Set trusted device cookie (30 days)
-      response.cookies.set('trusted-device', deviceToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: TRUSTED_DEVICE_DAYS * 24 * 60 * 60, // 30 days in seconds
-        path: '/',
-        ...(process.env.NODE_ENV === 'production' && {
-          domain: '.kindkandlesboutique.com'
-        })
-      });
-      
-      console.log(`Trusted device saved for user ${userId}, expires ${expiresAt.toISOString()}`);
+      try {
+        const deviceToken = crypto.randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + TRUSTED_DEVICE_DAYS * 24 * 60 * 60 * 1000);
+        
+        // Get device info from user agent
+        const userAgent = request.headers.get('user-agent') || 'Unknown';
+        const deviceName = parseDeviceName(userAgent);
+        
+        // Store trusted device in database (may fail if table doesn't exist)
+        const { error: insertError } = await supabase
+          .from('trusted_devices')
+          .insert({
+            user_id: userId,
+            device_token: deviceToken,
+            device_name: deviceName,
+            user_agent: userAgent.substring(0, 500), // Limit length
+            expires_at: expiresAt.toISOString(),
+            last_used_at: new Date().toISOString()
+          });
+        
+        if (!insertError) {
+          // Only set cookie if database insert succeeded
+          response.cookies.set('trusted-device', deviceToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: TRUSTED_DEVICE_DAYS * 24 * 60 * 60, // 30 days in seconds
+            path: '/',
+            ...(process.env.NODE_ENV === 'production' && {
+              domain: '.kindkandlesboutique.com'
+            })
+          });
+          
+          console.log(`Trusted device saved for user ${userId}, expires ${expiresAt.toISOString()}`);
+        } else {
+          console.warn('Could not save trusted device (table may not exist):', insertError.message);
+        }
+      } catch (trustedDeviceError) {
+        // Don't fail login if trusted device save fails
+        console.warn('Error saving trusted device:', trustedDeviceError);
+      }
     }
     
     // Clean up old OTP codes for this user
-    await supabase
-      .from('two_factor_codes')
-      .delete()
-      .eq('user_id', userId)
-      .neq('id', otpRecord.id);
+    try {
+      await supabase
+        .from('two_factor_codes')
+        .delete()
+        .eq('user_id', userId)
+        .neq('id', otpRecord.id);
+    } catch (cleanupError) {
+      console.warn('Error cleaning up OTP codes:', cleanupError);
+    }
     
-    // Clean up expired trusted devices for this user
-    await supabase
-      .from('trusted_devices')
-      .delete()
-      .eq('user_id', userId)
-      .lt('expires_at', new Date().toISOString());
+    // Clean up expired trusted devices for this user (may fail if table doesn't exist)
+    try {
+      await supabase
+        .from('trusted_devices')
+        .delete()
+        .eq('user_id', userId)
+        .lt('expires_at', new Date().toISOString());
+    } catch (cleanupError) {
+      // Ignore - table may not exist
+    }
     
     return response;
     

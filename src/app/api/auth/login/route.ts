@@ -240,26 +240,31 @@ export async function POST(request: NextRequest) {
       let isTrustedDevice = false;
       
       if (trustedDeviceToken && isSupabaseConfigured()) {
-        const supabase = createServerClient();
-        
-        // Check if this device is trusted for this user
-        const { data: trustedDevice } = await supabase
-          .from('trusted_devices')
-          .select('*')
-          .eq('user_id', dbUser.id)
-          .eq('device_token', trustedDeviceToken)
-          .gt('expires_at', new Date().toISOString())
-          .single();
-        
-        if (trustedDevice) {
-          isTrustedDevice = true;
-          console.log('Trusted device found, skipping 2FA');
+        try {
+          const supabase = createServerClient();
           
-          // Update last used timestamp
-          await supabase
+          // Check if this device is trusted for this user
+          const { data: trustedDevice, error: trustError } = await supabase
             .from('trusted_devices')
-            .update({ last_used_at: new Date().toISOString() })
-            .eq('id', trustedDevice.id);
+            .select('*')
+            .eq('user_id', dbUser.id)
+            .eq('device_token', trustedDeviceToken)
+            .gt('expires_at', new Date().toISOString())
+            .single();
+          
+          if (!trustError && trustedDevice) {
+            isTrustedDevice = true;
+            console.log('Trusted device found, skipping 2FA');
+            
+            // Update last used timestamp
+            await supabase
+              .from('trusted_devices')
+              .update({ last_used_at: new Date().toISOString() })
+              .eq('id', trustedDevice.id);
+          }
+        } catch (trustCheckError) {
+          // Table might not exist yet - continue with 2FA
+          console.warn('Trusted device check failed (table may not exist):', trustCheckError);
         }
       }
       
