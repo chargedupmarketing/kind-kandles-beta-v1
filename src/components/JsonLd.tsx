@@ -5,8 +5,11 @@
  * Use this component to add JSON-LD to any page.
  */
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type JsonLdData = any;
+
 interface JsonLdProps {
-  data: Record<string, unknown> | Record<string, unknown>[];
+  data: JsonLdData;
 }
 
 export default function JsonLd({ data }: JsonLdProps) {
