@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useIsMobile } from '@/hooks/useMobileDetect';
 import { 
   Menu, 
   Settings, 
@@ -54,6 +55,7 @@ import EmailManagement from './EmailManagement';
 import SubLevelManagement from './SubLevelManagement';
 import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
+import MobileAppShell from './mobile/MobileAppShell';
 
 type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
 
@@ -74,6 +76,7 @@ export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { logout, isMaintenanceMode, user, isSuperAdmin, hasPermission } = useAdmin();
+  const isMobile = useIsMobile();
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -298,6 +301,18 @@ export default function AdminDashboard() {
     }
   };
 
+  // Render mobile app shell on mobile devices
+  if (isMobile) {
+    return (
+      <MobileAppShell
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        renderDesktopContent={renderContent}
+      />
+    );
+  }
+
+  // Desktop layout
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Header */}
