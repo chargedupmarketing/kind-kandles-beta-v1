@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getSquareApplicationId, getSquareLocationId, getSquareEnvironment } from '@/lib/square';
+import { getSquareConfig } from '@/lib/square';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  const config = await getSquareConfig();
+  
   return NextResponse.json({
-    applicationId: getSquareApplicationId(),
-    locationId: getSquareLocationId(),
-    environment: getSquareEnvironment(),
+    applicationId: config.applicationId,
+    locationId: config.locationId,
+    environment: config.mode,
   });
 }
 

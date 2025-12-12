@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { squareClient, isSquareConfigured, toSquareAmount, generateIdempotencyKey, getSquareLocationId } from '@/lib/square';
+import { createSquareClient, getSquareConfig, isSquareConfiguredAsync, toSquareAmount, generateIdempotencyKey } from '@/lib/square';
 import type { Square } from 'square';
+
+export const dynamic = 'force-dynamic';
 
 interface CartItem {
   productId: string;
@@ -33,9 +35,20 @@ interface PaymentRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    if (!isSquareConfigured() || !squareClient) {
+    // Check if Square is configured (checks both DB and env vars)
+    const isConfigured = await isSquareConfiguredAsync();
+    if (!isConfigured) {
       return NextResponse.json({ error: 'Square is not configured' }, { status: 500 });
     }
+
+    // Create Square client with current settings
+    const squareClient = await createSquareClient();
+    if (!squareClient) {
+      return NextResponse.json({ error: 'Failed to initialize Square client' }, { status: 500 });
+    }
+
+    // Get current config for location ID
+    const config = await getSquareConfig();
 
     const body: PaymentRequest = await request.json();
     const { sourceId, items, shippingAddress, shippingCost, discountAmount } = body;
@@ -58,6 +71,12 @@ export async function POST(request: NextRequest) {
     // Convert to cents for Square
     const amountInCents = toSquareAmount(total);
 
+    console.log('Processing payment with Square:', {
+      mode: config.mode,
+      locationId: config.locationId,
+      amount: total,
+    });
+
     // Create payment with Square
     const response = await squareClient.payments.create({
       sourceId,
@@ -66,7 +85,7 @@ export async function POST(request: NextRequest) {
         amount: amountInCents,
         currency: 'USD',
       },
-      locationId: getSquareLocationId(),
+      locationId: config.locationId,
       buyerEmailAddress: shippingAddress.email,
       shippingAddress: {
         addressLine1: shippingAddress.address1,
