@@ -20,10 +20,10 @@ export const SITE_CONFIG = {
   locale: 'en_US',
   // Business info
   address: {
-    streetAddress: '9505 Reisterstown Rd, Suite 2SE',
-    addressLocality: 'Owings Mills',
+    streetAddress: '',
+    addressLocality: '',
     addressRegion: 'MD',
-    postalCode: '21117',
+    postalCode: '',
     addressCountry: 'US',
   },
   phone: '', // Add phone number when available
@@ -44,7 +44,7 @@ export const SEO_KEYWORDS = {
     'handmade candles',
     'natural skincare',
     'boutique Maryland',
-    'Owings Mills boutique',
+    'Maryland boutique',
     'natural ingredients',
     'handcrafted products',
     'eco-friendly candles',
@@ -243,12 +243,11 @@ export function generateLocalBusinessSchema(): LocalBusinessSchema {
     image: `${SITE_CONFIG.url}${SITE_CONFIG.ogImage}`,
     address: {
       '@type': 'PostalAddress',
-      ...SITE_CONFIG.address,
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: 39.4195,
-      longitude: -76.7781,
+      addressRegion: 'MD',
+      addressCountry: 'US',
+      streetAddress: '',
+      addressLocality: '',
+      postalCode: '',
     },
     ...(SITE_CONFIG.phone && { telephone: SITE_CONFIG.phone }),
     ...(SITE_CONFIG.email && { email: SITE_CONFIG.email }),

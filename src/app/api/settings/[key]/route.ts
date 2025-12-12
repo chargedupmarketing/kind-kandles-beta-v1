@@ -8,11 +8,11 @@ const defaultSettings: Record<string, any> = {
     email: 'info@kindkandlesboutique.com',
     phone: '',
     address: {
-      line1: '9505 Reisterstown Rd',
-      line2: 'Suite 2SE',
-      city: 'Owings Mills',
+      line1: '',
+      line2: '',
+      city: '',
       state: 'MD',
-      postal_code: '21117',
+      postal_code: '',
       country: 'US'
     },
     logo_url: '/logos/logo.png',

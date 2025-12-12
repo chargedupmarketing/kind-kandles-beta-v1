@@ -4,8 +4,8 @@ import JsonLd from '@/components/JsonLd';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'About Us - Our Story & Values',
-  description: 'Learn about My Kind Kandles & Boutique, a family-owned business in Owings Mills, Maryland. Discover our commitment to natural ingredients, handcrafted quality, and kindness.',
-  keywords: [...SEO_KEYWORDS.general, 'about us', 'Owings Mills boutique', 'family business', 'handmade products'],
+  description: 'Learn about My Kind Kandles & Boutique, a family-owned business in Maryland. Discover our commitment to natural ingredients, handcrafted quality, and kindness.',
+  keywords: [...SEO_KEYWORDS.general, 'about us', 'Maryland boutique', 'family business', 'handmade products'],
   path: '/about',
 });
 

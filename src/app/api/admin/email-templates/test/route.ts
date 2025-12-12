@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
           <strong>Lavender Body Butter</strong> x 1 - $15.00
         </div>
       `,
-      shipping_address: '123 Test Street<br>Owings Mills, MD 21117',
+      shipping_address: '123 Test Street<br>Maryland, USA',
       tracking_number: '1Z999AA10123456784',
       tracking_url: 'https://www.ups.com/track',
       review_url: 'https://kindkandlesboutique.com/write-your-story',

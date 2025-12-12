@@ -68,7 +68,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
     </div>
   </div>
 </body>
@@ -121,7 +121,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
     </div>
   </div>
 </body>
@@ -169,7 +169,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
     </div>
   </div>
 </body>
@@ -214,7 +214,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
     </div>
   </div>
 </body>
@@ -245,7 +245,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
       <p style="color: #555; font-size: 17px;">Hi {{subscriber_name}},</p>
       <p style="color: #555;">Welcome to the Kind Kandles family! We're so happy to have you here. 🕯️</p>
 
-      <p style="color: #555;">At My Kind Kandles & Boutique, we believe in creating moments of peace and self-care through our handmade candles and skincare products. Every item is crafted with love in Owings Mills, Maryland.</p>
+      <p style="color: #555;">At My Kind Kandles & Boutique, we believe in creating moments of peace and self-care through our handmade candles and skincare products. Every item is crafted with love in Maryland.</p>
 
       <div style="background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center;">
         <p style="color: #db2777; font-size: 20px; font-weight: bold; margin: 0 0 10px;">🎁 Welcome Gift!</p>
@@ -272,7 +272,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
       <p style="margin: 10px 0 0;"><a href="{{unsubscribe_link}}" style="color: #888; font-size: 11px;">Unsubscribe</a></p>
     </div>
   </div>
@@ -338,7 +338,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
         <a href="{{tiktok_url}}" style="display: inline-block; margin: 0 5px; color: #888;">TikTok</a>
       </div>
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
       <p style="margin: 10px 0 0;"><a href="{{unsubscribe_link}}" style="color: #888; font-size: 11px;">Unsubscribe</a></p>
     </div>
   </div>
@@ -393,7 +393,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
       <p style="margin: 10px 0 0;"><a href="{{unsubscribe_link}}" style="color: #888; font-size: 11px;">Unsubscribe</a></p>
     </div>
   </div>
@@ -455,7 +455,7 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     
     <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #eee;">
       <p style="margin: 0; color: #888; font-size: 12px;">My Kind Kandles & Boutique</p>
-      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117</p>
+      <p style="margin: 5px 0 0; color: #888; font-size: 12px;">Maryland, USA</p>
       <p style="margin: 10px 0 0;"><a href="{{unsubscribe_link}}" style="color: #888; font-size: 11px;">Unsubscribe</a></p>
     </div>
   </div>

@@ -4,8 +4,8 @@ import JsonLd from '@/components/JsonLd';
 
 export const metadata: Metadata = generatePageMetadata({
   title: 'Contact Us - Get in Touch',
-  description: 'Contact My Kind Kandles & Boutique in Owings Mills, Maryland. Visit our store at 9505 Reisterstown Rd, Suite 2SE or reach out for custom orders and inquiries.',
-  keywords: [...SEO_KEYWORDS.general, 'contact us', 'Owings Mills', 'store location', 'customer service'],
+  description: 'Contact My Kind Kandles & Boutique in Maryland. Reach out for custom orders, inquiries, or to learn more about our handcrafted products.',
+  keywords: [...SEO_KEYWORDS.general, 'contact us', 'Maryland', 'customer service', 'custom orders'],
   path: '/about/contact',
 });
 

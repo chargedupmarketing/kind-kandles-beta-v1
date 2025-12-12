@@ -15,9 +15,7 @@ const Footer = () => {
               Do All Things With Kindness
             </p>
             <div className="text-gray-300">
-              <p>9505 Reisterstown Rd</p>
-              <p>Suite 2SE</p>
-              <p>Owings Mills Maryland 21117</p>
+              <p>Maryland, USA</p>
             </div>
           </div>
 

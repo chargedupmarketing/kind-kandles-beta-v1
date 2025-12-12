@@ -17,7 +17,7 @@ export default function AboutPage() {
     {
       icon: <Users className="h-8 w-8 text-teal-600 dark:text-teal-400" />,
       title: 'Community Focused',
-      description: 'We are proud to be a part of the Owings Mills community and support local initiatives.'
+      description: 'We are proud to be a part of our local community and support meaningful initiatives.'
     },
     {
       icon: <Star className="h-8 w-8 text-amber-600 dark:text-amber-400" />,
@@ -46,7 +46,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-8 inline-flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md">
             <span className="text-amber-600 dark:text-amber-400">📍</span>
-            <span className="text-gray-700 dark:text-slate-300 font-medium">Proudly serving Owings Mills, Maryland & beyond</span>
+            <span className="text-gray-700 dark:text-slate-300 font-medium">Proudly serving Maryland & beyond</span>
           </div>
         </div>
       </section>
@@ -60,14 +60,14 @@ export default function AboutPage() {
               <div className="space-y-4 text-gray-600">
                 <p>
                   My Kind Kandles & Boutique was born from a passion for creating beautiful, natural products that bring joy and wellness into people's lives. 
-                  What started as a small dream has grown into a beloved boutique serving the Owings Mills community and beyond.
+                  What started as a small dream has grown into a beloved boutique serving customers across Maryland and beyond.
                 </p>
                 <p>
                   We specialize in handcrafted candles made with premium soy wax and essential oils, luxurious skincare products with natural ingredients, 
                   and carefully curated boutique items. Each product is made with intention, love, and our commitment to kindness.
                 </p>
                 <p>
-                  Located in Owings Mills, Maryland, we're more than just a boutique - we're a community hub where kindness, quality, and natural beauty come together.
+                  Based in Maryland, we're more than just a boutique - we're a community hub where kindness, quality, and natural beauty come together.
                 </p>
               </div>
             </div>
@@ -105,26 +105,24 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Location & Contact */}
+      {/* Contact */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Visit Our Boutique</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Connect With Us</h2>
               <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Address</h3>
-                  <p className="text-gray-600">
-                    9505 Reisterstown Rd<br />
-                    Suite 2SE<br />
-                    Owings Mills, Maryland 21117
-                  </p>
-                </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Experience</h3>
                   <p className="text-gray-600">
-                    Visit us in person to experience our products firsthand, or book a mobile candle making experience 
+                    Shop our products online, or book a mobile candle making experience 
                     for your next event or gathering.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Location</h3>
+                  <p className="text-gray-600">
+                    Based in Maryland, USA
                   </p>
                 </div>
               </div>
@@ -135,7 +133,7 @@ export default function AboutPage() {
               </div>
             </div>
             <div className="bg-gray-200 aspect-[4/3] rounded-lg flex items-center justify-center">
-              <span className="text-gray-400">Location Map</span>
+              <span className="text-gray-400">Brand Image</span>
             </div>
           </div>
         </div>

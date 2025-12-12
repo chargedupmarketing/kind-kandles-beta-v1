@@ -9,7 +9,7 @@ Brand Voice:
 - Tagline: "Do All Things With Kindness"
 
 Store Details:
-- Location: 9505 Reisterstown Rd, Suite 2SE, Owings Mills, MD 21117
+- Location: Maryland, USA
 - Products: Handmade soy candles, body butters, room sprays, bar soaps, body oils, wax melts
 - Brand colors: Pink (#db2777), soft pastels
 

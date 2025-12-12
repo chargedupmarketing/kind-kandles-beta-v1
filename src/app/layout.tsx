@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: "My Kind Kandles & Boutique - Do All Things With Kindness",
     template: "%s | My Kind Kandles & Boutique",
   },
-  description: "Natural handmade candles, skincare, body oils, and boutique items crafted with love in Owings Mills, Maryland. Promoting healthy skin with natural ingredients.",
+  description: "Natural handmade candles, skincare, body oils, and boutique items crafted with love in Maryland. Promoting healthy skin with natural ingredients.",
   keywords: [...SEO_KEYWORDS.general, ...SEO_KEYWORDS.candles, ...SEO_KEYWORDS.skincare].join(', '),
   manifest: "/manifest.json",
   robots: {
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     url: SITE_CONFIG.url,
     siteName: "My Kind Kandles & Boutique",
     title: "My Kind Kandles & Boutique - Do All Things With Kindness",
-    description: "Natural handmade candles, skincare, body oils, and boutique items crafted with love in Owings Mills, Maryland. Promoting healthy skin with natural ingredients.",
+    description: "Natural handmade candles, skincare, body oils, and boutique items crafted with love in Maryland. Promoting healthy skin with natural ingredients.",
     images: [
       {
         url: `${SITE_CONFIG.url}/og-image.svg`,

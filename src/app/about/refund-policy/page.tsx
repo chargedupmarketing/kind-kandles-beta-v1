@@ -100,12 +100,6 @@ export default function RefundPolicyPage() {
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Contact Information</h3>
                 <div className="bg-pink-50 dark:bg-gray-800 rounded-lg p-6">
-                  <p className="text-gray-700 dark:text-gray-300 mb-4">
-                    <strong>Address:</strong><br />
-                    9505 Reisterstown Rd<br />
-                    Suite 2SE<br />
-                    Owings Mills Maryland 21117
-                  </p>
                   <p className="text-gray-700 dark:text-gray-300">
                     <strong>Email:</strong> <a href="mailto:k@kindkandlesboutique.com" className="text-pink-600 hover:text-pink-700">k@kindkandlesboutique.com</a>
                   </p>
