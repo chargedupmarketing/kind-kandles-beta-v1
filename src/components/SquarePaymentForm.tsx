@@ -40,8 +40,10 @@ export default function SquarePaymentForm({
   const [card, setCard] = useState<any>(null);
   const [applePay, setApplePay] = useState<any>(null);
   const [googlePay, setGooglePay] = useState<any>(null);
+  const [cashAppPay, setCashAppPay] = useState<any>(null);
   const [isApplePayAvailable, setIsApplePayAvailable] = useState(false);
   const [isGooglePayAvailable, setIsGooglePayAvailable] = useState(false);
+  const [isCashAppPayAvailable, setIsCashAppPayAvailable] = useState(false);
   const [isCardContainerReady, setIsCardContainerReady] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'card' | 'apple' | 'google'>('card');
   const cardContainerRef = useRef<HTMLDivElement>(null);
@@ -131,6 +133,28 @@ export default function SquarePaymentForm({
         }
       } catch (googleErr) {
         console.log('Google Pay not available:', googleErr);
+      }
+
+      // Try to initialize Cash App Pay
+      try {
+        const cashAppPayInstance = await payments.cashAppPay({
+          redirectURL: window.location.href,
+          referenceId: `order-${Date.now()}`,
+        });
+        
+        // Attach Cash App Pay button
+        const cashAppContainer = document.getElementById('cash-app-pay-container');
+        if (cashAppContainer) {
+          await cashAppPayInstance.attach('#cash-app-pay-container', {
+            shape: 'semiround',
+            width: 'full',
+          });
+          setCashAppPay(cashAppPayInstance);
+          setIsCashAppPayAvailable(true);
+          console.log('Cash App Pay initialized');
+        }
+      } catch (cashAppErr) {
+        console.log('Cash App Pay not available:', cashAppErr);
       }
 
       setIsLoading(false);
@@ -228,8 +252,15 @@ export default function SquarePaymentForm({
           // Ignore cleanup errors
         }
       }
+      if (cashAppPay) {
+        try {
+          cashAppPay.destroy();
+        } catch (e) {
+          // Ignore cleanup errors
+        }
+      }
     };
-  }, [card, applePay, googlePay]);
+  }, [card, applePay, googlePay, cashAppPay]);
 
   // Process payment with token
   const processPayment = async (token: string) => {
@@ -339,6 +370,48 @@ export default function SquarePaymentForm({
     }
   };
 
+  const handleCashAppPay = async () => {
+    if (!cashAppPay) return;
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      const tokenResult = await cashAppPay.tokenize();
+      
+      if (tokenResult.status === 'OK') {
+        await processPayment(tokenResult.token);
+      } else {
+        let errorMessage = 'Cash App Pay failed';
+        if (tokenResult.errors) {
+          errorMessage = tokenResult.errors.map((e: any) => e.message).join(', ');
+        }
+        setError(errorMessage);
+      }
+    } catch (err) {
+      console.error('Cash App Pay error:', err);
+      setError('Cash App Pay failed. Please try another payment method.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle PayPal redirect
+  const handlePayPal = () => {
+    // Store cart info in session for PayPal return
+    sessionStorage.setItem('paypal_checkout', JSON.stringify({
+      items,
+      shippingAddress,
+      shippingCost,
+      discountCode,
+      discountAmount,
+      total: finalTotal,
+    }));
+    
+    // Redirect to PayPal checkout API
+    window.location.href = `/api/checkout/paypal/create?amount=${finalTotal.toFixed(2)}`;
+  };
+
   const createOrder = async (paymentId: string) => {
     try {
       const response = await fetch('/api/orders', {
@@ -404,39 +477,76 @@ export default function SquarePaymentForm({
       </div>
 
       {/* Express Checkout Options */}
-      {(isApplePayAvailable || isGooglePayAvailable) && !isLoading && (
+      {!isLoading && (
         <div className="space-y-3">
           <p className="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
             Express Checkout
           </p>
+          
+          {/* Row 1: Apple Pay & Google Pay */}
+          {(isApplePayAvailable || isGooglePayAvailable) && (
+            <div className="flex gap-3">
+              {isApplePayAvailable && (
+                <button
+                  type="button"
+                  onClick={handleApplePay}
+                  disabled={isProcessing}
+                  className="flex-1 bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                  </svg>
+                  Apple Pay
+                </button>
+              )}
+              {isGooglePayAvailable && (
+                <button
+                  type="button"
+                  onClick={handleGooglePay}
+                  disabled={isProcessing}
+                  className="flex-1 bg-white border-2 border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                  </svg>
+                  Google Pay
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Row 2: PayPal & Cash App */}
           <div className="flex gap-3">
-            {isApplePayAvailable && (
+            {/* PayPal Button */}
+            <button
+              type="button"
+              onClick={handlePayPal}
+              disabled={isProcessing}
+              className="flex-1 bg-[#0070BA] text-white py-3 px-4 rounded-lg font-medium hover:bg-[#005ea6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+              </svg>
+              PayPal
+            </button>
+
+            {/* Cash App Pay Container (Square handles the button) */}
+            {isCashAppPayAvailable ? (
+              <div id="cash-app-pay-container" className="flex-1 min-h-[48px]" />
+            ) : (
               <button
                 type="button"
-                onClick={handleApplePay}
-                disabled={isProcessing}
-                className="flex-1 bg-black text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled
+                className="flex-1 bg-[#00D632] text-white py-3 px-4 rounded-lg font-medium opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+                title="Cash App Pay requires setup in Square Dashboard"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.625 16.875h-1.5v-1.5h-2.25v1.5h-1.5v-1.5h-.75v-1.5h.75v-4.5h-.75v-1.5h.75v-1.5h1.5v1.5h2.25v-1.5h1.5v1.5h.75v1.5h-.75v4.5h.75v1.5h-.75v1.5zm-1.5-7.5h-2.25v4.5h2.25v-4.5z"/>
                 </svg>
-                Apple Pay
-              </button>
-            )}
-            {isGooglePayAvailable && (
-              <button
-                type="button"
-                onClick={handleGooglePay}
-                disabled={isProcessing}
-                className="flex-1 bg-white border-2 border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                Google Pay
+                Cash App
               </button>
             )}
           </div>
