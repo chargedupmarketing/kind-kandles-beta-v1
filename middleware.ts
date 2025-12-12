@@ -72,7 +72,11 @@ export async function middleware(request: NextRequest) {
       const payload = await verifyToken(adminToken);
       if (!payload) {
         const response = NextResponse.redirect(new URL('/restricted/login', request.url));
-        response.cookies.set('admin-token', '', { maxAge: 0, path: '/' });
+        response.cookies.set('admin-token', '', { 
+          maxAge: 0, 
+          path: '/',
+          domain: hostname.includes('kindkandlesboutique.com') ? '.kindkandlesboutique.com' : undefined
+        });
         return response;
       }
       
@@ -88,7 +92,11 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       console.error('Token verification failed:', error);
       const response = NextResponse.redirect(new URL('/restricted/login', request.url));
-      response.cookies.set('admin-token', '', { maxAge: 0, path: '/' });
+      response.cookies.set('admin-token', '', { 
+        maxAge: 0, 
+        path: '/',
+        domain: hostname.includes('kindkandlesboutique.com') ? '.kindkandlesboutique.com' : undefined
+      });
       return response;
     }
   }
