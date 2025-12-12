@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock, Mail, Shield, ArrowLeft, RefreshCw, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 type LoginStep = 'credentials' | '2fa';
 
@@ -194,199 +195,215 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-teal-600 rounded-full mb-4">
-            <Shield className="h-8 w-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {step === 'credentials' ? 'Admin Login' : 'Verify Your Identity'}
-          </h1>
-          <p className="text-slate-400">
-            {step === 'credentials' 
-              ? 'Enter your credentials to continue' 
-              : `Enter the code sent to ${maskedEmail}`}
-          </p>
-        </div>
-
-        {/* Login Form */}
-        <div className="bg-slate-800 rounded-xl shadow-2xl p-8 border border-slate-700">
-          {step === 'credentials' ? (
-            <form onSubmit={handleCredentialSubmit} className="space-y-6">
-              {/* Email Field */}
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="admin@example.com"
-                    required
-                    disabled={isLoading}
-                    autoComplete="email"
-                  />
-                </div>
+    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col">
+      {/* Main Content - Centered */}
+      <div className="flex-1 flex items-center justify-center px-4 py-6 sm:py-8">
+        <div className="w-full max-w-sm sm:max-w-md">
+          {/* Header */}
+          <div className="text-center mb-6 sm:mb-8">
+            {/* Logo */}
+            <div className="mb-4 sm:mb-6">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto">
+                <Image
+                  src="/logos/logo.png"
+                  alt="Kind Kandles"
+                  fill
+                  className="object-contain rounded-full"
+                  priority
+                />
               </div>
+            </div>
+            
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
+              {step === 'credentials' ? 'Admin Login' : 'Verify Identity'}
+            </h1>
+            <p className="text-slate-400 text-sm sm:text-base px-2">
+              {step === 'credentials' 
+                ? 'Enter your credentials to continue' 
+                : `Code sent to ${maskedEmail}`}
+            </p>
+          </div>
 
-              {/* Password Field */}
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    placeholder="Enter password"
-                    required
-                    disabled={isLoading}
-                    autoComplete="current-password"
-                  />
+          {/* Login Form Card */}
+          <div className="bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-2xl p-5 sm:p-8 border border-slate-700/50">
+            {step === 'credentials' ? (
+              <form onSubmit={handleCredentialSubmit} className="space-y-4 sm:space-y-5">
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 sm:py-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                      placeholder="admin@example.com"
+                      required
+                      disabled={isLoading}
+                      autoComplete="email"
+                      autoCapitalize="none"
+                    />
+                  </div>
+                </div>
+
+                {/* Password Field */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-1.5 sm:mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full pl-10 pr-12 py-3 sm:py-3.5 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                      placeholder="Enter password"
+                      required
+                      disabled={isLoading}
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300 p-1"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-900/50 border border-red-500/50 rounded-xl p-3">
+                    <p className="text-red-300 text-sm text-center">{error}</p>
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-teal-600 hover:bg-teal-500 active:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white font-semibold py-3.5 sm:py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center text-base sm:text-lg shadow-lg shadow-teal-900/30"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-5 sm:space-y-6">
+                {/* Back Button */}
+                <button
+                  onClick={handleBack}
+                  className="flex items-center text-slate-400 hover:text-white transition-colors -mt-1"
+                  disabled={isLoading}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1.5" />
+                  <span className="text-sm">Back</span>
+                </button>
+
+                {/* OTP Input */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-3 sm:mb-4 text-center">
+                    Enter 6-digit code
+                  </label>
+                  <div className="flex justify-center gap-2 sm:gap-2.5" onPaste={handleOtpPaste}>
+                    {otpCode.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(el) => { otpInputRefs.current[index] = el; }}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                        className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold bg-slate-700/50 border-2 border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                        disabled={isLoading}
+                        autoComplete="one-time-code"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Remaining Attempts */}
+                {remainingAttempts < 3 && (
+                  <p className="text-center text-amber-400 text-sm">
+                    {remainingAttempts} attempt{remainingAttempts !== 1 ? 's' : ''} remaining
+                  </p>
+                )}
+
+                {/* Error Message */}
+                {error && (
+                  <div className="bg-red-900/50 border border-red-500/50 rounded-xl p-3">
+                    <p className="text-red-300 text-sm text-center">{error}</p>
+                  </div>
+                )}
+
+                {/* Verify Button */}
+                <button
+                  onClick={() => handleOtpSubmit()}
+                  disabled={isLoading || otpCode.some(d => !d)}
+                  className="w-full bg-teal-600 hover:bg-teal-500 active:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white font-semibold py-3.5 sm:py-4 px-4 rounded-xl transition-all duration-200 flex items-center justify-center text-base sm:text-lg shadow-lg shadow-teal-900/30"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Verify & Login
+                    </>
+                  )}
+                </button>
+
+                {/* Resend Code */}
+                <div className="text-center pt-1">
+                  <p className="text-slate-400 text-sm mb-2">Didn't receive the code?</p>
                   <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
-                    disabled={isLoading}
+                    onClick={handleResendOtp}
+                    disabled={isLoading || resendCooldown > 0}
+                    className="text-teal-400 hover:text-teal-300 active:text-teal-500 disabled:text-slate-500 text-sm font-medium inline-flex items-center justify-center py-2 px-3 rounded-lg transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? 'animate-spin' : ''}`} />
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
                   </button>
                 </div>
               </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="bg-red-900/50 border border-red-500 rounded-lg p-3">
-                  <p className="text-red-300 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Authenticating...
-                  </>
-                ) : (
-                  'Continue'
-                )}
-              </button>
-            </form>
-          ) : (
-            <div className="space-y-6">
-              {/* Back Button */}
-              <button
-                onClick={handleBack}
-                className="flex items-center text-slate-400 hover:text-white transition-colors"
-                disabled={isLoading}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to login
-              </button>
-
-              {/* OTP Input */}
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-4 text-center">
-                  Enter 6-digit verification code
-                </label>
-                <div className="flex justify-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
-                  {otpCode.map((digit, index) => (
-                    <input
-                      key={index}
-                      ref={(el) => { otpInputRefs.current[index] = el; }}
-                      type="text"
-                      inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-10 h-12 sm:w-12 sm:h-14 text-center text-xl sm:text-2xl font-bold bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      disabled={isLoading}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Remaining Attempts */}
-              {remainingAttempts < 3 && (
-                <p className="text-center text-amber-400 text-sm">
-                  {remainingAttempts} attempt{remainingAttempts !== 1 ? 's' : ''} remaining
-                </p>
-              )}
-
-              {/* Error Message */}
-              {error && (
-                <div className="bg-red-900/50 border border-red-500 rounded-lg p-3">
-                  <p className="text-red-300 text-sm">{error}</p>
-                </div>
-              )}
-
-              {/* Verify Button */}
-              <button
-                onClick={() => handleOtpSubmit()}
-                disabled={isLoading || otpCode.some(d => !d)}
-                className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-5 w-5 mr-2" />
-                    Verify & Login
-                  </>
-                )}
-              </button>
-
-              {/* Resend Code */}
-              <div className="text-center">
-                <p className="text-slate-400 text-sm mb-2">Didn't receive the code?</p>
-                <button
-                  onClick={handleResendOtp}
-                  disabled={isLoading || resendCooldown > 0}
-                  className="text-teal-400 hover:text-teal-300 disabled:text-slate-500 text-sm font-medium flex items-center justify-center mx-auto"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Security Notice */}
-          <div className="mt-6 p-4 bg-slate-900 rounded-lg border border-slate-600">
-            <p className="text-xs text-slate-400 text-center">
+          <div className="mt-4 sm:mt-6 px-2">
+            <p className="text-xs text-slate-500 text-center leading-relaxed">
               🔒 {step === 'credentials' 
-                ? 'This is a secure administrative area. All access attempts are logged.'
-                : 'Never share your verification code. Kind Kandles staff will never ask for it.'}
+                ? 'Secure admin area. All access attempts are logged.'
+                : 'Never share your code. We will never ask for it.'}
             </p>
           </div>
         </div>
+      </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-slate-500 text-sm">
-            © 2024 Kind Kandles Boutique - Administrative System
-          </p>
-        </div>
+      {/* Footer - Fixed at bottom on mobile */}
+      <div className="py-4 sm:py-6">
+        <p className="text-slate-600 text-xs text-center">
+          © 2024 Kind Kandles Boutique
+        </p>
       </div>
     </div>
   );
