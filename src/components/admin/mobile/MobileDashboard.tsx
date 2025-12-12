@@ -43,7 +43,8 @@ interface RecentOrder {
   created_at: string;
 }
 
-type DateRange = 'today' | 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+// Match the API's expected range values
+type DateRange = '7d' | '30d' | '90d' | 'year' | 'all';
 
 interface DateRangeOption {
   id: DateRange;
@@ -52,53 +53,15 @@ interface DateRangeOption {
 }
 
 const dateRangeOptions: DateRangeOption[] = [
-  { id: 'today', label: 'Today', shortLabel: 'Today' },
-  { id: 'yesterday', label: 'Yesterday', shortLabel: 'Yesterday' },
-  { id: 'week', label: 'This Week', shortLabel: '7 Days' },
-  { id: 'month', label: 'This Month', shortLabel: '30 Days' },
-  { id: 'quarter', label: 'This Quarter', shortLabel: '90 Days' },
+  { id: '7d', label: 'Last 7 Days', shortLabel: '7 Days' },
+  { id: '30d', label: 'Last 30 Days', shortLabel: '30 Days' },
+  { id: '90d', label: 'Last 90 Days', shortLabel: '90 Days' },
   { id: 'year', label: 'This Year', shortLabel: 'Year' },
+  { id: 'all', label: 'All Time', shortLabel: 'All' },
 ];
 
-function getDateRangeParams(range: DateRange): { startDate: string; endDate: string } {
-  const now = new Date();
-  const endDate = new Date(now);
-  let startDate = new Date(now);
-
-  switch (range) {
-    case 'today':
-      startDate.setHours(0, 0, 0, 0);
-      break;
-    case 'yesterday':
-      startDate.setDate(startDate.getDate() - 1);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setDate(endDate.getDate() - 1);
-      endDate.setHours(23, 59, 59, 999);
-      break;
-    case 'week':
-      startDate.setDate(startDate.getDate() - 7);
-      break;
-    case 'month':
-      startDate.setDate(startDate.getDate() - 30);
-      break;
-    case 'quarter':
-      startDate.setDate(startDate.getDate() - 90);
-      break;
-    case 'year':
-      startDate.setFullYear(startDate.getFullYear() - 1);
-      break;
-    default:
-      startDate.setHours(0, 0, 0, 0);
-  }
-
-  return {
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
-  };
-}
-
 export default function MobileDashboard({ onNavigate, pendingOrderCount }: MobileDashboardProps) {
-  const [dateRange, setDateRange] = useState<DateRange>('today');
+  const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     periodOrders: 0,
@@ -114,26 +77,44 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const { startDate, endDate } = getDateRangeParams(dateRange);
-      
-      // Fetch overview stats with date range
+      // Fetch overview stats with date range - include auth header
       const [overviewRes, ordersRes, lowStockRes] = await Promise.all([
-        fetch(`/api/analytics/overview?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`),
-        fetch('/api/orders?limit=5&sort=created_at&order=desc'),
-        fetch('/api/analytics/low-stock'),
+        fetch(`/api/analytics/overview?range=${dateRange}`, {
+          headers: { 'Authorization': 'Bearer admin-token' }
+        }),
+        fetch('/api/orders?limit=5&sort=created_at&order=desc', {
+          headers: { 'Authorization': 'Bearer admin-token' }
+        }),
+        fetch('/api/analytics/low-stock?threshold=5', {
+          headers: { 'Authorization': 'Bearer admin-token' }
+        }),
       ]);
 
       const overview = await overviewRes.json();
       const orders = await ordersRes.json();
       const lowStock = await lowStockRes.json();
 
+      // Calculate trend percentages
+      const ordersTrend = overview.previousOrders > 0 
+        ? Math.round(((overview.totalOrders - overview.previousOrders) / overview.previousOrders) * 100)
+        : 0;
+      const revenueTrend = overview.previousRevenue > 0
+        ? Math.round(((overview.totalRevenue - overview.previousRevenue) / overview.previousRevenue) * 100)
+        : 0;
+
+      // Get pending orders count
+      const pendingRes = await fetch('/api/orders?status=pending&limit=1', {
+        headers: { 'Authorization': 'Bearer admin-token' }
+      });
+      const pendingData = await pendingRes.json();
+
       setStats({
-        periodOrders: overview.todayOrders || overview.periodOrders || 0,
-        periodRevenue: overview.todayRevenue || overview.periodRevenue || 0,
-        pendingOrders: overview.pendingOrders || pendingOrderCount,
-        lowStockCount: lowStock.count || 0,
-        ordersTrend: overview.ordersTrend || 0,
-        revenueTrend: overview.revenueTrend || 0,
+        periodOrders: overview.totalOrders || 0,
+        periodRevenue: overview.totalRevenue || 0,
+        pendingOrders: pendingData.total || pendingOrderCount,
+        lowStockCount: lowStock.products?.length || lowStock.count || 0,
+        ordersTrend,
+        revenueTrend,
       });
 
       setRecentOrders(orders.orders || []);
@@ -220,13 +201,12 @@ export default function MobileDashboard({ onNavigate, pendingOrderCount }: Mobil
     );
   }
 
-  const currentRangeLabel = dateRangeOptions.find(opt => opt.id === dateRange)?.label || 'Today';
-  const periodLabel = dateRange === 'today' ? "Today's" : 
-                      dateRange === 'yesterday' ? "Yesterday's" :
-                      dateRange === 'week' ? "This Week's" :
-                      dateRange === 'month' ? "This Month's" :
-                      dateRange === 'quarter' ? "This Quarter's" :
-                      dateRange === 'year' ? "This Year's" : "Period";
+  const currentRangeLabel = dateRangeOptions.find(opt => opt.id === dateRange)?.label || 'Last 30 Days';
+  const periodLabel = dateRange === '7d' ? "7-Day" : 
+                      dateRange === '30d' ? "30-Day" :
+                      dateRange === '90d' ? "90-Day" :
+                      dateRange === 'year' ? "Year" :
+                      dateRange === 'all' ? "All-Time" : "Period";
 
   return (
     <div className="p-4 space-y-4">
