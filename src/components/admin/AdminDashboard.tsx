@@ -27,7 +27,8 @@ import {
   ClipboardList,
   UserCog,
   PanelLeft,
-  UsersRound
+  UsersRound,
+  Truck
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -49,8 +50,9 @@ import AdminSettings from './AdminSettings';
 import AIAssistant from './AIAssistant';
 import EmailManagement from './EmailManagement';
 import SubLevelManagement from './SubLevelManagement';
+import ShippingManagement from './ShippingManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -111,6 +113,11 @@ export default function AdminDashboard() {
           id: 'fulfillment' as AdminSection,
           label: 'Order Fulfillment',
           icon: ClipboardList,
+        },
+        {
+          id: 'shipping' as AdminSection,
+          label: 'Shipping',
+          icon: Truck,
         },
         {
           id: 'products' as AdminSection,
@@ -235,6 +242,8 @@ export default function AdminDashboard() {
         return <ProductManagement />;
       case 'fulfillment':
         return <OrderFulfillment />;
+      case 'shipping':
+        return <ShippingManagement />;
       case 'orders':
         return <OrderManagement />;
       case 'customers':

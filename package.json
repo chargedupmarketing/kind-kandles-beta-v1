@@ -24,6 +24,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "resend": "^6.5.2",
+    "shippo": "^2.15.0",
     "square": "^43.2.1"
   },
   "devDependencies": {

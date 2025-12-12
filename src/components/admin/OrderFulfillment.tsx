@@ -20,9 +20,13 @@ import {
   ChevronUp,
   MapPin,
   Phone,
-  User
+  User,
+  DollarSign,
+  Tag
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
+import ShippingRateModal from './ShippingRateModal';
+import ShippingLabel from './ShippingLabel';
 
 interface OrderItem {
   id: string;
@@ -79,6 +83,26 @@ export default function OrderFulfillment() {
     carrier: 'usps',
     notes: ''
   });
+
+  // Shipping rate modal state
+  const [showRateModal, setShowRateModal] = useState(false);
+  const [rateModalOrder, setRateModalOrder] = useState<Order | null>(null);
+  const [selectedRate, setSelectedRate] = useState<{
+    id: string;
+    carrier: string;
+    service: string;
+    price: number;
+    estimated_days: number;
+  } | null>(null);
+  const [shipmentId, setShipmentId] = useState<string>('');
+  const [isPurchasingLabel, setIsPurchasingLabel] = useState(false);
+  const [purchasedLabel, setPurchasedLabel] = useState<{
+    labelUrl: string;
+    trackingNumber: string;
+    trackingUrl: string;
+    carrier: string;
+    service: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -207,6 +231,79 @@ export default function OrderFulfillment() {
       setErrorMessage('Failed to ship order');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  // Open rate shopping modal
+  const handleGetRates = (order: Order) => {
+    setRateModalOrder(order);
+    setShowRateModal(true);
+    setSelectedRate(null);
+    setPurchasedLabel(null);
+  };
+
+  // Handle rate selection
+  const handleSelectRate = (rate: {
+    id: string;
+    carrier: string;
+    service: string;
+    price: number;
+    estimated_days: number;
+  }, shipmentIdValue: string) => {
+    setSelectedRate(rate);
+    setShipmentId(shipmentIdValue);
+    setShowRateModal(false);
+  };
+
+  // Purchase shipping label
+  const handlePurchaseLabel = async () => {
+    if (!selectedRate || !rateModalOrder) return;
+
+    setIsPurchasingLabel(true);
+    try {
+      const response = await fetch('/api/shipping/labels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rate_id: selectedRate.id,
+          order_id: rateModalOrder.id,
+          carrier: selectedRate.carrier,
+          service: selectedRate.service,
+          rate_amount: selectedRate.price,
+          estimated_days: selectedRate.estimated_days,
+          to_address: {
+            name: rateModalOrder.customer_name,
+            street1: rateModalOrder.shipping_address_line1,
+            street2: rateModalOrder.shipping_address_line2,
+            city: rateModalOrder.shipping_city,
+            state: rateModalOrder.shipping_state,
+            zip: rateModalOrder.shipping_postal_code,
+            country: rateModalOrder.shipping_country,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to purchase label');
+      }
+
+      setPurchasedLabel({
+        labelUrl: data.label_url,
+        trackingNumber: data.tracking_number,
+        trackingUrl: data.tracking_url,
+        carrier: selectedRate.carrier,
+        service: selectedRate.service,
+      });
+
+      setSuccessMessage(`Label purchased! Tracking: ${data.tracking_number}`);
+      setTimeout(() => setSuccessMessage(''), 5000);
+      fetchOrders();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to purchase label');
+    } finally {
+      setIsPurchasingLabel(false);
     }
   };
 
@@ -478,7 +575,7 @@ export default function OrderFulfillment() {
 
                     {/* Actions */}
                     <div className="p-4 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-200 dark:border-gray-700">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <button
                             onClick={(e) => {
@@ -491,7 +588,7 @@ export default function OrderFulfillment() {
                             Print
                           </button>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {(order.status === 'pending' || order.status === 'paid') && (
                             <button
                               onClick={(e) => {
@@ -505,6 +602,16 @@ export default function OrderFulfillment() {
                               Start Processing
                             </button>
                           )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGetRates(order);
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                          >
+                            <DollarSign className="h-4 w-4" />
+                            Get Shipping Rates
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -644,6 +751,112 @@ export default function OrderFulfillment() {
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shipping Rate Modal */}
+      {rateModalOrder && (
+        <ShippingRateModal
+          isOpen={showRateModal}
+          onClose={() => {
+            setShowRateModal(false);
+            setRateModalOrder(null);
+          }}
+          onSelectRate={handleSelectRate}
+          toAddress={{
+            name: rateModalOrder.customer_name,
+            street1: rateModalOrder.shipping_address_line1,
+            street2: rateModalOrder.shipping_address_line2 || undefined,
+            city: rateModalOrder.shipping_city,
+            state: rateModalOrder.shipping_state,
+            zip: rateModalOrder.shipping_postal_code,
+            country: rateModalOrder.shipping_country,
+          }}
+          orderNumber={rateModalOrder.order_number}
+        />
+      )}
+
+      {/* Selected Rate & Purchase Label Modal */}
+      {selectedRate && rateModalOrder && !purchasedLabel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
+            <div className="p-6 border-b dark:border-gray-700">
+              <h3 className="text-xl font-bold">Purchase Shipping Label</h3>
+              <p className="text-gray-500 text-sm mt-1">Order {rateModalOrder.order_number}</p>
+            </div>
+            <div className="p-6">
+              <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium uppercase">{selectedRate.carrier}</span>
+                  <span className="text-2xl font-bold text-teal-600">${selectedRate.price.toFixed(2)}</span>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400">{selectedRate.service}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Estimated delivery: {selectedRate.estimated_days} business day{selectedRate.estimated_days !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setSelectedRate(null);
+                    setShowRateModal(true);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Change Rate
+                </button>
+                <button
+                  onClick={handlePurchaseLabel}
+                  disabled={isPurchasingLabel}
+                  className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isPurchasingLabel ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Purchasing...
+                    </>
+                  ) : (
+                    <>
+                      <Tag className="h-4 w-4" />
+                      Buy Label
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="p-4 border-t dark:border-gray-700">
+              <button
+                onClick={() => {
+                  setSelectedRate(null);
+                  setRateModalOrder(null);
+                }}
+                className="w-full text-center text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchased Label Display */}
+      {purchasedLabel && rateModalOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-md w-full">
+            <ShippingLabel
+              labelUrl={purchasedLabel.labelUrl}
+              trackingNumber={purchasedLabel.trackingNumber}
+              trackingUrl={purchasedLabel.trackingUrl}
+              carrier={purchasedLabel.carrier}
+              service={purchasedLabel.service}
+              orderNumber={rateModalOrder.order_number}
+              onClose={() => {
+                setPurchasedLabel(null);
+                setSelectedRate(null);
+                setRateModalOrder(null);
+              }}
+            />
           </div>
         </div>
       )}
