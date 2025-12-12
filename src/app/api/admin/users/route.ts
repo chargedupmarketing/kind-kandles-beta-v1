@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate role
-    const validRoles = ['admin', 'editor'];
+    const validRoles = ['user', 'admin', 'super_admin'];
     if (role && !validRoles.includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
@@ -75,8 +75,9 @@ export async function POST(request: NextRequest) {
         password_hash,
         first_name,
         last_name,
-        role: role || 'admin',
-        is_active: true
+        role: role || 'user',
+        is_active: true,
+        two_factor_enabled: true
       })
       .select('id, email, first_name, last_name, role, is_active, created_at')
       .single();

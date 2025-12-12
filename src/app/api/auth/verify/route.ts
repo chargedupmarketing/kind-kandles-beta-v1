@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyToken } from '../login/route';
+import { jwtVerify } from 'jose';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long'
+);
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,9 +19,11 @@ export async function GET(request: NextRequest) {
     }
     
     // Verify token
-    const payload = await verifyToken(token);
-    
-    if (!payload) {
+    let payload;
+    try {
+      const result = await jwtVerify(token, JWT_SECRET);
+      payload = result.payload;
+    } catch {
       // Clear invalid cookie
       const response = NextResponse.json(
         { error: 'Invalid or expired token' },
@@ -35,11 +41,51 @@ export async function GET(request: NextRequest) {
       return response;
     }
     
+    // Get additional user info from database if available
+    let userName = payload.email as string;
+    let subLevels = (payload.subLevels as string[]) || [];
+    
+    if (payload.userId && isSupabaseConfigured()) {
+      try {
+        const supabase = createServerClient();
+        
+        // Get user details
+        const { data: user } = await supabase
+          .from('admin_users')
+          .select('first_name, last_name')
+          .eq('id', payload.userId)
+          .single();
+        
+        if (user) {
+          userName = `${user.first_name} ${user.last_name}`;
+        }
+        
+        // Get fresh sub-levels
+        const { data: assignments } = await supabase
+          .from('user_sub_level_assignments')
+          .select('user_sub_levels(slug)')
+          .eq('user_id', payload.userId);
+        
+        if (assignments) {
+          subLevels = assignments
+            .map((a: any) => a.user_sub_levels?.slug)
+            .filter(Boolean);
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+        // Continue with token data
+      }
+    }
+    
     return NextResponse.json({ 
       success: true,
       user: {
-        username: payload.username,
-        role: payload.role
+        userId: payload.userId,
+        email: payload.email,
+        username: payload.email, // For backwards compatibility
+        name: userName,
+        role: payload.role,
+        subLevels
       }
     });
     

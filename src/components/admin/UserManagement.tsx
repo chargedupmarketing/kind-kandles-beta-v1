@@ -24,10 +24,11 @@ interface AdminUser {
   email: string;
   first_name: string;
   last_name: string;
-  role: 'super_admin' | 'admin' | 'editor';
+  role: 'super_admin' | 'admin' | 'user';
   is_active: boolean;
   last_login: string | null;
   created_at: string;
+  sub_levels?: string[];
 }
 
 interface NewUserForm {
@@ -36,7 +37,7 @@ interface NewUserForm {
   confirmPassword: string;
   first_name: string;
   last_name: string;
-  role: 'admin' | 'editor';
+  role: 'super_admin' | 'admin' | 'user';
 }
 
 export default function UserManagement() {
@@ -56,7 +57,7 @@ export default function UserManagement() {
     confirmPassword: '',
     first_name: '',
     last_name: '',
-    role: 'admin'
+    role: 'user'
   });
 
   useEffect(() => {
@@ -201,10 +202,10 @@ export default function UserManagement() {
             Admin
           </span>
         );
-      case 'editor':
+      case 'user':
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-            Editor
+            User
           </span>
         );
       default:
@@ -390,11 +391,12 @@ export default function UserManagement() {
                   </label>
                   <select
                     value={newUser.role}
-                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'admin' | 'editor' })}
+                    onChange={(e) => setNewUser({ ...newUser, role: e.target.value as 'super_admin' | 'admin' | 'user' })}
                     className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                   >
-                    <option value="admin">Admin - Full access</option>
-                    <option value="editor">Editor - Limited access</option>
+                    <option value="user">User - View only access</option>
+                    <option value="admin">Admin - Full store access</option>
+                    <option value="super_admin">Super Admin - Full system access</option>
                   </select>
                 </div>
 
@@ -576,9 +578,9 @@ export default function UserManagement() {
               About User Roles
             </h4>
             <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-              <li><strong>Super Admin:</strong> Full access, cannot be deleted or deactivated</li>
-              <li><strong>Admin:</strong> Full access to all admin features</li>
-              <li><strong>Editor:</strong> Limited access to content management only</li>
+              <li><strong>Super Admin:</strong> Full system access including user management, database operations, and all admin features</li>
+              <li><strong>Admin:</strong> Full access to store management (products, orders, customers, discounts, website settings)</li>
+              <li><strong>User:</strong> View-only access to dashboard and basic information</li>
             </ul>
           </div>
         </div>

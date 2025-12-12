@@ -26,7 +26,8 @@ import {
   Wrench,
   ClipboardList,
   UserCog,
-  PanelLeft
+  PanelLeft,
+  UsersRound
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -47,13 +48,27 @@ import UserManagement from './UserManagement';
 import AdminSettings from './AdminSettings';
 import AIAssistant from './AIAssistant';
 import EmailManagement from './EmailManagement';
+import SubLevelManagement from './SubLevelManagement';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels';
+
+// Access Denied component for unauthorized sections
+function AccessDenied() {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 text-center">
+      <Shield className="h-16 w-16 text-red-400 mb-4" />
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h2>
+      <p className="text-gray-600 dark:text-gray-400">
+        You don't have permission to access this section.
+      </p>
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout, isMaintenanceMode, user } = useAdmin();
+  const { logout, isMaintenanceMode, user, isSuperAdmin, hasPermission } = useAdmin();
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -181,6 +196,7 @@ export default function AdminDashboard() {
           label: 'Store Settings',
           icon: Cog,
         },
+        // Admin Settings - visible to all admins, but database section hidden for non-super admins
         {
           id: 'admin-settings' as AdminSection,
           label: 'Admin Settings',
@@ -188,11 +204,18 @@ export default function AdminDashboard() {
           badge: isMaintenanceMode ? 'MAINT' : undefined,
           badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
         },
-        {
+        // Admin Users - Super Admin only
+        ...(isSuperAdmin ? [{
           id: 'users' as AdminSection,
           label: 'Admin Users',
           icon: UserCog,
-        },
+        }] : []),
+        // Sub-Levels - Super Admin or Developer
+        ...(hasPermission('manage_sub_levels') ? [{
+          id: 'sub-levels' as AdminSection,
+          label: 'Teams & Sub-Levels',
+          icon: UsersRound,
+        }] : []),
         {
           id: 'ai-assistant' as AdminSection,
           label: 'AI Assistant',
@@ -237,7 +260,9 @@ export default function AdminDashboard() {
       case 'settings':
         return <SettingsPanel />;
       case 'users':
-        return <UserManagement />;
+        return isSuperAdmin ? <UserManagement /> : <AccessDenied />;
+      case 'sub-levels':
+        return hasPermission('manage_sub_levels') ? <SubLevelManagement /> : <AccessDenied />;
       case 'admin-settings':
         return <AdminSettings />;
       case 'ai-assistant':
@@ -289,7 +314,7 @@ export default function AdminDashboard() {
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                  {user?.username || 'Administrator'}
+                  {user?.name || user?.email || 'Administrator'}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {user?.role || 'Admin'}

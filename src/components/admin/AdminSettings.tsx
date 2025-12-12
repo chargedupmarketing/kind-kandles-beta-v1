@@ -40,7 +40,8 @@ export default function AdminSettings() {
     isMaintenanceMode, 
     setMaintenanceMode, 
     maintenanceAccessCode, 
-    setMaintenanceAccessCode 
+    setMaintenanceAccessCode,
+    isSuperAdmin 
   } = useAdmin();
   
   const [activeTab, setActiveTab] = useState<'maintenance' | 'database'>('maintenance');
@@ -271,17 +272,19 @@ export default function AdminSettings() {
           <Shield className="h-4 w-4" />
           Maintenance Mode
         </button>
-        <button
-          onClick={() => setActiveTab('database')}
-          className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 -mb-px ${
-            activeTab === 'database'
-              ? 'text-pink-600 border-pink-600'
-              : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
-          }`}
-        >
-          <Database className="h-4 w-4" />
-          Database Management
-        </button>
+        {isSuperAdmin && (
+          <button
+            onClick={() => setActiveTab('database')}
+            className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 -mb-px ${
+              activeTab === 'database'
+                ? 'text-pink-600 border-pink-600'
+                : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
+            }`}
+          >
+            <Database className="h-4 w-4" />
+            Database Management
+          </button>
+        )}
       </div>
 
       {/* Maintenance Mode Tab */}
@@ -436,8 +439,8 @@ export default function AdminSettings() {
         </div>
       )}
 
-      {/* Database Management Tab */}
-      {activeTab === 'database' && (
+      {/* Database Management Tab - Super Admin Only */}
+      {activeTab === 'database' && isSuperAdmin && (
         <div className="space-y-6">
           {/* Warning Banner */}
           <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg p-4">
