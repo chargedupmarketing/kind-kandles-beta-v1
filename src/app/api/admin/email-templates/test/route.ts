@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
-import jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { logAuditEvent } from '@/lib/auditLog';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'fallback-secret');
 
 // Helper to verify user role from JWT
 async function verifyUserRole(request: NextRequest): Promise<{ 
@@ -22,7 +24,8 @@ async function verifyUserRole(request: NextRequest): Promise<{
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret') as {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const decoded = payload as {
       userId: string;
       email: string;
       role: string;
@@ -47,9 +50,14 @@ async function verifyUserRole(request: NextRequest): Promise<{
     }
 
     // Extract sub-level names
-    const subLevels = user.user_sub_level_assignments?.map(
-      (a: { sub_levels: { name: string } }) => a.sub_levels.name.toLowerCase()
-    ) || [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const subLevels = user.user_sub_level_assignments?.map((a: any) => {
+      const subLevel = a.sub_levels;
+      if (subLevel && typeof subLevel.name === 'string') {
+        return subLevel.name.toLowerCase();
+      }
+      return '';
+    }).filter(Boolean) || [];
 
     // Check if user is super_admin or has developer sub-level
     const isSuperAdmin = user.role === 'super_admin';
@@ -182,17 +190,18 @@ export async function POST(request: NextRequest) {
 
     // Log the test email action
     await logAuditEvent({
-      action: 'test_email_sent',
-      resource: 'email_templates',
-      resourceId: null,
+      action: 'TEST',
+      resource: 'email_template',
+      resourceId: undefined,
       userId: authResult.user?.id,
       userEmail: authResult.user?.email,
       userRole: authResult.user?.role,
+      ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+      userAgent: request.headers.get('user-agent') || 'unknown',
       details: {
         recipient: to,
         subject: processedSubject,
       },
-      request,
     });
 
     return NextResponse.json({ success: true, message: `Test email sent to ${to}` });

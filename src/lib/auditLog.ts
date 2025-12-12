@@ -19,7 +19,8 @@ export type AuditAction =
   | 'PERMISSION_CHANGE'
   | 'SETTINGS_CHANGE'
   | 'DATA_EXPORT'
-  | 'DATA_WIPE';
+  | 'DATA_WIPE'
+  | 'TEST';
 
 export type AuditResource = 
   | 'customer'
