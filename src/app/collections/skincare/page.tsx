@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { Package, Loader } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 
+// Metadata is exported from a separate file for client components
+// See: src/app/collections/skincare/metadata.ts
+
 interface Product {
   id: string;
   title: string;

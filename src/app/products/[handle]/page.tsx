@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import ProductPage from '@/components/ProductPage';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/localStore';
+import JsonLd from '@/components/JsonLd';
+import { generateProductSchema, generateBreadcrumbSchema, SITE_CONFIG, SEO_KEYWORDS } from '@/lib/seo';
 
 interface ProductPageProps {
   params: Promise<{
@@ -81,7 +83,46 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     isNatural: product.tags?.some((tag: string) => tag.toLowerCase().includes('natural')) ?? true,
   };
 
-  return <ProductPage product={transformedProduct} />;
+  // Generate structured data for SEO
+  const productSchema = generateProductSchema({
+    name: product.title,
+    description: product.description || `Shop ${product.title} at My Kind Kandles & Boutique`,
+    image: product.images?.map((img: any) => img.url) || [],
+    price: product.price,
+    url: `${SITE_CONFIG.url}/products/${product.handle}`,
+    inStock,
+    sku: product.id,
+    category: product.product_type,
+    rating: 4.8,
+    reviewCount: 127,
+  });
+
+  // Generate breadcrumb schema
+  const breadcrumbItems = [
+    { name: 'Home', path: '' },
+    { name: 'Collections', path: '/collections' },
+  ];
+  
+  if (product.product_type) {
+    const categoryPath = product.product_type.toLowerCase().includes('candle') 
+      ? '/collections/candles' 
+      : product.product_type.toLowerCase().includes('skincare') || product.product_type.toLowerCase().includes('body')
+        ? '/collections/skincare'
+        : '/collections/all';
+    breadcrumbItems.push({ name: product.product_type, path: categoryPath });
+  }
+  
+  breadcrumbItems.push({ name: product.title, path: `/products/${product.handle}` });
+  
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbItems);
+
+  return (
+    <>
+      <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      <ProductPage product={transformedProduct} />
+    </>
+  );
 }
 
 // Generate metadata for SEO
@@ -95,16 +136,45 @@ export async function generateMetadata({ params }: ProductPageProps) {
     };
   }
 
+  // Determine category-specific keywords
+  const categoryKeywords = product.product_type?.toLowerCase().includes('candle')
+    ? SEO_KEYWORDS.candles
+    : product.product_type?.toLowerCase().includes('skincare') || product.product_type?.toLowerCase().includes('body')
+      ? SEO_KEYWORDS.skincare
+      : SEO_KEYWORDS.general;
+
+  const description = product.description 
+    ? product.description.substring(0, 160) 
+    : `Shop ${product.title} at My Kind Kandles & Boutique. Handmade with natural ingredients.`;
+
   return {
     title: `${product.title} | My Kind Kandles & Boutique`,
-    description: product.description || `Shop ${product.title} at My Kind Kandles & Boutique`,
+    description,
+    keywords: [...categoryKeywords, product.title.toLowerCase()].join(', '),
+    alternates: {
+      canonical: `${SITE_CONFIG.url}/products/${handle}`,
+    },
     openGraph: {
-      title: product.title,
-      description: product.description || `Shop ${product.title}`,
+      title: `${product.title} - My Kind Kandles & Boutique`,
+      description,
+      url: `${SITE_CONFIG.url}/products/${handle}`,
+      siteName: SITE_CONFIG.name,
       images: product.images?.map((img: any) => ({
-        url: img.url,
+        url: img.url.startsWith('http') ? img.url : `${SITE_CONFIG.url}${img.url}`,
         alt: img.alt_text || product.title,
-      })) || [],
+        width: 800,
+        height: 800,
+      })) || [{
+        url: `${SITE_CONFIG.url}/og-image.jpg`,
+        alt: product.title,
+      }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.title,
+      description,
+      images: product.images?.[0]?.url || `${SITE_CONFIG.url}/og-image.jpg`,
     },
   };
 }

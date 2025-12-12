@@ -1,6 +1,15 @@
+import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/localStore';
 import CollectionsPageClient from '@/components/CollectionsPageClient';
+import { generatePageMetadata, SEO_KEYWORDS } from '@/lib/seo';
+
+export const metadata: Metadata = generatePageMetadata({
+  title: 'Shop All Collections - Candles, Skincare & More',
+  description: 'Browse our complete collection of handmade candles, natural skincare, body oils, room sprays, and boutique items. Crafted with love in Owings Mills, Maryland.',
+  keywords: [...SEO_KEYWORDS.general, ...SEO_KEYWORDS.candles, ...SEO_KEYWORDS.skincare],
+  path: '/collections',
+});
 
 async function getCollections() {
   try {

@@ -1,0 +1,19 @@
+# robots.txt for My Kind Kandles & Boutique
+# https://kindkandlesboutique.com
+
+# Allow all search engines
+User-agent: *
+Allow: /
+
+# Block admin and restricted areas
+Disallow: /restricted/
+Disallow: /api/
+Disallow: /shopify-test/
+Disallow: /_next/
+
+# Block checkout process (not useful for indexing)
+Disallow: /checkout/
+
+# Sitemap location
+Sitemap: https://kindkandlesboutique.com/sitemap.xml
+
