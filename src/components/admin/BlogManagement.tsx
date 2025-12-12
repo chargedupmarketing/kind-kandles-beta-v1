@@ -331,7 +331,7 @@ Use HTML formatting.`;
           'Authorization': `Bearer ${openaiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4-turbo',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
@@ -1350,8 +1350,8 @@ Use HTML formatting.`;
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
                 <h4 className="font-medium text-purple-700 dark:text-purple-300 mb-2">💡 Model Info</h4>
                 <p className="text-sm text-purple-600 dark:text-purple-400">
-                  This feature uses <strong>GPT-4o Mini</strong> - an excellent balance of quality and cost for content generation. 
-                  It's ~15x cheaper than GPT-4 while still producing high-quality blog content.
+                  This feature uses <strong>GPT-4 Turbo</strong> - OpenAI's most capable model with a 128K context window. 
+                  Excellent for high-quality, nuanced blog content with better reasoning and creativity.
                 </p>
               </div>
             </div>
