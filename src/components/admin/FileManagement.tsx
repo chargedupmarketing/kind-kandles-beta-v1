@@ -204,30 +204,15 @@ export default function FileManagement() {
     }
   };
 
-  const createFolder = async () => {
+  const createFolder = () => {
     if (!newFolderName.trim()) return;
-
-    // Create a placeholder file to establish the folder
-    const placeholderBlob = new Blob([''], { type: 'text/plain' });
-    const placeholderFile = new File([placeholderBlob], '.placeholder', { type: 'text/plain' });
-
-    const formData = new FormData();
-    formData.append('file', placeholderFile);
-    formData.append('bucket', currentBucket);
-    formData.append('folder', currentFolder ? `${currentFolder}/${newFolderName}` : newFolderName);
-
-    try {
-      await fetch('/api/admin/files', {
-        method: 'POST',
-        body: formData,
-      });
-
-      setNewFolderName('');
-      setShowNewFolder(false);
-      fetchFiles();
-    } catch (error) {
-      console.error('Error creating folder:', error);
-    }
+    
+    // Set the current folder to the new folder path
+    // Folders in Supabase Storage are created automatically when files are uploaded
+    const newPath = currentFolder ? `${currentFolder}/${newFolderName}` : newFolderName;
+    setCurrentFolder(newPath);
+    setNewFolderName('');
+    setShowNewFolder(false);
   };
 
   const formatFileSize = (bytes?: number) => {

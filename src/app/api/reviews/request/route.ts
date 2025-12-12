@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Generate a secure random token
 function generateToken(): string {
@@ -117,6 +117,11 @@ export async function POST(request: NextRequest) {
 
 // Helper function to send review request email
 async function sendReviewRequestEmail(reviewToken: any, order: any) {
+  if (!resend) {
+    console.warn('Resend API key not configured, skipping email');
+    return;
+  }
+
   const reviewUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://kindkandlesboutique.com'}/reviews/${reviewToken.token}`;
   
   // Get product details

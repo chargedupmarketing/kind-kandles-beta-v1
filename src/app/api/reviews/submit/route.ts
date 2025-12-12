@@ -7,7 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -157,16 +157,20 @@ async function sendThankYouEmail(reviewToken: any) {
     </html>
   `;
 
-  try {
-    await resend.emails.send({
-      from: process.env.EMAIL_FROM || 'My Kind Kandles <orders@kindkandlesboutique.com>',
-      to: reviewToken.customer_email,
-      subject: 'Thank you for your review!',
-      html: emailHtml,
-    });
-  } catch (error) {
-    console.error('Error sending thank you email:', error);
-    // Don't throw - the review was still submitted successfully
+  if (resend) {
+    try {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'My Kind Kandles <orders@kindkandlesboutique.com>',
+        to: reviewToken.customer_email,
+        subject: 'Thank you for your review!',
+        html: emailHtml,
+      });
+    } catch (error) {
+      console.error('Error sending thank you email:', error);
+      // Don't throw - the review was still submitted successfully
+    }
+  } else {
+    console.warn('Resend API key not configured, skipping thank you email');
   }
 }
 
