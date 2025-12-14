@@ -11,7 +11,7 @@ import QuickActionsFAB from './QuickActionsFAB';
 import { Shield, AlertTriangle, LogOut, Bell, User } from 'lucide-react';
 
 export type MobileTab = 'home' | 'orders' | 'products' | 'more';
-export type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
+export type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 interface MobileAppShellProps {
   children?: ReactNode;

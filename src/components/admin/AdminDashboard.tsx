@@ -28,7 +28,6 @@ import {
   ClipboardList,
   UserCog,
   PanelLeft,
-  UsersRound,
   Truck,
   HardDrive
 } from 'lucide-react';
@@ -52,12 +51,11 @@ import UserManagement from './UserManagement';
 import AdminSettings from './AdminSettings';
 import AIAssistant from './AIAssistant';
 import EmailManagement from './EmailManagement';
-import SubLevelManagement from './SubLevelManagement';
 import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'sub-levels' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -227,17 +225,11 @@ export default function AdminDashboard() {
           badge: isMaintenanceMode ? 'MAINT' : undefined,
           badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
         },
-        // Admin Users - Super Admin only
+        // User Management - Super Admin only (includes users and teams)
         ...(isSuperAdmin ? [{
           id: 'users' as AdminSection,
-          label: 'Admin Users',
+          label: 'User Management',
           icon: UserCog,
-        }] : []),
-        // Sub-Levels - Super Admin or Developer
-        ...(hasPermission('manage_sub_levels') ? [{
-          id: 'sub-levels' as AdminSection,
-          label: 'Teams & Sub-Levels',
-          icon: UsersRound,
         }] : []),
         {
           id: 'ai-assistant' as AdminSection,
@@ -290,8 +282,6 @@ export default function AdminDashboard() {
         return <SettingsPanel />;
       case 'users':
         return isSuperAdmin ? <UserManagement /> : <AccessDenied />;
-      case 'sub-levels':
-        return hasPermission('manage_sub_levels') ? <SubLevelManagement /> : <AccessDenied />;
       case 'admin-settings':
         return <AdminSettings />;
       case 'ai-assistant':

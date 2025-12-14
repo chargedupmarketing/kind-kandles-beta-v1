@@ -18,7 +18,6 @@ import {
   Cog,
   Settings,
   UserCog,
-  UsersRound,
   Shield,
   ChevronLeft,
   Search,
@@ -125,15 +124,8 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
           icon: UserCog, 
           color: 'text-blue-600',
           bgColor: 'bg-blue-50',
-          requiresSuperAdmin: true
-        },
-        { 
-          id: 'sub-levels', 
-          label: 'Teams', 
-          icon: UsersRound, 
-          color: 'text-purple-600',
-          bgColor: 'bg-purple-50',
-          requiresPermission: 'manage_sub_levels'
+          requiresSuperAdmin: true,
+          description: 'Users & Teams'
         },
         { 
           id: 'ai-assistant', 
