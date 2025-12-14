@@ -46,10 +46,10 @@ interface BucketStats {
 }
 
 const BUCKET_INFO = {
-  products: { label: 'Product Images', icon: Image, color: 'text-purple-400' },
-  marketing: { label: 'Marketing Assets', icon: Folder, color: 'text-blue-400' },
-  documents: { label: 'Documents', icon: FileText, color: 'text-green-400' },
-  blog: { label: 'Blog Images', icon: Image, color: 'text-orange-400' },
+  products: { label: 'Product Images', icon: Image, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  marketing: { label: 'Marketing Assets', icon: Folder, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  documents: { label: 'Documents', icon: FileText, color: 'text-green-600', bgColor: 'bg-green-100' },
+  blog: { label: 'Blog Images', icon: Image, color: 'text-orange-600', bgColor: 'bg-orange-100' },
 };
 
 export default function FileManagement() {
@@ -207,8 +207,6 @@ export default function FileManagement() {
   const createFolder = () => {
     if (!newFolderName.trim()) return;
     
-    // Set the current folder to the new folder path
-    // Folders in Supabase Storage are created automatically when files are uploaded
     const newPath = currentFolder ? `${currentFolder}/${newFolderName}` : newFolderName;
     setCurrentFolder(newPath);
     setNewFolderName('');
@@ -240,7 +238,6 @@ export default function FileManagement() {
     return file.name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
-  // Separate folders and files
   const folders = filteredFiles.filter((f) => !f.id || f.name.endsWith('/'));
   const regularFiles = filteredFiles.filter((f) => f.id && !f.name.endsWith('/'));
 
@@ -252,22 +249,22 @@ export default function FileManagement() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white">File Management</h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">File Management</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Upload and manage files for your store
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={fetchFiles}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             title="Refresh"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             title={viewMode === 'grid' ? 'List view' : 'Grid view'}
           >
             {viewMode === 'grid' ? <List className="w-5 h-5" /> : <Grid className="w-5 h-5" />}
@@ -284,17 +281,19 @@ export default function FileManagement() {
             <div
               key={stat.bucket}
               onClick={() => setCurrentBucket(stat.bucket)}
-              className={`p-4 rounded-lg cursor-pointer transition-all ${
+              className={`p-4 rounded-xl cursor-pointer transition-all ${
                 currentBucket === stat.bucket
-                  ? 'bg-purple-600/20 border border-purple-500'
-                  : 'bg-gray-800/50 border border-gray-700 hover:border-gray-600'
+                  ? 'bg-teal-50 dark:bg-teal-900/20 border-2 border-teal-500'
+                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-8 h-8 ${info?.color || 'text-gray-400'}`} />
+                <div className={`p-2 rounded-lg ${info?.bgColor || 'bg-slate-100'}`}>
+                  <Icon className={`w-6 h-6 ${info?.color || 'text-slate-500'}`} />
+                </div>
                 <div>
-                  <p className="text-white font-medium text-sm">{info?.label || stat.bucket}</p>
-                  <p className="text-gray-400 text-xs">
+                  <p className="text-slate-900 dark:text-white font-medium text-sm">{info?.label || stat.bucket}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">
                     {stat.fileCount} files • {formatFileSize(stat.totalSize)}
                   </p>
                 </div>
@@ -305,27 +304,27 @@ export default function FileManagement() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-gray-800/50 rounded-lg p-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => setCurrentFolder('')}
-            className="flex items-center gap-1 text-purple-400 hover:text-purple-300"
+            className="flex items-center gap-1 text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium"
           >
             <CurrentBucketIcon className="w-4 h-4" />
             {currentBucketInfo?.label || currentBucket}
           </button>
           {currentFolder && (
             <>
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              <ChevronRight className="w-4 h-4 text-slate-400" />
               {currentFolder.split('/').map((part, i, arr) => (
                 <button
                   key={i}
                   onClick={() => setCurrentFolder(arr.slice(0, i + 1).join('/'))}
-                  className="text-gray-400 hover:text-white"
+                  className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 >
                   {part}
-                  {i < arr.length - 1 && <ChevronRight className="w-4 h-4 inline text-gray-500" />}
+                  {i < arr.length - 1 && <ChevronRight className="w-4 h-4 inline text-slate-400" />}
                 </button>
               ))}
             </>
@@ -335,19 +334,19 @@ export default function FileManagement() {
         {/* Actions */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-initial">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search files..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full sm:w-48 pl-9 pr-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full sm:w-48 pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
 
           <button
             onClick={() => setShowNewFolder(true)}
-            className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             title="New folder"
           >
             <FolderPlus className="w-5 h-5" />
@@ -363,7 +362,7 @@ export default function FileManagement() {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
           >
             <Upload className="w-4 h-4" />
             <span className="hidden sm:inline">{uploading ? 'Uploading...' : 'Upload'}</span>
@@ -384,15 +383,15 @@ export default function FileManagement() {
       {/* New Folder Modal */}
       {showNewFolder && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-white mb-4">Create New Folder</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Create New Folder</h3>
             <input
               type="text"
               placeholder="Folder name"
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && createFolder()}
-              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               autoFocus
             />
             <div className="flex justify-end gap-2 mt-4">
@@ -401,14 +400,14 @@ export default function FileManagement() {
                   setShowNewFolder(false);
                   setNewFolderName('');
                 }}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={createFolder}
                 disabled={!newFolderName.trim()}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 Create
               </button>
@@ -423,30 +422,30 @@ export default function FileManagement() {
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg transition-colors ${
+        className={`relative border-2 border-dashed rounded-xl transition-colors bg-white dark:bg-slate-800 ${
           dragActive
-            ? 'border-purple-500 bg-purple-500/10'
-            : 'border-gray-700 hover:border-gray-600'
+            ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+            : 'border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600'
         }`}
       >
         {dragActive && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 rounded-lg z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-white/90 dark:bg-slate-900/80 rounded-xl z-10">
             <div className="text-center">
-              <Upload className="w-12 h-12 text-purple-400 mx-auto mb-2" />
-              <p className="text-white font-medium">Drop files here to upload</p>
+              <Upload className="w-12 h-12 text-teal-500 mx-auto mb-2" />
+              <p className="text-slate-900 dark:text-white font-medium">Drop files here to upload</p>
             </div>
           </div>
         )}
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <RefreshCw className="w-8 h-8 text-purple-400 animate-spin" />
+            <RefreshCw className="w-8 h-8 text-teal-500 animate-spin" />
           </div>
         ) : filteredFiles.length === 0 ? (
           <div className="text-center py-20">
-            <HardDrive className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 mb-2">No files in this location</p>
-            <p className="text-gray-500 text-sm">
+            <HardDrive className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <p className="text-slate-600 dark:text-slate-400 mb-2">No files in this location</p>
+            <p className="text-slate-500 dark:text-slate-500 text-sm">
               Drag and drop files here or click Upload
             </p>
           </div>
@@ -457,10 +456,10 @@ export default function FileManagement() {
               <div
                 key={folder.path}
                 onClick={() => setCurrentFolder(folder.path)}
-                className="group relative bg-gray-800/50 rounded-lg p-4 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                className="group relative bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-600"
               >
-                <Folder className="w-12 h-12 text-yellow-400 mx-auto mb-2" />
-                <p className="text-white text-sm text-center truncate">{folder.name}</p>
+                <Folder className="w-12 h-12 text-amber-500 mx-auto mb-2" />
+                <p className="text-slate-900 dark:text-white text-sm text-center truncate">{folder.name}</p>
               </div>
             ))}
 
@@ -472,8 +471,10 @@ export default function FileManagement() {
               return (
                 <div
                   key={file.path}
-                  className={`group relative bg-gray-800/50 rounded-lg overflow-hidden cursor-pointer transition-all ${
-                    isSelected ? 'ring-2 ring-purple-500' : 'hover:bg-gray-700/50'
+                  className={`group relative bg-slate-50 dark:bg-slate-700/50 rounded-lg overflow-hidden cursor-pointer transition-all border ${
+                    isSelected 
+                      ? 'ring-2 ring-teal-500 border-teal-500' 
+                      : 'border-slate-200 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   {/* Selection checkbox */}
@@ -490,8 +491,8 @@ export default function FileManagement() {
                     }}
                     className={`absolute top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center z-10 transition-colors ${
                       isSelected
-                        ? 'bg-purple-600 border-purple-600'
-                        : 'border-gray-500 bg-gray-800/80 opacity-0 group-hover:opacity-100'
+                        ? 'bg-teal-600 border-teal-600'
+                        : 'border-slate-400 bg-white dark:bg-slate-800 opacity-0 group-hover:opacity-100'
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -500,7 +501,7 @@ export default function FileManagement() {
                   {/* Preview */}
                   <div
                     onClick={() => setPreviewFile(file)}
-                    className="aspect-square flex items-center justify-center bg-gray-900/50"
+                    className="aspect-square flex items-center justify-center bg-slate-100 dark:bg-slate-800"
                   >
                     {isImage(file) ? (
                       <img
@@ -512,16 +513,16 @@ export default function FileManagement() {
                         }}
                       />
                     ) : (
-                      <FileIcon className="w-12 h-12 text-gray-400" />
+                      <FileIcon className="w-12 h-12 text-slate-400" />
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="p-2">
-                    <p className="text-white text-xs truncate" title={file.name}>
+                    <p className="text-slate-900 dark:text-white text-xs truncate" title={file.name}>
                       {file.name}
                     </p>
-                    <p className="text-gray-500 text-xs">
+                    <p className="text-slate-500 dark:text-slate-400 text-xs">
                       {formatFileSize(file.metadata?.size)}
                     </p>
                   </div>
@@ -533,13 +534,13 @@ export default function FileManagement() {
                         e.stopPropagation();
                         copyToClipboard(file.url);
                       }}
-                      className="p-1.5 bg-gray-800/80 rounded hover:bg-gray-700 transition-colors"
+                      className="p-1.5 bg-white dark:bg-slate-800 rounded shadow hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                       title="Copy URL"
                     >
                       {copiedUrl === file.url ? (
-                        <Check className="w-3 h-3 text-green-400" />
+                        <Check className="w-3 h-3 text-green-500" />
                       ) : (
-                        <Copy className="w-3 h-3 text-gray-400" />
+                        <Copy className="w-3 h-3 text-slate-500" />
                       )}
                     </button>
                     <button
@@ -547,10 +548,10 @@ export default function FileManagement() {
                         e.stopPropagation();
                         handleDelete(file);
                       }}
-                      className="p-1.5 bg-gray-800/80 rounded hover:bg-red-600 transition-colors"
+                      className="p-1.5 bg-white dark:bg-slate-800 rounded shadow hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                       title="Delete"
                     >
-                      <Trash2 className="w-3 h-3 text-gray-400" />
+                      <Trash2 className="w-3 h-3 text-red-500" />
                     </button>
                   </div>
                 </div>
@@ -558,7 +559,7 @@ export default function FileManagement() {
             })}
           </div>
         ) : (
-          <div className="divide-y divide-gray-700">
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
             {/* List view */}
             {[...folders, ...regularFiles].map((file) => {
               const FileIcon = getFileIcon(file);
@@ -570,7 +571,9 @@ export default function FileManagement() {
                   key={file.path}
                   onClick={() => (isFolder ? setCurrentFolder(file.path) : setPreviewFile(file))}
                   className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${
-                    isSelected ? 'bg-purple-600/20' : 'hover:bg-gray-800/50'
+                    isSelected 
+                      ? 'bg-teal-50 dark:bg-teal-900/20' 
+                      : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
                   }`}
                 >
                   {/* Selection */}
@@ -588,8 +591,8 @@ export default function FileManagement() {
                       }}
                       className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                         isSelected
-                          ? 'bg-purple-600 border-purple-600'
-                          : 'border-gray-500'
+                          ? 'bg-teal-600 border-teal-600'
+                          : 'border-slate-400'
                       }`}
                     >
                       {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -607,16 +610,16 @@ export default function FileManagement() {
                       />
                     ) : (
                       <FileIcon
-                        className={`w-6 h-6 ${isFolder ? 'text-yellow-400' : 'text-gray-400'}`}
+                        className={`w-6 h-6 ${isFolder ? 'text-amber-500' : 'text-slate-400'}`}
                       />
                     )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white truncate">{file.name}</p>
+                    <p className="text-slate-900 dark:text-white truncate">{file.name}</p>
                     {!isFolder && (
-                      <p className="text-gray-500 text-sm">
+                      <p className="text-slate-500 dark:text-slate-400 text-sm">
                         {formatFileSize(file.metadata?.size)} •{' '}
                         {file.created_at
                           ? new Date(file.created_at).toLocaleDateString()
@@ -633,11 +636,11 @@ export default function FileManagement() {
                           e.stopPropagation();
                           copyToClipboard(file.url);
                         }}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         title="Copy URL"
                       >
                         {copiedUrl === file.url ? (
-                          <Check className="w-4 h-4 text-green-400" />
+                          <Check className="w-4 h-4 text-green-500" />
                         ) : (
                           <Copy className="w-4 h-4" />
                         )}
@@ -646,7 +649,7 @@ export default function FileManagement() {
                         href={file.url}
                         download
                         onClick={(e) => e.stopPropagation()}
-                        className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         title="Download"
                       >
                         <Download className="w-4 h-4" />
@@ -656,7 +659,7 @@ export default function FileManagement() {
                           e.stopPropagation();
                           handleDelete(file);
                         }}
-                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded-lg transition-colors"
+                        className="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -673,26 +676,26 @@ export default function FileManagement() {
       {/* File Preview Modal */}
       {previewFile && (
         <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => setPreviewFile(null)}
         >
           <div
-            className="bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white dark:bg-slate-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-700">
-              <h3 className="text-white font-medium truncate pr-4">{previewFile.name}</h3>
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-slate-900 dark:text-white font-medium truncate pr-4">{previewFile.name}</h3>
               <button
                 onClick={() => setPreviewFile(null)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Preview */}
-            <div className="p-4 flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-auto bg-gray-900/50">
+            <div className="p-4 flex items-center justify-center min-h-[300px] max-h-[60vh] overflow-auto bg-slate-50 dark:bg-slate-900/50">
               {isImage(previewFile) ? (
                 <img
                   src={previewFile.url}
@@ -701,38 +704,38 @@ export default function FileManagement() {
                 />
               ) : (
                 <div className="text-center">
-                  <File className="w-20 h-20 text-gray-500 mx-auto mb-4" />
-                  <p className="text-gray-400">Preview not available</p>
+                  <File className="w-20 h-20 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-500 dark:text-slate-400">Preview not available</p>
                 </div>
               )}
             </div>
 
             {/* Info & Actions */}
-            <div className="p-4 border-t border-gray-700">
+            <div className="p-4 border-t border-slate-200 dark:border-slate-700">
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div>
-                  <p className="text-gray-500">Size</p>
-                  <p className="text-white">{formatFileSize(previewFile.metadata?.size)}</p>
+                  <p className="text-slate-500 dark:text-slate-400">Size</p>
+                  <p className="text-slate-900 dark:text-white">{formatFileSize(previewFile.metadata?.size)}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Type</p>
-                  <p className="text-white">{previewFile.metadata?.mimetype || 'Unknown'}</p>
+                  <p className="text-slate-500 dark:text-slate-400">Type</p>
+                  <p className="text-slate-900 dark:text-white">{previewFile.metadata?.mimetype || 'Unknown'}</p>
                 </div>
               </div>
 
               {/* URL */}
               <div className="mb-4">
-                <p className="text-gray-500 text-sm mb-1">Public URL</p>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Public URL</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     readOnly
                     value={previewFile.url}
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm"
+                    className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white text-sm"
                   />
                   <button
                     onClick={() => copyToClipboard(previewFile.url)}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors flex items-center gap-2"
                   >
                     {copiedUrl === previewFile.url ? (
                       <>
@@ -755,7 +758,7 @@ export default function FileManagement() {
                   href={previewFile.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors"
                 >
                   <Eye className="w-4 h-4" />
                   Open in New Tab
@@ -763,7 +766,7 @@ export default function FileManagement() {
                 <a
                   href={previewFile.url}
                   download
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   Download
@@ -785,11 +788,11 @@ export default function FileManagement() {
       )}
 
       {/* Info Note */}
-      <div className="flex items-start gap-3 p-4 bg-blue-900/20 border border-blue-800/50 rounded-lg">
-        <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+        <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
         <div className="text-sm">
-          <p className="text-blue-300 font-medium">About File Storage</p>
-          <p className="text-blue-400/80 mt-1">
+          <p className="text-blue-800 dark:text-blue-300 font-medium">About File Storage</p>
+          <p className="text-blue-700 dark:text-blue-400 mt-1">
             Files are stored securely in Supabase Storage. You can organize files into different
             buckets (Products, Marketing, Documents, Blog) and create folders within each bucket.
             Copy the public URL to use images in products, blog posts, or marketing materials.
@@ -799,4 +802,3 @@ export default function FileManagement() {
     </div>
   );
 }
-
