@@ -42,84 +42,39 @@ export default function StoryManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedStory, setEditedStory] = useState<StorySubmission | null>(null);
 
-  // Load mock data on component mount
+  // Load stories from localStorage on component mount
   useEffect(() => {
-    const mockStories: StorySubmission[] = [
-      {
-        id: '1',
-        title: 'My Candle Journey: Finding Peace in Scent',
-        author: 'Jennifer Martinez',
-        email: 'jennifer.m@email.com',
-        content: 'I discovered Kind Kandles during one of the most stressful periods of my life. I was working long hours, barely sleeping, and feeling completely overwhelmed. A friend recommended your lavender candle, saying it might help me relax.\n\nThe first time I lit that candle, something magical happened. The gentle scent filled my apartment, and for the first time in months, I felt my shoulders relax. It became my evening ritual - lighting the candle, taking deep breaths, and allowing myself to just be present.\n\nNow, six months later, I have a collection of your candles for different moods and moments. The citrus ones energize my mornings, the vanilla soothes my evenings, and the eucalyptus helps me focus during work. Each candle tells a story, and together they\'ve helped me create a more mindful, peaceful life.\n\nThank you for creating products that do more than just smell good - they create experiences and memories.',
-        submittedAt: new Date('2024-11-09T15:30:00'),
-        status: 'pending',
-        isStarred: true,
-        category: 'candle-journey',
-        adminNotes: 'Beautiful story, perfect for homepage feature'
-      },
-      {
-        id: '2',
-        title: 'A Gift of Kindness That Changed Everything',
-        author: 'Robert Chen',
-        email: 'rchen.writer@gmail.com',
-        content: 'Last year, my neighbor Mrs. Thompson was going through chemotherapy. She\'s always been the kindest person on our block, always checking on everyone, bringing cookies, and just spreading joy wherever she went.\n\nWhen I heard about her diagnosis, I wanted to do something special but didn\'t know what. That\'s when I remembered seeing your "Do All Things With Kindness" motto on your candles. I ordered a care package with different scented candles and a handwritten note.\n\nThe smile on her face when I delivered it was priceless. She told me later that during her toughest days, she would light one of your candles and remember that people cared about her. The scents became associated with hope and healing for her.\n\nMrs. Thompson is now cancer-free, and she still lights your candles every evening. She says they remind her to approach each day with kindness, just like your motto suggests. Your candles didn\'t just provide comfort - they became symbols of community and caring.',
-        submittedAt: new Date('2024-11-08T10:45:00'),
-        status: 'approved',
-        isStarred: true,
-        category: 'kindness-story',
-        publishedAt: new Date('2024-11-09T09:00:00')
-      },
-      {
-        id: '3',
-        title: 'The Perfect Wedding Favor',
-        author: 'Sarah & Mike Johnson',
-        email: 'sarahmike.wedding@email.com',
-        content: 'We used Kind Kandles as our wedding favors and they were absolutely perfect! We chose the "Love Blossom" scent and had custom labels made with our wedding date and a thank you message.\n\nOur guests loved them, and we still get messages from friends and family saying they light their candle and think of our special day. The quality is amazing - even a year later, people tell us their candles still smell incredible and burn evenly.\n\nWhat made it even more special was working with your team. They were so helpful with the custom labeling and made sure everything arrived on time. The attention to detail and customer service was outstanding.\n\nThank you for helping make our wedding day even more memorable!',
-        submittedAt: new Date('2024-11-07T14:20:00'),
-        status: 'published',
-        isStarred: false,
-        category: 'product-review',
-        publishedAt: new Date('2024-11-08T12:00:00')
-      },
-      {
-        id: '4',
-        title: 'Creating Memories with My Daughter',
-        author: 'Maria Rodriguez',
-        email: 'maria.rodriguez.mom@gmail.com',
-        content: 'Every Sunday, my 8-year-old daughter and I have "candle time." We light one of your candles, turn off all the electronics, and just talk about our week. It started as a way to get her to open up about school, but it\'s become so much more.\n\nShe has her favorite scents for different moods - vanilla when she\'s feeling cozy, citrus when she\'s excited about something, and lavender when she needs comfort. Last month, she asked if we could make our own candles someday "just like the Kind Kandles lady."\n\nThese simple moments have strengthened our bond in ways I never expected. Your candles have become the backdrop for some of our most precious conversations and memories.',
-        submittedAt: new Date('2024-11-06T19:15:00'),
-        status: 'pending',
-        isStarred: false,
-        category: 'life-moment'
-      },
-      {
-        id: '5',
-        title: 'From Skeptic to Believer',
-        author: 'David Park',
-        email: 'dpark.reviews@email.com',
-        content: 'I\'ll be honest - I was skeptical about "fancy" candles. I thought a candle was just a candle. My wife kept talking about trying Kind Kandles, and I kept rolling my eyes and suggesting we just buy the cheap ones from the grocery store.\n\nThen she surprised me with the "Man Cave Season" candle for my birthday. The scent was incredible - woodsy and masculine without being overpowering. But what really impressed me was how long it lasted and how evenly it burned.\n\nNow I\'m the one suggesting we order more candles. The quality difference is undeniable, and I\'ve become a believer in supporting small businesses that clearly care about their craft. Consider me converted!',
-        submittedAt: new Date('2024-11-05T16:30:00'),
-        status: 'rejected',
-        isStarred: false,
-        category: 'product-review',
-        adminNotes: 'Good review but doesn\'t fit current story theme'
-      }
-    ];
-
-    // Load from localStorage or use mock data
+    // Clear any old sample data and start fresh
     const savedStories = localStorage.getItem('storySubmissions');
     if (savedStories) {
-      const parsed = JSON.parse(savedStories);
-      // Convert date strings back to Date objects
-      const withDates = parsed.map((story: any) => ({
-        ...story,
-        submittedAt: new Date(story.submittedAt),
-        publishedAt: story.publishedAt ? new Date(story.publishedAt) : undefined
-      }));
-      setStories(withDates);
+      try {
+        const parsed = JSON.parse(savedStories);
+        // Check if this is sample data (has specific sample IDs)
+        const isSampleData = parsed.some((story: any) => 
+          ['1', '2', '3', '4', '5'].includes(story.id) && 
+          ['jennifer.m@email.com', 'rchen.writer@gmail.com', 'sarahmike.wedding@email.com'].includes(story.email)
+        );
+        
+        if (isSampleData) {
+          // Clear sample data
+          localStorage.removeItem('storySubmissions');
+          setStories([]);
+        } else {
+          // Convert date strings back to Date objects
+          const withDates = parsed.map((story: any) => ({
+            ...story,
+            submittedAt: new Date(story.submittedAt),
+            publishedAt: story.publishedAt ? new Date(story.publishedAt) : undefined
+          }));
+          setStories(withDates);
+        }
+      } catch (e) {
+        // If parsing fails, start fresh
+        localStorage.removeItem('storySubmissions');
+        setStories([]);
+      }
     } else {
-      setStories(mockStories);
-      localStorage.setItem('storySubmissions', JSON.stringify(mockStories));
+      setStories([]);
     }
   }, []);
 
