@@ -29,7 +29,10 @@ import {
   Wand2,
   RefreshCw,
   CheckCircle2,
-  Filter
+  Filter,
+  Boxes,
+  Minus,
+  ArrowUpDown
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 
@@ -211,6 +214,10 @@ export default function ProductManagement() {
   }[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>('');
+  const [showStockModal, setShowStockModal] = useState(false);
+  const [stockUpdates, setStockUpdates] = useState<{ [productId: string]: number }>({});
+  const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
+  const [isSavingStock, setIsSavingStock] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -765,6 +772,97 @@ export default function ProductManagement() {
     setSelectedProducts(newSelection);
   };
 
+  // Stock Management Functions
+  const openStockModal = () => {
+    // Initialize stock updates with current values
+    const initialStock: { [productId: string]: number } = {};
+    products.forEach(product => {
+      initialStock[product.id] = product.variants?.[0]?.inventory_quantity || 0;
+    });
+    setStockUpdates(initialStock);
+    setShowStockModal(true);
+  };
+
+  const updateStockValue = (productId: string, value: number) => {
+    setStockUpdates(prev => ({
+      ...prev,
+      [productId]: Math.max(0, value)
+    }));
+  };
+
+  const adjustStock = (productId: string, adjustment: number) => {
+    setStockUpdates(prev => ({
+      ...prev,
+      [productId]: Math.max(0, (prev[productId] || 0) + adjustment)
+    }));
+  };
+
+  const getStockFilteredProducts = () => {
+    return products.filter(product => {
+      const currentStock = product.variants?.[0]?.inventory_quantity || 0;
+      if (stockFilter === 'low') return currentStock > 0 && currentStock <= 5;
+      if (stockFilter === 'out') return currentStock === 0;
+      return true;
+    });
+  };
+
+  const getChangedStockProducts = () => {
+    return products.filter(product => {
+      const originalStock = product.variants?.[0]?.inventory_quantity || 0;
+      const newStock = stockUpdates[product.id];
+      return newStock !== undefined && newStock !== originalStock;
+    });
+  };
+
+  const saveStockUpdates = async () => {
+    const changedProducts = getChangedStockProducts();
+    if (changedProducts.length === 0) {
+      setSuccessMessage('No changes to save');
+      setTimeout(() => setSuccessMessage(''), 3000);
+      return;
+    }
+
+    setIsSavingStock(true);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const product of changedProducts) {
+      try {
+        const response = await fetch(`/api/admin/products/${product.id}/stock`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer admin-token'
+          },
+          body: JSON.stringify({
+            inventory_quantity: stockUpdates[product.id]
+          })
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (error) {
+        console.error('Error updating stock:', error);
+        errorCount++;
+      }
+    }
+
+    setIsSavingStock(false);
+    setShowStockModal(false);
+
+    if (errorCount === 0) {
+      setSuccessMessage(`Successfully updated stock for ${successCount} products!`);
+    } else {
+      setSuccessMessage(`Updated ${successCount} products (${errorCount} failed)`);
+    }
+    setTimeout(() => setSuccessMessage(''), 5000);
+    
+    fetchProducts();
+  };
+
   const selectAllProducts = () => {
     if (selectedProducts.size === filteredProducts.length) {
       setSelectedProducts(new Set());
@@ -810,6 +908,14 @@ export default function ProductManagement() {
           </p>
         </div>
         <div className="flex gap-2 sm:gap-3">
+          <button
+            onClick={openStockModal}
+            className="flex items-center gap-1 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors shadow-lg text-sm"
+          >
+            <Boxes className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Manage Stock</span>
+            <span className="sm:hidden">Stock</span>
+          </button>
           <button
             onClick={generateOrganizePreview}
             className="flex items-center gap-1 sm:gap-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-lg text-sm"
@@ -1474,6 +1580,197 @@ export default function ProductManagement() {
             >
               Clear
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Stock Modal */}
+      {showStockModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gradient-to-r from-teal-500 to-emerald-500">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Boxes className="h-5 w-5" />
+                Manage Inventory
+              </h3>
+              <button 
+                onClick={() => setShowStockModal(false)} 
+                className="p-2 hover:bg-white/20 rounded-lg text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 p-4 border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Filter:</span>
+              <div className="flex gap-2">
+                {[
+                  { value: 'all', label: 'All Products', count: products.length },
+                  { value: 'low', label: 'Low Stock', count: products.filter(p => (p.variants?.[0]?.inventory_quantity || 0) > 0 && (p.variants?.[0]?.inventory_quantity || 0) <= 5).length },
+                  { value: 'out', label: 'Out of Stock', count: products.filter(p => (p.variants?.[0]?.inventory_quantity || 0) === 0).length },
+                ].map(filter => (
+                  <button
+                    key={filter.value}
+                    onClick={() => setStockFilter(filter.value as typeof stockFilter)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      stockFilter === filter.value
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {filter.label} ({filter.count})
+                  </button>
+                ))}
+              </div>
+              {getChangedStockProducts().length > 0 && (
+                <span className="ml-auto text-sm text-teal-600 dark:text-teal-400 font-medium">
+                  {getChangedStockProducts().length} pending changes
+                </span>
+              )}
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="space-y-2">
+                {getStockFilteredProducts().map((product) => {
+                  const originalStock = product.variants?.[0]?.inventory_quantity || 0;
+                  const newStock = stockUpdates[product.id] ?? originalStock;
+                  const hasChanged = newStock !== originalStock;
+                  const stockStatus = newStock === 0 ? 'out' : newStock <= 5 ? 'low' : 'good';
+                  
+                  return (
+                    <div 
+                      key={product.id}
+                      className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
+                        hasChanged 
+                          ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-900/20' 
+                          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
+                      }`}
+                    >
+                      {/* Product Image */}
+                      {product.images?.[0]?.url ? (
+                        <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden">
+                          <Image
+                            src={product.images[0].url}
+                            alt={product.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+
+                      {/* Product Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
+                          {product.title}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          SKU: {product.variants?.[0]?.sku || 'N/A'}
+                        </p>
+                      </div>
+
+                      {/* Stock Status Badge */}
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        stockStatus === 'out' 
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                          : stockStatus === 'low'
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                      }`}>
+                        {stockStatus === 'out' ? 'Out of Stock' : stockStatus === 'low' ? 'Low Stock' : 'In Stock'}
+                      </div>
+
+                      {/* Stock Controls */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => adjustStock(product.id, -1)}
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          disabled={newStock <= 0}
+                        >
+                          <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          value={newStock}
+                          onChange={(e) => updateStockValue(product.id, parseInt(e.target.value) || 0)}
+                          className={`w-16 px-2 py-1.5 text-center border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 ${
+                            hasChanged 
+                              ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-600' 
+                              : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
+                          }`}
+                        />
+                        <button
+                          onClick={() => adjustStock(product.id, 1)}
+                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        >
+                          <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                        </button>
+                      </div>
+
+                      {/* Change Indicator */}
+                      {hasChanged && (
+                        <div className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
+                          <ArrowUpDown className="h-3 w-3" />
+                          <span>{originalStock} → {newStock}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {getStockFilteredProducts().length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Package className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>No products match this filter</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-between items-center gap-3 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <div className="text-sm text-gray-500">
+                {getChangedStockProducts().length > 0 ? (
+                  <span className="text-teal-600 dark:text-teal-400 font-medium">
+                    {getChangedStockProducts().length} products will be updated
+                  </span>
+                ) : (
+                  'No changes made'
+                )}
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowStockModal(false)}
+                  className="px-6 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveStockUpdates}
+                  disabled={isSavingStock || getChangedStockProducts().length === 0}
+                  className="flex items-center gap-2 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                >
+                  {isSavingStock ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
