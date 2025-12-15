@@ -20,16 +20,23 @@ interface MobileProductsProps {
   onNavigate: (section: AdminSection) => void;
 }
 
+interface ProductVariant {
+  id: string;
+  inventory_quantity: number;
+  price: number;
+  sku?: string;
+}
+
 interface Product {
   id: string;
   title: string;
   handle: string;
   price: number;
   compare_at_price?: number;
-  inventory_quantity?: number;
   status?: 'active' | 'draft' | 'archived';
   images?: { url: string }[];
-  type?: string;
+  variants?: ProductVariant[];
+  product_type?: string;
   vendor?: string;
 }
 
@@ -49,38 +56,65 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
   const [hasMore, setHasMore] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
 
+  // Helper to get inventory from product variants
+  const getInventory = (product: Product): number => {
+    if (!product.variants || product.variants.length === 0) return 0;
+    return product.variants.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0);
+  };
+
   const fetchProducts = useCallback(async (reset = false) => {
     try {
-      const currentPage = reset ? 1 : page;
-      const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
-      
-      const response = await fetch(
-        `/api/products?page=${currentPage}&limit=20${searchParam}`
-      );
+      // Use admin API to get full product data including variants with inventory
+      const response = await fetch('/api/admin/products', {
+        headers: {
+          'Authorization': 'Bearer admin-token'
+        }
+      });
       const data = await response.json();
 
       let sortedProducts = data.products || [];
       
+      // Apply search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        sortedProducts = sortedProducts.filter((p: Product) => 
+          p.title.toLowerCase().includes(query) ||
+          p.handle.toLowerCase().includes(query) ||
+          p.variants?.[0]?.sku?.toLowerCase().includes(query)
+        );
+      }
+      
+      // Apply sorting
       switch (sortBy) {
         case 'title':
           sortedProducts.sort((a: Product, b: Product) => a.title.localeCompare(b.title));
           break;
         case 'price':
-          sortedProducts.sort((a: Product, b: Product) => b.price - a.price);
+          sortedProducts.sort((a: Product, b: Product) => (b.price || 0) - (a.price || 0));
           break;
         case 'stock':
-          sortedProducts.sort((a: Product, b: Product) => (a.inventory_quantity ?? 0) - (b.inventory_quantity ?? 0));
+          sortedProducts.sort((a: Product, b: Product) => {
+            const aStock = a.variants?.[0]?.inventory_quantity || 0;
+            const bStock = b.variants?.[0]?.inventory_quantity || 0;
+            return aStock - bStock;
+          });
           break;
       }
 
+      // Apply pagination
+      const currentPage = reset ? 1 : page;
+      const pageSize = 20;
+      const startIndex = (currentPage - 1) * pageSize;
+      const paginatedProducts = sortedProducts.slice(startIndex, startIndex + pageSize);
+
       if (reset) {
-        setProducts(sortedProducts);
+        setProducts(paginatedProducts);
         setPage(1);
       } else {
-        setProducts(prev => [...prev, ...sortedProducts]);
+        setProducts(prev => [...prev, ...paginatedProducts]);
       }
       
-      setHasMore(sortedProducts.length === 20);
+      setHasMore(startIndex + pageSize < sortedProducts.length);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -289,7 +323,8 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             {viewMode === 'grid' ? (
               <div className="grid grid-cols-3 gap-2">
                 {products.map((product) => {
-                  const stockStatus = getStockStatus(product.inventory_quantity);
+                  const inventoryQty = product.variants?.[0]?.inventory_quantity ?? 0;
+                  const stockStatus = getStockStatus(inventoryQty);
                   const imageUrl = product.images?.[0]?.url || '/placeholder-product.jpg';
 
                   return (
@@ -334,7 +369,8 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             ) : (
               <div className="space-y-2">
                 {products.map((product) => {
-                  const stockStatus = getStockStatus(product.inventory_quantity);
+                  const inventoryQty = product.variants?.[0]?.inventory_quantity ?? 0;
+                  const stockStatus = getStockStatus(inventoryQty);
                   const imageUrl = product.images?.[0]?.url || '/placeholder-product.jpg';
 
                   return (
@@ -365,7 +401,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                             {formatCurrency(product.price)}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${stockStatus.color}`}>
-                            {product.inventory_quantity ?? 0} in stock
+                            {inventoryQty} in stock
                           </span>
                         </div>
                       </div>
