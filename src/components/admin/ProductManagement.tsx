@@ -907,32 +907,54 @@ export default function ProductManagement() {
             {products.length} total • {products.filter(p => p.status === 'active').length} active
           </p>
         </div>
-        <div className="flex gap-2 sm:gap-3">
+        <div className="hidden sm:flex gap-3">
           <button
             onClick={openStockModal}
-            className="flex items-center gap-1 sm:gap-2 bg-teal-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors shadow-lg text-sm"
+            className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors shadow-lg text-sm"
           >
-            <Boxes className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Manage Stock</span>
-            <span className="sm:hidden">Stock</span>
+            <Boxes className="h-5 w-5" />
+            Manage Stock
           </button>
           <button
             onClick={generateOrganizePreview}
-            className="flex items-center gap-1 sm:gap-2 bg-purple-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-lg text-sm"
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors shadow-lg text-sm"
           >
-            <Wand2 className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Auto-Organize</span>
-            <span className="sm:hidden">Organize</span>
+            <Wand2 className="h-5 w-5" />
+            Auto-Organize
           </button>
           <button
             onClick={handleCreate}
-            className="flex items-center gap-1 sm:gap-2 bg-pink-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors shadow-lg text-sm"
+            className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors shadow-lg text-sm"
           >
-            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Add Product</span>
-            <span className="sm:hidden">Add</span>
+            <Plus className="h-5 w-5" />
+            Add Product
           </button>
         </div>
+      </div>
+
+      {/* Mobile Action Buttons */}
+      <div className="sm:hidden grid grid-cols-3 gap-2">
+        <button
+          onClick={openStockModal}
+          className="flex flex-col items-center justify-center gap-1 bg-teal-600 text-white px-3 py-3 rounded-xl hover:bg-teal-700 transition-colors shadow-lg"
+        >
+          <Boxes className="h-5 w-5" />
+          <span className="text-xs font-medium">Manage Stock</span>
+        </button>
+        <button
+          onClick={generateOrganizePreview}
+          className="flex flex-col items-center justify-center gap-1 bg-purple-600 text-white px-3 py-3 rounded-xl hover:bg-purple-700 transition-colors shadow-lg"
+        >
+          <Wand2 className="h-5 w-5" />
+          <span className="text-xs font-medium">Organize</span>
+        </button>
+        <button
+          onClick={handleCreate}
+          className="flex flex-col items-center justify-center gap-1 bg-pink-600 text-white px-3 py-3 rounded-xl hover:bg-pink-700 transition-colors shadow-lg"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-xs font-medium">Add Product</span>
+        </button>
       </div>
 
       {/* Filters */}
