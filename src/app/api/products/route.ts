@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const productType = searchParams.get('type');
     const tag = searchParams.get('tag');
+    const includeAll = searchParams.get('include_all') === 'true'; // Admin flag to include all products
 
     let query = supabase
       .from('products')
@@ -23,8 +24,7 @@ export async function GET(request: NextRequest) {
         collection:collections(*)
       `)
       .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('created_at', { ascending: false });
 
     // Filter by collection
     if (collection) {
@@ -66,9 +66,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 });
     }
 
+    // Filter out products that are out of stock (unless admin flag is set)
+    let filteredProducts = products || [];
+    if (!includeAll) {
+      filteredProducts = filteredProducts.filter(product => {
+        // Check if product has any variant with inventory > 0
+        const variants = product.variants || [];
+        if (variants.length === 0) return true; // Show products without variants
+        
+        const totalInventory = variants.reduce((sum: number, variant: any) => {
+          return sum + (variant.inventory_quantity || 0);
+        }, 0);
+        
+        return totalInventory > 0;
+      });
+    }
+
+    // Apply pagination after filtering
+    const paginatedProducts = filteredProducts.slice(offset, offset + limit);
+
     return NextResponse.json({
-      products: products || [],
-      total: count || 0,
+      products: paginatedProducts,
+      total: filteredProducts.length,
       limit,
       offset
     });

@@ -8,6 +8,8 @@ export async function GET(
 ) {
   try {
     const { handle } = await params;
+    const { searchParams } = new URL(request.url);
+    const includeOutOfStock = searchParams.get('include_out_of_stock') === 'true'; // Admin flag
 
     const { data: product, error } = await supabase
       .from('products')
@@ -22,6 +24,20 @@ export async function GET(
 
     if (error || !product) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    }
+
+    // Check if product is out of stock (unless admin flag is set)
+    if (!includeOutOfStock) {
+      const variants = product.variants || [];
+      if (variants.length > 0) {
+        const totalInventory = variants.reduce((sum: number, variant: any) => {
+          return sum + (variant.inventory_quantity || 0);
+        }, 0);
+        
+        if (totalInventory <= 0) {
+          return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+        }
+      }
     }
 
     // Sort images by position
