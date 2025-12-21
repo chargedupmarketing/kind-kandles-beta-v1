@@ -122,10 +122,15 @@ const nextConfig = {
     ];
   },
 
-  // Rewrites for admin subdomain
+  // Rewrites for admin subdomain and Apple Pay verification
   async rewrites() {
     return {
       beforeFiles: [
+        // Apple Pay domain verification - must come first to avoid redirects
+        {
+          source: '/.well-known/apple-developer-merchantid-domain-association',
+          destination: '/api/well-known/apple-pay',
+        },
         // When accessing admin.kindkandlesboutique.com, rewrite to /restricted paths
         {
           source: '/',
