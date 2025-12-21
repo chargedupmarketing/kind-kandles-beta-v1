@@ -1,15 +1,30 @@
-/**
- * Shippo Shipping Integration
- * 
- * Multi-carrier shipping with USPS, UPS, FedEx, and DHL
- * Features: Rate shopping, label generation, tracking
- */
+import Shippo from 'shippo';
 
-const SHIPPO_API_KEY = process.env.SHIPPO_API_KEY || '';
-const SHIPPO_API_URL = 'https://api.goshippo.com';
+// Initialize Shippo client
+const shippoApiKey = process.env.SHIPPO_API_KEY || '';
 
-// Types
-export interface ShippoAddress {
+let shippoClient: Shippo | null = null;
+
+export function getShippoClient(): Shippo | null {
+  if (!shippoApiKey) {
+    console.warn('Shippo API key not configured');
+    return null;
+  }
+  
+  if (!shippoClient) {
+    shippoClient = new Shippo({ apiKeyHeader: shippoApiKey });
+  }
+  
+  return shippoClient;
+}
+
+// Check if Shippo is configured
+export function isShippoConfigured(): boolean {
+  return !!shippoApiKey;
+}
+
+// Address interface
+export interface ShippingAddress {
   name: string;
   company?: string;
   street1: string;
@@ -20,316 +35,200 @@ export interface ShippoAddress {
   country: string;
   phone?: string;
   email?: string;
-  is_residential?: boolean;
 }
 
-export interface ShippoParcel {
+// Parcel dimensions interface
+export interface ParcelDimensions {
   length: number;
   width: number;
   height: number;
-  distance_unit: 'in' | 'cm';
   weight: number;
-  mass_unit: 'lb' | 'oz' | 'kg' | 'g';
+  massUnit?: 'lb' | 'oz' | 'kg' | 'g';
+  distanceUnit?: 'in' | 'cm' | 'ft' | 'm';
 }
 
-export interface ShippoRate {
-  object_id: string;
-  provider: string;
-  provider_image_75: string;
-  provider_image_200: string;
-  servicelevel: {
-    name: string;
-    token: string;
-    terms: string;
-  };
+// Shipping rate interface
+export interface ShippingRate {
+  id: string;
+  carrier: string;
+  carrierAccount: string;
+  serviceName: string;
+  serviceToken: string;
   amount: string;
   currency: string;
-  estimated_days: number;
-  duration_terms: string;
-  attributes: string[];
+  estimatedDays: number;
+  durationTerms?: string;
+  provider: string;
+  providerImage75?: string;
+  providerImage200?: string;
 }
 
-export interface ShippoShipment {
-  object_id: string;
-  object_created: string;
-  status: string;
-  address_from: ShippoAddress;
-  address_to: ShippoAddress;
-  parcels: ShippoParcel[];
-  rates: ShippoRate[];
-}
-
-export interface ShippoTransaction {
-  object_id: string;
-  object_state: string;
-  status: string;
-  tracking_number: string;
-  tracking_url_provider: string;
-  label_url: string;
-  commercial_invoice_url?: string;
+// Shipping label interface
+export interface ShippingLabel {
+  objectId: string;
+  trackingNumber: string;
+  trackingUrlProvider: string;
+  labelUrl: string;
+  commercialInvoiceUrl?: string;
+  carrier: string;
+  serviceName: string;
   rate: string;
-  messages: Array<{ source: string; code: string; text: string }>;
+  createdAt: string;
 }
 
-export interface ShippoTrackingStatus {
-  object_id: string;
-  status: string;
-  status_details: string;
-  status_date: string;
-  substatus?: {
-    code: string;
-    text: string;
-  };
-  location?: {
-    city: string;
-    state: string;
-    zip: string;
-    country: string;
-  };
-  tracking_history: Array<{
-    object_id: string;
+// Tracking info interface
+export interface TrackingInfo {
+  carrier: string;
+  trackingNumber: string;
+  trackingStatus: {
     status: string;
-    status_details: string;
-    status_date: string;
+    statusDetails: string;
+    statusDate: string;
     location?: {
-      city: string;
-      state: string;
-      zip: string;
-      country: string;
+      city?: string;
+      state?: string;
+      country?: string;
+    };
+  };
+  trackingHistory: Array<{
+    status: string;
+    statusDetails: string;
+    statusDate: string;
+    location?: {
+      city?: string;
+      state?: string;
+      country?: string;
     };
   }>;
-  tracking_number: string;
-  carrier: string;
   eta?: string;
-  original_eta?: string;
-  servicelevel?: {
-    name: string;
-    token: string;
-  };
-  address_from?: ShippoAddress;
-  address_to?: ShippoAddress;
+  originalEta?: string;
 }
 
-// Helper to make API requests
-async function shippoRequest<T>(
-  endpoint: string,
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-  body?: Record<string, unknown>
-): Promise<T> {
-  if (!SHIPPO_API_KEY) {
-    throw new Error('Shippo API key not configured. Add SHIPPO_API_KEY to environment variables.');
-  }
-
-  const response = await fetch(`${SHIPPO_API_URL}${endpoint}`, {
-    method,
-    headers: {
-      'Authorization': `ShippoToken ${SHIPPO_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error.detail || `Shippo API error: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Validate an address with Shippo
- */
-export async function validateAddress(address: ShippoAddress): Promise<{
-  is_valid: boolean;
-  validation_results: {
-    is_valid: boolean;
-    messages: Array<{ source: string; code: string; text: string }>;
-  };
-  object_id: string;
-}> {
-  const result = await shippoRequest<{
-    object_id: string;
-    is_complete: boolean;
-    validation_results: {
-      is_valid: boolean;
-      messages: Array<{ source: string; code: string; text: string }>;
-    };
-  }>('/addresses', 'POST', {
-    ...address,
-    validate: true,
-  });
-
+// Default store address (from settings or env)
+export function getStoreAddress(): ShippingAddress {
   return {
-    is_valid: result.validation_results?.is_valid ?? result.is_complete,
-    validation_results: result.validation_results || { is_valid: result.is_complete, messages: [] },
-    object_id: result.object_id,
-  };
-}
-
-/**
- * Get shipping rates for a shipment
- */
-export async function getShippingRates(
-  fromAddress: ShippoAddress,
-  toAddress: ShippoAddress,
-  parcel: ShippoParcel
-): Promise<{ shipment_id: string; rates: ShippoRate[] }> {
-  const shipment = await shippoRequest<ShippoShipment>('/shipments', 'POST', {
-    address_from: fromAddress,
-    address_to: toAddress,
-    parcels: [parcel],
-    async: false,
-  });
-
-  // Sort rates by price
-  const sortedRates = shipment.rates.sort((a, b) => parseFloat(a.amount) - parseFloat(b.amount));
-
-  return {
-    shipment_id: shipment.object_id,
-    rates: sortedRates,
-  };
-}
-
-/**
- * Purchase a shipping label
- */
-export async function purchaseLabel(
-  rateId: string,
-  labelFormat: 'PDF' | 'PNG' | 'PDF_4x6' | 'ZPLII' = 'PDF_4x6'
-): Promise<ShippoTransaction> {
-  const transaction = await shippoRequest<ShippoTransaction>('/transactions', 'POST', {
-    rate: rateId,
-    label_file_type: labelFormat,
-    async: false,
-  });
-
-  if (transaction.status !== 'SUCCESS') {
-    const errorMessages = transaction.messages.map(m => m.text).join(', ');
-    throw new Error(`Label purchase failed: ${errorMessages || 'Unknown error'}`);
-  }
-
-  return transaction;
-}
-
-/**
- * Get tracking information for a shipment
- */
-export async function getTrackingInfo(
-  carrier: string,
-  trackingNumber: string
-): Promise<ShippoTrackingStatus> {
-  const tracking = await shippoRequest<ShippoTrackingStatus>(
-    `/tracks/${carrier}/${trackingNumber}`
-  );
-  return tracking;
-}
-
-/**
- * Register a tracking webhook for a shipment
- */
-export async function registerTrackingWebhook(
-  carrier: string,
-  trackingNumber: string,
-  metadata?: string
-): Promise<{ carrier: string; tracking_number: string }> {
-  const result = await shippoRequest<{ carrier: string; tracking_number: string }>(
-    '/tracks',
-    'POST',
-    {
-      carrier,
-      tracking_number: trackingNumber,
-      metadata,
-    }
-  );
-  return result;
-}
-
-/**
- * Get default store address (from address for all shipments)
- */
-export function getStoreAddress(): ShippoAddress {
-  return {
-    name: process.env.STORE_NAME || 'My Kind Kandles & Boutique',
+    name: process.env.STORE_NAME || 'Kind Kandles',
     company: 'My Kind Kandles & Boutique',
-    street1: process.env.STORE_ADDRESS_LINE1 || '',
-    street2: process.env.STORE_ADDRESS_LINE2 || '',
-    city: process.env.STORE_CITY || '',
-    state: process.env.STORE_STATE || 'MD',
-    zip: process.env.STORE_ZIP || '',
-    country: process.env.STORE_COUNTRY || 'US',
+    street1: process.env.STORE_ADDRESS_STREET || '42 2nd Ave',
+    street2: process.env.STORE_ADDRESS_STREET2 || 'Unit 29',
+    city: process.env.STORE_ADDRESS_CITY || 'North Attleboro',
+    state: process.env.STORE_ADDRESS_STATE || 'MA',
+    zip: process.env.STORE_ADDRESS_ZIP || '02760',
+    country: process.env.STORE_ADDRESS_COUNTRY || 'US',
     phone: process.env.STORE_PHONE || '',
-    email: process.env.STORE_EMAIL || 'info@kindkandlesboutique.com',
-    is_residential: false,
+    email: process.env.STORE_EMAIL || 'orders@kindkandlesboutique.com',
   };
 }
 
-/**
- * Create a parcel from product dimensions
- */
-export function createParcel(
-  weight: number,
-  length: number = 8,
-  width: number = 6,
-  height: number = 4
-): ShippoParcel {
-  return {
-    length,
-    width,
-    height,
-    distance_unit: 'in',
-    weight,
-    mass_unit: 'oz',
-  };
-}
-
-/**
- * Map carrier codes to display names
- */
-export const CARRIER_NAMES: Record<string, string> = {
-  usps: 'USPS',
-  ups: 'UPS',
-  fedex: 'FedEx',
-  dhl_express: 'DHL Express',
-  dhl_ecommerce: 'DHL eCommerce',
+// Default parcel sizes for candles
+export const DEFAULT_PARCEL_SIZES = {
+  small: {
+    name: 'Small (1-2 candles)',
+    length: 6,
+    width: 6,
+    height: 4,
+    weight: 1,
+    massUnit: 'lb' as const,
+    distanceUnit: 'in' as const,
+  },
+  medium: {
+    name: 'Medium (3-4 candles)',
+    length: 10,
+    width: 8,
+    height: 6,
+    weight: 3,
+    massUnit: 'lb' as const,
+    distanceUnit: 'in' as const,
+  },
+  large: {
+    name: 'Large (5+ candles)',
+    length: 14,
+    width: 10,
+    height: 8,
+    weight: 6,
+    massUnit: 'lb' as const,
+    distanceUnit: 'in' as const,
+  },
 };
 
-/**
- * Map tracking status to order status
- */
-export function mapTrackingStatusToOrderStatus(trackingStatus: string): string {
-  const statusMap: Record<string, string> = {
-    PRE_TRANSIT: 'processing',
-    TRANSIT: 'shipped',
-    DELIVERED: 'delivered',
-    RETURNED: 'returned',
-    FAILURE: 'delivery_failed',
-    UNKNOWN: 'shipped',
+// Carrier display names and logos
+export const CARRIER_INFO: Record<string, { name: string; logo: string }> = {
+  usps: { name: 'USPS', logo: '/carriers/usps.png' },
+  ups: { name: 'UPS', logo: '/carriers/ups.png' },
+  fedex: { name: 'FedEx', logo: '/carriers/fedex.png' },
+  dhl_express: { name: 'DHL Express', logo: '/carriers/dhl.png' },
+  dhl_ecommerce: { name: 'DHL eCommerce', logo: '/carriers/dhl.png' },
+};
+
+// Format carrier name for display
+export function formatCarrierName(carrier: string): string {
+  return CARRIER_INFO[carrier.toLowerCase()]?.name || carrier.toUpperCase();
+}
+
+// Calculate estimated parcel size based on items
+export function estimateParcelSize(itemCount: number, totalWeight?: number): ParcelDimensions {
+  if (itemCount <= 2) {
+    return { ...DEFAULT_PARCEL_SIZES.small, weight: totalWeight || DEFAULT_PARCEL_SIZES.small.weight };
+  } else if (itemCount <= 4) {
+    return { ...DEFAULT_PARCEL_SIZES.medium, weight: totalWeight || DEFAULT_PARCEL_SIZES.medium.weight };
+  } else {
+    return { ...DEFAULT_PARCEL_SIZES.large, weight: totalWeight || DEFAULT_PARCEL_SIZES.large.weight };
+  }
+}
+
+// Format shipping rate for display
+export function formatShippingRate(rate: ShippingRate): {
+  id: string;
+  carrier: string;
+  carrierLogo?: string;
+  service: string;
+  price: number;
+  estimatedDays: number;
+  estimatedDelivery: string;
+} {
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + rate.estimatedDays);
+  
+  return {
+    id: rate.id,
+    carrier: formatCarrierName(rate.carrier),
+    carrierLogo: CARRIER_INFO[rate.carrier.toLowerCase()]?.logo,
+    service: rate.serviceName,
+    price: parseFloat(rate.amount),
+    estimatedDays: rate.estimatedDays,
+    estimatedDelivery: deliveryDate.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    }),
   };
-  return statusMap[trackingStatus] || 'shipped';
 }
 
-/**
- * Check if Shippo is configured
- */
-export function isShippoConfigured(): boolean {
-  return !!SHIPPO_API_KEY && SHIPPO_API_KEY.length > 0;
+// Validate address format
+export function validateAddress(address: ShippingAddress): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!address.name || address.name.length < 2) {
+    errors.push('Name is required');
+  }
+  if (!address.street1 || address.street1.length < 3) {
+    errors.push('Street address is required');
+  }
+  if (!address.city || address.city.length < 2) {
+    errors.push('City is required');
+  }
+  if (!address.state || address.state.length < 2) {
+    errors.push('State is required');
+  }
+  if (!address.zip || !/^\d{5}(-\d{4})?$/.test(address.zip)) {
+    errors.push('Valid ZIP code is required');
+  }
+  if (!address.country || address.country.length !== 2) {
+    errors.push('Country code is required (2 letters)');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
 }
-
-/**
- * Verify Shippo webhook signature
- */
-export function verifyWebhookSignature(
-  payload: string,
-  signature: string,
-  secret: string
-): boolean {
-  // Shippo uses HMAC-SHA256 for webhook signatures
-  const crypto = require('crypto');
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-  return signature === expectedSignature;
-}
-
