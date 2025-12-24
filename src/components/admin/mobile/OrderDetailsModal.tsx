@@ -1,7 +1,7 @@
 'use client';
 
 import { X, Package, Mail, Phone, MapPin, Calendar, DollarSign, Truck, Copy, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { hapticLight, hapticSuccess } from '@/lib/haptics';
 
 interface OrderDetailsModalProps {
@@ -56,6 +56,16 @@ interface OrderDetailsModalProps {
 export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
+
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -102,10 +112,17 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full sm:max-w-2xl sm:rounded-t-2xl rounded-t-2xl max-h-[90vh] flex flex-col animate-slide-up">
+    <div 
+      className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div className="bg-white w-full sm:max-w-2xl sm:rounded-t-2xl rounded-t-2xl max-h-[90vh] flex flex-col animate-slide-up overflow-hidden">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between rounded-t-2xl z-10">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Order Details</h2>
             <p className="text-xs text-gray-500">#{order.order_number}</p>
@@ -122,7 +139,7 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4" style={{ WebkitOverflowScrolling: 'touch' }}>
           {/* Status & Date */}
           <div className="bg-gray-50 rounded-lg p-3 space-y-2">
             <div className="flex items-center justify-between">
