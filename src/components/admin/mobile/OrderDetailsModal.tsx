@@ -132,7 +132,7 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
 
       {/* Content - Scrollable */}
       <div 
-        className="flex-1 overflow-y-auto p-4 pb-8 space-y-6"
+        className="flex-1 overflow-y-auto p-5 pb-12 space-y-8"
         style={{ 
           WebkitOverflowScrolling: 'touch',
           overscrollBehavior: 'contain',
@@ -140,7 +140,7 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
         }}
       >
           {/* Status & Date */}
-          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+          <div className="bg-gray-50 rounded-lg p-5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs text-gray-500">Status</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
@@ -161,8 +161,8 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
 
           {/* Customer Info */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Customer</h3>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Customer</h3>
+            <div className="bg-gray-50 rounded-lg p-5 space-y-4">
               <div className="flex items-center space-x-2">
                 <Package className="h-4 w-4 text-gray-400 flex-shrink-0" />
                 <span className="text-sm text-gray-900">{order.customer_name}</span>
@@ -215,8 +215,8 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
           {/* Shipping Address */}
           {order.shipping_address && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Shipping Address</h3>
-              <div className="bg-gray-50 rounded-lg p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Shipping Address</h3>
+              <div className="bg-gray-50 rounded-lg p-5">
                 <div className="flex items-start space-x-2">
                   <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-gray-900 space-y-0.5">
@@ -240,8 +240,8 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
           {/* Tracking Info */}
           {order.tracking_number && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Tracking</h3>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Tracking</h3>
+              <div className="bg-gray-50 rounded-lg p-5 space-y-4">
                 {order.carrier && (
                   <div className="flex items-center space-x-2">
                     <Truck className="h-4 w-4 text-gray-400" />
@@ -278,10 +278,10 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
           {/* Order Items */}
           {order.items && order.items.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Items ({order.items.length})</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Items ({order.items.length})</h3>
               <div className="bg-gray-50 rounded-lg divide-y divide-gray-200">
                 {order.items.map((item) => (
-                  <div key={item.id} className="p-3 flex items-center justify-between">
+                  <div key={item.id} className="p-4 flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
                       {item.variant_title && item.variant_title !== 'Default Title' && (
@@ -300,8 +300,8 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
 
           {/* Order Summary */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Summary</h3>
-            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <h3 className="text-base font-semibold text-gray-900 mb-4">Summary</h3>
+            <div className="bg-gray-50 rounded-lg p-5 space-y-4">
               {order.subtotal !== undefined && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
@@ -336,8 +336,8 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
           {/* Notes */}
           {order.notes && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Order Notes</h3>
-              <div className="bg-blue-50 rounded-lg p-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Order Notes</h3>
+              <div className="bg-blue-50 rounded-lg p-5">
                 <p className="text-sm text-blue-900">{order.notes}</p>
               </div>
             </div>
