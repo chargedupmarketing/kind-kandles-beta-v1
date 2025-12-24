@@ -137,7 +137,20 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
       });
       const data = await response.json();
       if (response.ok) {
-        setDetailsOrder(data.order);
+        // Transform flat address fields to nested object for modal
+        const transformedOrder = {
+          ...data.order,
+          shipping_address: {
+            name: data.order.customer_name,
+            line1: data.order.shipping_address_line1 || data.order.shipping_line1,
+            line2: data.order.shipping_address_line2 || data.order.shipping_line2,
+            city: data.order.shipping_city,
+            state: data.order.shipping_state,
+            postal_code: data.order.shipping_postal_code,
+            country: data.order.shipping_country || 'US'
+          }
+        };
+        setDetailsOrder(transformedOrder);
       } else {
         console.error('Failed to fetch order details:', data.error);
       }
