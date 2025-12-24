@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShippoClient } from '@/lib/shippo';
 
 export const dynamic = 'force-dynamic';
 
 // Get available carrier accounts
+// Pirate Ship only supports USPS and UPS - no need to fetch from API
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -11,26 +11,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const shippo = getShippoClient();
-    if (!shippo) {
+    const apiKey = process.env.PIRATE_SHIP_API_KEY;
+    if (!apiKey) {
       return NextResponse.json(
         { error: 'Shipping service not configured' },
         { status: 503 }
       );
     }
 
-    // Get all carrier accounts
-    const carrierAccounts = await shippo.carrierAccounts.list();
-
-    const carriers = (carrierAccounts.results || []).map((account: any) => ({
-      id: account.objectId,
-      carrier: account.carrier,
-      carrierName: account.carrierName || account.carrier.toUpperCase(),
-      accountId: account.accountId,
-      active: account.active,
-      testMode: account.test,
-      parameters: account.parameters,
-    }));
+    // Pirate Ship supports USPS and UPS carriers
+    const carriers = [
+      {
+        id: 'usps',
+        carrier: 'usps',
+        carrierName: 'USPS',
+        accountId: 'pirateship_usps',
+        active: true,
+        testMode: false,
+        parameters: {},
+      },
+      {
+        id: 'ups',
+        carrier: 'ups',
+        carrierName: 'UPS',
+        accountId: 'pirateship_ups',
+        active: true,
+        testMode: false,
+        parameters: {},
+      },
+    ];
 
     return NextResponse.json({
       carriers,

@@ -62,17 +62,17 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      tracking_number: trackingInfo.tracking_number,
+      tracking_number: trackingInfo.trackingNumber,
       carrier: trackingInfo.carrier,
       status: trackingInfo.status,
-      status_details: trackingInfo.status_details,
-      status_date: trackingInfo.status_date,
+      status_details: trackingInfo.statusDetails,
+      status_date: trackingInfo.statusDate,
       location: trackingInfo.location,
       eta: trackingInfo.eta,
-      tracking_history: trackingInfo.tracking_history.map(event => ({
+      tracking_history: trackingInfo.trackingHistory.map(event => ({
         status: event.status,
-        status_details: event.status_details,
-        status_date: event.status_date,
+        status_details: event.statusDetails,
+        status_date: event.statusDate,
         location: event.location,
       })),
     });
@@ -106,7 +106,7 @@ async function fetchAndCacheTracking(
       
       const updateData: Record<string, unknown> = {
         status: trackingInfo.status.toLowerCase(),
-        tracking_history: trackingInfo.tracking_history,
+        tracking_history: trackingInfo.trackingHistory,
         updated_at: new Date().toISOString(),
       };
 
@@ -115,7 +115,7 @@ async function fetchAndCacheTracking(
       }
 
       if (trackingInfo.status === 'DELIVERED') {
-        updateData.delivered_date = trackingInfo.status_date;
+        updateData.delivered_date = trackingInfo.statusDate;
       }
 
       await supabase
@@ -126,17 +126,17 @@ async function fetchAndCacheTracking(
 
     return {
       success: true,
-      tracking_number: trackingInfo.tracking_number,
+      tracking_number: trackingInfo.trackingNumber,
       carrier: trackingInfo.carrier,
       status: trackingInfo.status,
-      status_details: trackingInfo.status_details,
-      status_date: trackingInfo.status_date,
+      status_details: trackingInfo.statusDetails,
+      status_date: trackingInfo.statusDate,
       location: trackingInfo.location,
       eta: trackingInfo.eta,
-      tracking_history: trackingInfo.tracking_history.map(event => ({
+      tracking_history: trackingInfo.trackingHistory.map(event => ({
         status: event.status,
-        status_details: event.status_details,
-        status_date: event.status_date,
+        status_details: event.statusDetails,
+        status_date: event.statusDate,
         location: event.location,
       })),
     };
