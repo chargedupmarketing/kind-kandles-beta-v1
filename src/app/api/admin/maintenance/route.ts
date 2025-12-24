@@ -97,7 +97,7 @@ export async function PUT(request: NextRequest) {
       // Update existing
       const { error } = await supabase
         .from('store_settings')
-        .update({ value: settings, updated_at: new Date().toISOString() })
+        .update({ value: settings })
         .eq('key', MAINTENANCE_SETTINGS_KEY);
 
       if (error) {
@@ -113,8 +113,6 @@ export async function PUT(request: NextRequest) {
         .insert({
           key: MAINTENANCE_SETTINGS_KEY,
           value: settings,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
         });
 
       if (error) {
