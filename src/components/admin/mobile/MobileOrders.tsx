@@ -19,6 +19,7 @@ import {
 import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
 import QuickShipModal from './QuickShipModal';
+import OrderDetailsModal from './OrderDetailsModal';
 
 interface MobileOrdersProps {
   onNavigate: (section: AdminSection) => void;
@@ -52,6 +53,8 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [quickShipOrder, setQuickShipOrder] = useState<Order | null>(null);
+  const [detailsOrder, setDetailsOrder] = useState<any | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
@@ -123,6 +126,26 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     hapticSuccess();
     setQuickShipOrder(null);
     fetchOrders(true);
+  };
+
+  const handleViewDetails = async (order: Order) => {
+    hapticMedium();
+    setLoadingDetails(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        headers: { 'Authorization': 'Bearer admin-token' }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setDetailsOrder(data.order);
+      } else {
+        console.error('Failed to fetch order details:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+    } finally {
+      setLoadingDetails(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -352,12 +375,13 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onNavigate('orders');
+                            handleViewDetails(order);
                           }}
-                          className="flex items-center justify-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium"
+                          disabled={loadingDetails}
+                          className="flex items-center justify-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
                         >
-                          <span>Details</span>
-                          <ChevronRight className="h-3.5 w-3.5" />
+                          <span>{loadingDetails ? 'Loading...' : 'Details'}</span>
+                          {!loadingDetails && <ChevronRight className="h-3.5 w-3.5" />}
                         </button>
                       </div>
                     </div>
@@ -386,6 +410,14 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
           order={quickShipOrder}
           onClose={() => setQuickShipOrder(null)}
           onSuccess={handleShipSuccess}
+        />
+      )}
+
+      {/* Order Details Modal */}
+      {detailsOrder && (
+        <OrderDetailsModal
+          order={detailsOrder}
+          onClose={() => setDetailsOrder(null)}
         />
       )}
     </div>
