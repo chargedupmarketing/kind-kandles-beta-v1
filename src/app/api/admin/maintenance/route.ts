@@ -59,10 +59,13 @@ export async function PUT(request: NextRequest) {
     // Check authorization
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.includes('admin-token')) {
+      console.error('Unauthorized access attempt to maintenance settings');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+    console.log('Received maintenance settings update:', body);
+    
     const supabase = createServerClient();
 
     // Validate the incoming data
@@ -75,14 +78,22 @@ export async function PUT(request: NextRequest) {
       estimated_time: typeof body.estimated_time === 'string' ? body.estimated_time : DEFAULT_SETTINGS.estimated_time,
     };
 
+    console.log('Validated settings:', settings);
+
     // Check if settings exist
-    const { data: existing } = await supabase
+    const { data: existing, error: selectError } = await supabase
       .from('store_settings')
       .select('id')
       .eq('key', MAINTENANCE_SETTINGS_KEY)
       .single();
 
+    if (selectError && selectError.code !== 'PGRST116') {
+      console.error('Error checking existing settings:', selectError);
+      return NextResponse.json({ error: 'Database error: ' + selectError.message }, { status: 500 });
+    }
+
     if (existing) {
+      console.log('Updating existing maintenance settings with id:', existing.id);
       // Update existing
       const { error } = await supabase
         .from('store_settings')
@@ -91,9 +102,11 @@ export async function PUT(request: NextRequest) {
 
       if (error) {
         console.error('Error updating maintenance settings:', error);
-        return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to update settings: ' + error.message }, { status: 500 });
       }
+      console.log('Successfully updated maintenance settings');
     } else {
+      console.log('Inserting new maintenance settings');
       // Insert new
       const { error } = await supabase
         .from('store_settings')
@@ -106,14 +119,17 @@ export async function PUT(request: NextRequest) {
 
       if (error) {
         console.error('Error inserting maintenance settings:', error);
-        return NextResponse.json({ error: 'Failed to save settings' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to save settings: ' + error.message }, { status: 500 });
       }
+      console.log('Successfully inserted maintenance settings');
     }
 
     return NextResponse.json({ success: true, settings });
   } catch (error) {
     console.error('Error in maintenance PUT:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error') 
+    }, { status: 500 });
   }
 }
 

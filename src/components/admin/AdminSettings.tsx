@@ -99,14 +99,18 @@ export default function AdminSettings() {
   };
 
   const handleToggleMaintenanceMode = async () => {
+    console.log('Toggle maintenance mode clicked, current state:', isMaintenanceMode);
     setIsSaving(true);
     try {
       const newMode = !isMaintenanceMode;
+      console.log('Attempting to set maintenance mode to:', newMode);
       await setMaintenanceMode(newMode);
+      console.log('Maintenance mode updated successfully');
       setSuccessMessage(newMode ? 'Maintenance mode enabled!' : 'Maintenance mode disabled!');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      setErrorMessage('Failed to update maintenance mode');
+      console.error('Error toggling maintenance mode:', error);
+      setErrorMessage('Failed to update maintenance mode: ' + (error instanceof Error ? error.message : 'Unknown error'));
       setTimeout(() => setErrorMessage(''), 3000);
     } finally {
       setIsSaving(false);

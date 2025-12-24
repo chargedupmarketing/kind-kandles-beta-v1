@@ -319,19 +319,31 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setMaintenanceMode = async (enabled: boolean) => {
-    await updateMaintenanceSettings({ enabled });
+    const success = await updateMaintenanceSettings({ enabled });
+    if (!success) {
+      throw new Error('Failed to update maintenance mode in database');
+    }
   };
 
   const setMaintenanceAccessCode = async (code: string) => {
-    await updateMaintenanceSettings({ access_code: code });
+    const success = await updateMaintenanceSettings({ access_code: code });
+    if (!success) {
+      throw new Error('Failed to update access code in database');
+    }
   };
 
   const setMaintenanceMessage = async (message: string) => {
-    await updateMaintenanceSettings({ message });
+    const success = await updateMaintenanceSettings({ message });
+    if (!success) {
+      throw new Error('Failed to update maintenance message in database');
+    }
   };
 
   const setMaintenanceEstimatedTime = async (time: string) => {
-    await updateMaintenanceSettings({ estimated_time: time });
+    const success = await updateMaintenanceSettings({ estimated_time: time });
+    if (!success) {
+      throw new Error('Failed to update estimated time in database');
+    }
   };
 
   const refreshMaintenanceSettings = async () => {
