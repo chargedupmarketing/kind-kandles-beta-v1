@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { X, Truck, Package, CheckCircle, Loader2 } from 'lucide-react';
-import { hapticSuccess, hapticError } from '@/lib/haptics';
+import { useState, useEffect } from 'react';
+import { X, Truck, Package, CheckCircle, Loader2, MapPin, Mail, Phone } from 'lucide-react';
+import { hapticSuccess, hapticError, hapticLight } from '@/lib/haptics';
 
 interface Order {
   id: string;
@@ -38,7 +38,18 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
   const [rates, setRates] = useState<ShippingRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [trackingUrl, setTrackingUrl] = useState('');
   const [error, setError] = useState('');
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   // Mock rates for demo - in production, fetch from /api/shipping/rates
   useState(() => {
@@ -80,14 +91,19 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
 
       const labelData = await labelResponse.json();
       setTrackingNumber(labelData.tracking_number || 'TRACK123456');
+      setTrackingUrl(labelData.tracking_url || '');
 
       // Update order status
       await fetch(`/api/orders/${order.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
         body: JSON.stringify({
           status: 'shipped',
           tracking_number: labelData.tracking_number,
+          tracking_url: labelData.tracking_url,
         }),
       });
 
@@ -110,153 +126,206 @@ export default function QuickShipModal({ order, onClose, onSuccess }: QuickShipM
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-      <div 
-        className="bg-white w-full max-h-[85vh] rounded-t-2xl overflow-hidden animate-slide-up shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Quick Ship</h2>
-            <p className="text-sm text-gray-500">Order #{order.order_number}</p>
-          </div>
+    <div className="fixed inset-0 z-[9999] bg-white flex flex-col">
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 safe-area-top">
+        <div className="flex items-center justify-between mb-2">
           <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => {
+              hapticLight();
+              onClose();
+            }}
+            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
+          {step === 'confirm' && (
+            <button
+              onClick={() => {
+                hapticLight();
+                setStep('rates');
+              }}
+              className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Back
+            </button>
+          )}
         </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">Quick Ship</h2>
+          <p className="text-xs text-gray-500">Order #{order.order_number}</p>
+        </div>
+      </div>
 
-        {/* Content */}
-        <div className="p-4 overflow-auto max-h-[60vh]">
+      {/* Content - Scrollable */}
+      <div 
+        className="flex-1 overflow-y-auto p-5 pb-12 space-y-8"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          minHeight: 0
+        }}
+      >
           {step === 'rates' && (
-            <div className="space-y-4">
-              {/* Shipping To */}
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <p className="text-xs text-gray-500 mb-1">Shipping to</p>
-                <p className="text-sm text-gray-900 font-medium">{order.customer_name}</p>
-                {order.shipping_address && (
-                  <p className="text-sm text-gray-600">
-                    {[
-                      order.shipping_address.line1,
-                      order.shipping_address.city,
-                      order.shipping_address.state,
-                      order.shipping_address.postal_code
-                    ].filter(Boolean).join(', ')}
-                  </p>
-                )}
+            <>
+              {/* Customer & Address Info */}
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Shipping To</h3>
+                <div className="bg-gray-50 rounded-lg p-5 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Package className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span className="text-sm text-gray-900 font-medium">{order.customer_name}</span>
+                  </div>
+                  {order.customer_email && (
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <a 
+                        href={`mailto:${order.customer_email}`}
+                        className="text-sm text-teal-600 hover:text-teal-700"
+                      >
+                        {order.customer_email}
+                      </a>
+                    </div>
+                  )}
+                  {order.shipping_address && (
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-gray-900 space-y-0.5">
+                        {order.shipping_address.line1 && <div>{order.shipping_address.line1}</div>}
+                        <div>
+                          {[
+                            order.shipping_address.city,
+                            order.shipping_address.state,
+                            order.shipping_address.postal_code
+                          ].filter(Boolean).join(', ')}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Rate Selection */}
               <div>
-                <p className="text-sm font-medium text-gray-900 mb-3">Select shipping method</p>
-                <div className="space-y-2">
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Select Shipping Method</h3>
+                <div className="space-y-3">
                   {rates.map((rate) => (
                     <button
                       key={rate.id}
-                      onClick={() => handleSelectRate(rate)}
-                      className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors text-left"
+                      onClick={() => {
+                        hapticLight();
+                        handleSelectRate(rate);
+                      }}
+                      className="w-full flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors text-left"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-white border border-gray-200 rounded-lg">
+                      <div className="flex items-center space-x-4">
+                        <div className="p-3 bg-white border border-gray-200 rounded-lg">
                           <Truck className="h-5 w-5 text-gray-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{rate.carrier}</p>
-                          <p className="text-xs text-gray-500">{rate.service}</p>
+                          <p className="text-base font-medium text-gray-900">{rate.carrier}</p>
+                          <p className="text-sm text-gray-500">{rate.service}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-gray-900">{formatCurrency(rate.price)}</p>
-                        <p className="text-xs text-gray-500">{rate.estimated_days} days</p>
+                        <p className="text-base font-bold text-gray-900">{formatCurrency(rate.price)}</p>
+                        <p className="text-sm text-gray-500">{rate.estimated_days} days</p>
                       </div>
                     </button>
                   ))}
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           {step === 'confirm' && selectedRate && (
-            <div className="space-y-4">
-              {/* Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-500">Carrier</span>
-                  <span className="text-sm text-gray-900 font-medium">{selectedRate.carrier}</span>
-                </div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-500">Service</span>
-                  <span className="text-sm text-gray-900 font-medium">{selectedRate.service}</span>
-                </div>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-500">Delivery</span>
-                  <span className="text-sm text-gray-900 font-medium">{selectedRate.estimated_days} business days</span>
-                </div>
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                  <span className="text-sm font-medium text-gray-900">Shipping Cost</span>
-                  <span className="text-lg font-bold text-gray-900">{formatCurrency(selectedRate.price)}</span>
+            <>
+              {/* Shipping Summary */}
+              <div>
+                <h3 className="text-base font-semibold text-gray-900 mb-4">Shipping Summary</h3>
+                <div className="bg-gray-50 rounded-lg p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Carrier</span>
+                    <span className="text-base text-gray-900 font-medium">{selectedRate.carrier}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Service</span>
+                    <span className="text-base text-gray-900 font-medium">{selectedRate.service}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Estimated Delivery</span>
+                    <span className="text-base text-gray-900 font-medium">{selectedRate.estimated_days} business days</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <span className="text-base font-medium text-gray-900">Shipping Cost</span>
+                    <span className="text-xl font-bold text-gray-900">{formatCurrency(selectedRate.price)}</span>
+                  </div>
                 </div>
               </div>
 
               {error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setStep('rates')}
-                  className="flex-1 py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg transition-colors text-sm font-medium"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={handleConfirmShip}
-                  disabled={loading}
-                  className="flex-1 flex items-center justify-center space-x-2 py-3 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Creating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Package className="h-4 w-4" />
-                      <span>Create Label</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+              {/* Create Label Button */}
+              <button
+                onClick={handleConfirmShip}
+                disabled={loading}
+                className="w-full flex items-center justify-center space-x-2 py-4 px-4 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-base font-medium"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Creating Label...</span>
+                  </>
+                ) : (
+                  <>
+                    <Package className="h-5 w-5" />
+                    <span>Create Shipping Label</span>
+                  </>
+                )}
+              </button>
+            </>
           )}
 
           {step === 'success' && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-10 w-10 text-green-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Label Created!</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Tracking: {trackingNumber}
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                The customer will receive a shipping notification email.
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Label Created!</h3>
+              <div className="bg-gray-50 rounded-lg p-5 mb-6 space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
+                  <p className="text-base font-mono text-gray-900 font-medium">{trackingNumber}</p>
+                </div>
+                {trackingUrl && (
+                  <a
+                    href={trackingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full py-3 px-4 bg-white border border-gray-200 hover:bg-gray-50 text-teal-600 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Track Package
+                  </a>
+                )}
+              </div>
+              <p className="text-sm text-gray-500 mb-8">
+                The customer will receive a shipping notification email with tracking information.
               </p>
               <button
-                onClick={onSuccess}
-                className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-sm font-medium"
+                onClick={() => {
+                  hapticSuccess();
+                  onSuccess();
+                }}
+                className="w-full py-4 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-base font-medium"
               >
                 Done
               </button>
             </div>
           )}
-        </div>
       </div>
     </div>
   );
