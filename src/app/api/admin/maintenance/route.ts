@@ -80,47 +80,23 @@ export async function PUT(request: NextRequest) {
 
     console.log('Validated settings:', settings);
 
-    // Check if settings exist
-    const { data: existing, error: selectError } = await supabase
+    // Use upsert to insert or update - handles both cases automatically
+    console.log('Upserting maintenance settings for key:', MAINTENANCE_SETTINGS_KEY);
+    const { error } = await supabase
       .from('store_settings')
-      .select('id')
-      .eq('key', MAINTENANCE_SETTINGS_KEY)
-      .single();
+      .upsert({ 
+        key: MAINTENANCE_SETTINGS_KEY,
+        value: settings 
+      }, {
+        onConflict: 'key'
+      });
 
-    if (selectError && selectError.code !== 'PGRST116') {
-      console.error('Error checking existing settings:', selectError);
-      return NextResponse.json({ error: 'Database error: ' + selectError.message }, { status: 500 });
+    if (error) {
+      console.error('Error saving maintenance settings:', error);
+      return NextResponse.json({ error: 'Failed to save settings: ' + error.message }, { status: 500 });
     }
-
-    if (existing) {
-      console.log('Updating existing maintenance settings with id:', existing.id);
-      // Update existing
-      const { error } = await supabase
-        .from('store_settings')
-        .update({ value: settings })
-        .eq('key', MAINTENANCE_SETTINGS_KEY);
-
-      if (error) {
-        console.error('Error updating maintenance settings:', error);
-        return NextResponse.json({ error: 'Failed to update settings: ' + error.message }, { status: 500 });
-      }
-      console.log('Successfully updated maintenance settings');
-    } else {
-      console.log('Inserting new maintenance settings');
-      // Insert new
-      const { error } = await supabase
-        .from('store_settings')
-        .insert({
-          key: MAINTENANCE_SETTINGS_KEY,
-          value: settings,
-        });
-
-      if (error) {
-        console.error('Error inserting maintenance settings:', error);
-        return NextResponse.json({ error: 'Failed to save settings: ' + error.message }, { status: 500 });
-      }
-      console.log('Successfully inserted maintenance settings');
-    }
+    
+    console.log('Successfully saved maintenance settings');
 
     return NextResponse.json({ success: true, settings });
   } catch (error) {
