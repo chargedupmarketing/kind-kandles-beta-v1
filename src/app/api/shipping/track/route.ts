@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrackingInfo, isShippoConfigured } from '@/lib/shippo';
+import { getTrackingInfo, isPirateShipConfigured } from '@/lib/pirateship';
 import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 
 // GET /api/shipping/track - Get tracking information
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
-    if (!isShippoConfigured()) {
+    if (!isPirateShipConfigured()) {
       return NextResponse.json({ 
         error: 'Shipping service not configured' 
       }, { status: 400 });
@@ -90,12 +90,12 @@ async function fetchAndCacheTracking(
   trackingNumber: string,
   shipmentId: string
 ) {
-  if (!isShippoConfigured()) {
-    return {
-      success: false,
-      error: 'Shipping service not configured',
-    };
-  }
+    if (!isPirateShipConfigured()) {
+      return {
+        success: false,
+        error: 'Shipping service not configured',
+      };
+    }
 
   try {
     const trackingInfo = await getTrackingInfo(carrier, trackingNumber);

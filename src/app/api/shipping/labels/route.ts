@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getShippoClient, type ShippingLabel } from '@/lib/shippo';
+import { 
+  isPirateShipConfigured,
+  createShippingLabel,
+  getStoreAddress,
+  estimateParcelSize,
+  type ShippingLabel 
+} from '@/lib/pirateship';
 import { createServerClient } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
@@ -13,8 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const shippo = getShippoClient();
-    if (!shippo) {
+    if (!isPirateShipConfigured()) {
       return NextResponse.json(
         { error: 'Shipping service not configured' },
         { status: 503 }
@@ -22,44 +27,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { rateId, orderId, async = false } = body;
+    const { rateId, orderId, toAddress, parcel } = body;
 
-    if (!rateId) {
+    if (!rateId || !toAddress) {
       return NextResponse.json(
-        { error: 'Rate ID is required' },
+        { error: 'Rate ID and destination address are required' },
         { status: 400 }
       );
     }
 
-    // Purchase the label (create transaction)
-    const transaction = await shippo.transactions.create({
-      rate: rateId,
-      labelFileType: 'PDF',
-      async: async,
-    });
+    // Get store address as origin
+    const fromAddress = getStoreAddress();
 
-    // Check if transaction was successful
-    if (transaction.status === 'ERROR') {
-      return NextResponse.json(
-        { 
-          error: 'Failed to create label', 
-          details: transaction.messages?.map((m: any) => m.text).join(', ')
-        },
-        { status: 400 }
-      );
-    }
+    // Use provided parcel or estimate
+    const parcelDimensions = parcel || estimateParcelSize(1, 1);
 
-    const label: ShippingLabel = {
-      objectId: transaction.objectId || '',
-      trackingNumber: transaction.trackingNumber || '',
-      trackingUrlProvider: transaction.trackingUrlProvider || '',
-      labelUrl: transaction.labelUrl || '',
-      commercialInvoiceUrl: transaction.commercialInvoiceUrl || undefined,
-      carrier: transaction.rate?.provider || '',
-      serviceName: transaction.rate?.servicelevel?.name || '',
-      rate: transaction.rate?.amount || '0',
-      createdAt: new Date().toISOString(),
-    };
+    // Create the shipping label
+    const label = await createShippingLabel(fromAddress, toAddress, parcelDimensions, rateId);
 
     // If orderId provided, update the order with tracking info
     if (orderId) {
@@ -69,7 +53,7 @@ export async function POST(request: NextRequest) {
           .from('orders')
           .update({
             tracking_number: label.trackingNumber,
-            tracking_url: label.trackingUrlProvider,
+            tracking_url: label.trackingUrl,
             shipping_label_url: label.labelUrl,
             carrier: label.carrier,
             shipping_service: label.serviceName,
@@ -98,7 +82,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Get label details
+// Get label details (not supported by Pirate Ship API - labels are immediate)
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -106,33 +90,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const shippo = getShippoClient();
-    if (!shippo) {
-      return NextResponse.json(
-        { error: 'Shipping service not configured' },
-        { status: 503 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const transactionId = searchParams.get('transactionId');
-
-    if (!transactionId) {
-      return NextResponse.json(
-        { error: 'Transaction ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const transaction = await shippo.transactions.get(transactionId);
-
     return NextResponse.json({
-      transaction,
-      labelUrl: transaction.labelUrl,
-      trackingNumber: transaction.trackingNumber,
-      trackingUrl: transaction.trackingUrlProvider,
-      status: transaction.status,
-    });
+      error: 'Label retrieval not supported. Labels are created immediately and returned in the POST response.',
+    }, { status: 501 });
 
   } catch (error: any) {
     console.error('Error getting label details:', error);

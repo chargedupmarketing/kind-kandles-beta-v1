@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
-import { mapTrackingStatusToOrderStatus, verifyWebhookSignature } from '@/lib/shippo';
+import { mapTrackingStatusToOrderStatus, verifyWebhookSignature } from '@/lib/pirateship';
 import { Resend } from 'resend';
 
-const SHIPPO_WEBHOOK_SECRET = process.env.SHIPPO_WEBHOOK_SECRET || '';
+const PIRATESHIP_WEBHOOK_SECRET = process.env.PIRATESHIP_WEBHOOK_SECRET || '';
 
 // Tracking status to email template mapping
 const STATUS_EMAIL_MAP: Record<string, string> = {
@@ -14,17 +14,17 @@ const STATUS_EMAIL_MAP: Record<string, string> = {
   FAILURE: 'delivery-failed',
 };
 
-// POST /api/webhooks/shippo - Handle Shippo tracking webhooks
+// POST /api/webhooks/pirateship - Handle Pirate Ship tracking webhooks
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
-    const signature = request.headers.get('shippo-signature') || '';
+    const signature = request.headers.get('x-pirateship-signature') || '';
 
     // Verify webhook signature if secret is configured
-    if (SHIPPO_WEBHOOK_SECRET) {
-      const isValid = verifyWebhookSignature(rawBody, signature, SHIPPO_WEBHOOK_SECRET);
+    if (PIRATESHIP_WEBHOOK_SECRET) {
+      const isValid = verifyWebhookSignature(rawBody, signature, PIRATESHIP_WEBHOOK_SECRET);
       if (!isValid) {
-        console.error('Invalid Shippo webhook signature');
+        console.error('Invalid Pirate Ship webhook signature');
         return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
       }
     }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     const payload = JSON.parse(rawBody);
     const { event, data } = payload;
 
-    console.log('Shippo webhook received:', event, data?.tracking_number);
+    console.log('Pirate Ship webhook received:', event, data?.tracking_number);
 
     // Handle tracking update events
     if (event === 'track_updated') {
