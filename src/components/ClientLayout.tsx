@@ -17,7 +17,7 @@ interface ClientLayoutProps {
 
 export default function ClientLayout({ children }: ClientLayoutProps) {
   const { isSimpleBannerVisible, setSimpleBannerVisible } = useBanner();
-  const { isMaintenanceMode, maintenanceAccessCode } = useAdmin();
+  const { isMaintenanceMode, maintenanceAccessCode, maintenanceMessage, maintenanceEstimatedTime } = useAdmin();
   const [hasMaintenanceAccess, setHasMaintenanceAccess] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const pathname = usePathname();
@@ -61,18 +61,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
 
   // Show maintenance page if maintenance mode is active and user doesn't have access
   if (isMaintenanceMode && !hasMaintenanceAccess && !isAdminPage) {
-    const maintenanceMessage = isMounted 
-      ? (localStorage.getItem('maintenanceMessage') || 
-         'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!')
-      : 'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!';
-    const estimatedTime = isMounted 
-      ? (localStorage.getItem('maintenanceEstimatedTime') || '2 hours')
-      : '2 hours';
-
     return (
       <MaintenancePage
         message={maintenanceMessage}
-        estimatedTime={estimatedTime}
+        estimatedTime={maintenanceEstimatedTime}
         onAccessCodeSubmit={handleAccessCodeSubmit}
       />
     );

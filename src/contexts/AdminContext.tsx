@@ -47,6 +47,14 @@ const ROLE_HIERARCHY: Record<MainLevel, number> = {
   super_admin: 3,
 };
 
+// Maintenance settings interface
+interface MaintenanceSettings {
+  enabled: boolean;
+  access_code: string;
+  message: string;
+  estimated_time: string;
+}
+
 interface AdminContextType {
   isAuthenticated: boolean;
   user: AdminUser | null;
@@ -61,9 +69,15 @@ interface AdminContextType {
   verify2FA: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isMaintenanceMode: boolean;
-  setMaintenanceMode: (enabled: boolean) => void;
+  setMaintenanceMode: (enabled: boolean) => Promise<void>;
   maintenanceAccessCode: string;
-  setMaintenanceAccessCode: (code: string) => void;
+  setMaintenanceAccessCode: (code: string) => Promise<void>;
+  maintenanceMessage: string;
+  setMaintenanceMessage: (message: string) => Promise<void>;
+  maintenanceEstimatedTime: string;
+  setMaintenanceEstimatedTime: (time: string) => Promise<void>;
+  refreshMaintenanceSettings: () => Promise<void>;
+  isMaintenanceLoading: boolean;
   // Permission helpers
   hasPermission: (permission: Permission) => boolean;
   hasRole: (minRole: MainLevel) => boolean;
@@ -76,13 +90,87 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 const DEFAULT_MAINTENANCE_CODE = process.env.NEXT_PUBLIC_DEFAULT_MAINTENANCE_CODE || 'ADMIN123';
+const DEFAULT_MAINTENANCE_MESSAGE = 'We are currently performing scheduled maintenance to improve your experience. Please check back shortly!';
+const DEFAULT_MAINTENANCE_TIME = '2 hours';
 
 export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMaintenanceLoading, setIsMaintenanceLoading] = useState(true);
   const [isMaintenanceMode, setIsMaintenanceModeState] = useState(false);
   const [maintenanceAccessCode, setMaintenanceAccessCodeState] = useState(DEFAULT_MAINTENANCE_CODE);
+  const [maintenanceMessage, setMaintenanceMessageState] = useState(DEFAULT_MAINTENANCE_MESSAGE);
+  const [maintenanceEstimatedTime, setMaintenanceEstimatedTimeState] = useState(DEFAULT_MAINTENANCE_TIME);
+
+  // Fetch maintenance settings from API
+  const fetchMaintenanceSettings = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/maintenance');
+      if (response.ok) {
+        const data = await response.json();
+        const settings: MaintenanceSettings = data.settings;
+        setIsMaintenanceModeState(settings.enabled);
+        setMaintenanceAccessCodeState(settings.access_code);
+        setMaintenanceMessageState(settings.message);
+        setMaintenanceEstimatedTimeState(settings.estimated_time);
+      }
+    } catch (error) {
+      console.error('Error fetching maintenance settings:', error);
+      // Fall back to localStorage if API fails
+      const localEnabled = localStorage.getItem('maintenanceMode');
+      if (localEnabled === 'true') {
+        setIsMaintenanceModeState(true);
+      }
+      const localCode = localStorage.getItem('maintenanceAccessCode');
+      if (localCode) {
+        setMaintenanceAccessCodeState(localCode);
+      }
+    } finally {
+      setIsMaintenanceLoading(false);
+    }
+  }, []);
+
+  // Update maintenance settings via API
+  const updateMaintenanceSettings = useCallback(async (updates: Partial<MaintenanceSettings>) => {
+    try {
+      const currentSettings: MaintenanceSettings = {
+        enabled: isMaintenanceMode,
+        access_code: maintenanceAccessCode,
+        message: maintenanceMessage,
+        estimated_time: maintenanceEstimatedTime,
+      };
+      
+      const newSettings = { ...currentSettings, ...updates };
+      
+      const response = await fetch('/api/admin/maintenance', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const settings: MaintenanceSettings = data.settings;
+        setIsMaintenanceModeState(settings.enabled);
+        setMaintenanceAccessCodeState(settings.access_code);
+        setMaintenanceMessageState(settings.message);
+        setMaintenanceEstimatedTimeState(settings.estimated_time);
+        
+        // Also update localStorage as cache/fallback
+        localStorage.setItem('maintenanceMode', settings.enabled.toString());
+        localStorage.setItem('maintenanceAccessCode', settings.access_code);
+        localStorage.setItem('maintenanceMessage', settings.message);
+        localStorage.setItem('maintenanceEstimatedTime', settings.estimated_time);
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating maintenance settings:', error);
+      return false;
+    }
+  }, [isMaintenanceMode, maintenanceAccessCode, maintenanceMessage, maintenanceEstimatedTime]);
 
   // Verify authentication on mount
   useEffect(() => {
@@ -117,18 +205,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     };
 
     verifyAuth();
-
-    // Load maintenance mode settings
-    const maintenanceMode = localStorage.getItem('maintenanceMode');
-    if (maintenanceMode === 'true') {
-      setIsMaintenanceModeState(true);
-    }
-
-    const storedCode = localStorage.getItem('maintenanceAccessCode');
-    if (storedCode) {
-      setMaintenanceAccessCodeState(storedCode);
-    }
-  }, []);
+    
+    // Fetch maintenance settings from database
+    fetchMaintenanceSettings();
+  }, [fetchMaintenanceSettings]);
 
   // Login - Step 1: Validate credentials
   const login = async (email: string, password: string): Promise<{ 
@@ -227,14 +307,25 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const setMaintenanceMode = (enabled: boolean) => {
-    setIsMaintenanceModeState(enabled);
-    localStorage.setItem('maintenanceMode', enabled.toString());
+  const setMaintenanceMode = async (enabled: boolean) => {
+    await updateMaintenanceSettings({ enabled });
   };
 
-  const setMaintenanceAccessCode = (code: string) => {
-    setMaintenanceAccessCodeState(code);
-    localStorage.setItem('maintenanceAccessCode', code);
+  const setMaintenanceAccessCode = async (code: string) => {
+    await updateMaintenanceSettings({ access_code: code });
+  };
+
+  const setMaintenanceMessage = async (message: string) => {
+    await updateMaintenanceSettings({ message });
+  };
+
+  const setMaintenanceEstimatedTime = async (time: string) => {
+    await updateMaintenanceSettings({ estimated_time: time });
+  };
+
+  const refreshMaintenanceSettings = async () => {
+    setIsMaintenanceLoading(true);
+    await fetchMaintenanceSettings();
   };
 
   // Permission helpers
@@ -284,6 +375,12 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       setMaintenanceMode,
       maintenanceAccessCode,
       setMaintenanceAccessCode,
+      maintenanceMessage,
+      setMaintenanceMessage,
+      maintenanceEstimatedTime,
+      setMaintenanceEstimatedTime,
+      refreshMaintenanceSettings,
+      isMaintenanceLoading,
       hasPermission,
       hasRole,
       hasSubLevel,

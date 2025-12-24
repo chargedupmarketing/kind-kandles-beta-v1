@@ -43,15 +43,20 @@ export default function AdminSettings() {
     setMaintenanceMode, 
     maintenanceAccessCode, 
     setMaintenanceAccessCode,
+    maintenanceMessage,
+    setMaintenanceMessage,
+    maintenanceEstimatedTime,
+    setMaintenanceEstimatedTime,
+    refreshMaintenanceSettings,
+    isMaintenanceLoading,
     isSuperAdmin 
   } = useAdmin();
   
   const [activeTab, setActiveTab] = useState<'maintenance' | 'database'>('maintenance');
   const [newAccessCode, setNewAccessCode] = useState(maintenanceAccessCode);
   const [showAccessCode, setShowAccessCode] = useState(false);
-  const [maintenanceMessage, setMaintenanceMessage] = useState('');
-  const [estimatedTime, setEstimatedTime] = useState('2 hours');
-  const [isLoading, setIsLoading] = useState(false);
+  const [localMessage, setLocalMessage] = useState(maintenanceMessage);
+  const [localEstimatedTime, setLocalEstimatedTime] = useState(maintenanceEstimatedTime);
   const [dbStats, setDbStats] = useState<DatabaseStats>({
     products: 0,
     orders: 0,
@@ -64,17 +69,19 @@ export default function AdminSettings() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
+  // Sync local state with context when context updates
   useEffect(() => {
-    // Load maintenance settings from localStorage
-    const savedMessage = localStorage.getItem('maintenanceMessage');
-    const savedTime = localStorage.getItem('maintenanceEstimatedTime');
-    if (savedMessage) setMaintenanceMessage(savedMessage);
-    if (savedTime) setEstimatedTime(savedTime);
-    
+    setNewAccessCode(maintenanceAccessCode);
+    setLocalMessage(maintenanceMessage);
+    setLocalEstimatedTime(maintenanceEstimatedTime);
+  }, [maintenanceAccessCode, maintenanceMessage, maintenanceEstimatedTime]);
+
+  useEffect(() => {
     // Fetch database stats
     fetchDatabaseStats();
   }, []);
@@ -91,21 +98,34 @@ export default function AdminSettings() {
     }
   };
 
-  const handleToggleMaintenanceMode = () => {
-    const newMode = !isMaintenanceMode;
-    setMaintenanceMode(newMode);
-    
-    if (newMode) {
-      localStorage.setItem('maintenanceMessage', maintenanceMessage);
-      localStorage.setItem('maintenanceEstimatedTime', estimatedTime);
+  const handleToggleMaintenanceMode = async () => {
+    setIsSaving(true);
+    try {
+      const newMode = !isMaintenanceMode;
+      await setMaintenanceMode(newMode);
+      setSuccessMessage(newMode ? 'Maintenance mode enabled!' : 'Maintenance mode disabled!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Failed to update maintenance mode');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleUpdateAccessCode = () => {
+  const handleUpdateAccessCode = async () => {
     if (newAccessCode.trim().length >= 6) {
-      setMaintenanceAccessCode(newAccessCode.trim());
-      setSuccessMessage('Access code updated successfully!');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setIsSaving(true);
+      try {
+        await setMaintenanceAccessCode(newAccessCode.trim());
+        setSuccessMessage('Access code updated successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        setErrorMessage('Failed to update access code');
+        setTimeout(() => setErrorMessage(''), 3000);
+      } finally {
+        setIsSaving(false);
+      }
     } else {
       setErrorMessage('Access code must be at least 6 characters long.');
       setTimeout(() => setErrorMessage(''), 3000);
@@ -121,10 +141,25 @@ export default function AdminSettings() {
     setNewAccessCode(result);
   };
 
-  const handleSaveMaintenanceSettings = () => {
-    localStorage.setItem('maintenanceMessage', maintenanceMessage);
-    localStorage.setItem('maintenanceEstimatedTime', estimatedTime);
-    setSuccessMessage('Maintenance settings saved successfully!');
+  const handleSaveMaintenanceSettings = async () => {
+    setIsSaving(true);
+    try {
+      // Save message and time together
+      await setMaintenanceMessage(localMessage);
+      await setMaintenanceEstimatedTime(localEstimatedTime);
+      setSuccessMessage('Maintenance settings saved successfully!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      setErrorMessage('Failed to save maintenance settings');
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    await refreshMaintenanceSettings();
+    setSuccessMessage('Settings refreshed from server');
     setTimeout(() => setSuccessMessage(''), 3000);
   };
 
@@ -341,7 +376,8 @@ export default function AdminSettings() {
               
               <button
                 onClick={handleToggleMaintenanceMode}
-                className={`relative inline-flex h-7 w-12 sm:h-6 sm:w-11 items-center rounded-full transition-colors flex-shrink-0 ${
+                disabled={isSaving || isMaintenanceLoading}
+                className={`relative inline-flex h-7 w-12 sm:h-6 sm:w-11 items-center rounded-full transition-colors flex-shrink-0 disabled:opacity-50 ${
                   isMaintenanceMode ? 'bg-red-600' : 'bg-gray-200 dark:bg-gray-700'
                 }`}
               >
@@ -403,7 +439,17 @@ export default function AdminSettings() {
 
           {/* Maintenance Message Settings */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Maintenance Page Settings</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-slate-100">Maintenance Page Settings</h3>
+              <button
+                onClick={handleRefresh}
+                disabled={isMaintenanceLoading}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border border-slate-300 dark:border-slate-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isMaintenanceLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+            </div>
             
             <div className="space-y-4">
               <div>
@@ -411,8 +457,8 @@ export default function AdminSettings() {
                   Maintenance Message
                 </label>
                 <textarea
-                  value={maintenanceMessage}
-                  onChange={(e) => setMaintenanceMessage(e.target.value)}
+                  value={localMessage}
+                  onChange={(e) => setLocalMessage(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-base"
                   placeholder="We are currently performing scheduled maintenance..."
@@ -425,8 +471,8 @@ export default function AdminSettings() {
                 </label>
                 <input
                   type="text"
-                  value={estimatedTime}
-                  onChange={(e) => setEstimatedTime(e.target.value)}
+                  value={localEstimatedTime}
+                  onChange={(e) => setLocalEstimatedTime(e.target.value)}
                   className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 text-base"
                   placeholder="e.g., 2 hours"
                 />
@@ -434,10 +480,11 @@ export default function AdminSettings() {
 
               <button
                 onClick={handleSaveMaintenanceSettings}
-                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors"
+                disabled={isSaving}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 <Save className="h-4 w-4" />
-                <span>Save Settings</span>
+                <span>{isSaving ? 'Saving...' : 'Save Settings'}</span>
               </button>
             </div>
           </div>
