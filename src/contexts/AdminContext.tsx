@@ -106,7 +106,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   // Fetch maintenance settings from API
   const fetchMaintenanceSettings = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/maintenance');
+      const response = await fetch('/api/admin/maintenance', {
+        headers: { 'Authorization': 'Bearer admin-token' }
+      });
       if (response.ok) {
         const data = await response.json();
         const settings: MaintenanceSettings = data.settings;
@@ -143,14 +145,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       
       const newSettings = { ...currentSettings, ...updates };
       
+      console.log('Updating maintenance settings:', newSettings);
+      
       const response = await fetch('/api/admin/maintenance', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
         body: JSON.stringify(newSettings),
       });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Maintenance settings updated successfully:', data);
         const settings: MaintenanceSettings = data.settings;
         setIsMaintenanceModeState(settings.enabled);
         setMaintenanceAccessCodeState(settings.access_code);
@@ -164,8 +172,11 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('maintenanceEstimatedTime', settings.estimated_time);
         
         return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update maintenance settings:', response.status, errorData);
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Error updating maintenance settings:', error);
       return false;

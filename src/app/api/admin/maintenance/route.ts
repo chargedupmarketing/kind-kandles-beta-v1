@@ -18,8 +18,14 @@ const DEFAULT_SETTINGS: MaintenanceSettings = {
 };
 
 // GET - Fetch current maintenance settings
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Check authorization
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.includes('admin-token')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const supabase = createServerClient();
     
     const { data, error } = await supabase
@@ -50,6 +56,12 @@ export async function GET() {
 // PUT - Update maintenance settings
 export async function PUT(request: NextRequest) {
   try {
+    // Check authorization
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.includes('admin-token')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const supabase = createServerClient();
 
