@@ -1,17 +1,22 @@
+// @ts-ignore - Shippo v2 SDK has complex types
 import Shippo from 'shippo';
+import crypto from 'crypto';
 
 // Initialize Shippo client
 const shippoApiKey = process.env.SHIPPO_API_KEY || '';
 
-let shippoClient: Shippo | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let shippoClient: any = null;
 
-export function getShippoClient(): Shippo | null {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getShippoClient(): any {
   if (!shippoApiKey) {
     console.warn('Shippo API key not configured');
     return null;
   }
   
   if (!shippoClient) {
+    // @ts-ignore - Shippo SDK initialization
     shippoClient = new Shippo({ apiKeyHeader: shippoApiKey });
   }
   
@@ -202,6 +207,118 @@ export function formatShippingRate(rate: ShippingRate): {
       day: 'numeric',
     }),
   };
+}
+
+// Get tracking information from Shippo
+export async function getTrackingInfo(carrier: string, trackingNumber: string): Promise<{
+  tracking_number: string;
+  carrier: string;
+  status: string;
+  status_details: string;
+  status_date: string;
+  location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  tracking_history: Array<{
+    status: string;
+    status_details: string;
+    status_date: string;
+    location?: {
+      city?: string;
+      state?: string;
+      country?: string;
+    };
+  }>;
+  eta?: string;
+}> {
+  const client = getShippoClient();
+  if (!client) {
+    throw new Error('Shippo client not configured');
+  }
+
+  try {
+    const tracking = await client.tracks.getByTrackingNumber({
+      carrier: carrier.toLowerCase(),
+      trackingNumber,
+    });
+
+    const trackingStatus = tracking.trackingStatus || {
+      status: 'UNKNOWN',
+      statusDetails: 'Tracking information not available',
+      statusDate: new Date().toISOString(),
+    };
+
+    return {
+      tracking_number: trackingNumber,
+      carrier: carrier,
+      status: trackingStatus.status || 'UNKNOWN',
+      status_details: trackingStatus.statusDetails || '',
+      status_date: trackingStatus.statusDate || new Date().toISOString(),
+      location: trackingStatus.location ? {
+        city: trackingStatus.location.city,
+        state: trackingStatus.location.state,
+        country: trackingStatus.location.country,
+      } : undefined,
+      tracking_history: (tracking.trackingHistory || []).map((event: any) => ({
+        status: event.status || 'UNKNOWN',
+        status_details: event.statusDetails || '',
+        status_date: event.statusDate || new Date().toISOString(),
+        location: event.location ? {
+          city: event.location.city,
+          state: event.location.state,
+          country: event.location.country,
+        } : undefined,
+      })),
+      eta: tracking.eta || undefined,
+    };
+  } catch (error) {
+    console.error('Error getting tracking info from Shippo:', error);
+    throw new Error(`Failed to get tracking info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Map Shippo tracking status to order status
+export function mapTrackingStatusToOrderStatus(trackingStatus: string): string {
+  const statusMap: Record<string, string> = {
+    'PRE_TRANSIT': 'processing',
+    'TRANSIT': 'shipped',
+    'OUT_FOR_DELIVERY': 'shipped',
+    'DELIVERED': 'delivered',
+    'RETURNED': 'returned',
+    'FAILURE': 'failed',
+    'UNKNOWN': 'processing',
+  };
+
+  return statusMap[trackingStatus.toUpperCase()] || 'processing';
+}
+
+// Verify Shippo webhook signature
+export function verifyWebhookSignature(
+  rawBody: string,
+  signature: string,
+  secret: string
+): boolean {
+  if (!secret || !signature) {
+    return false;
+  }
+
+  try {
+    // Shippo uses HMAC SHA256 for webhook signatures
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(rawBody);
+    const expectedSignature = hmac.digest('hex');
+    
+    // Compare signatures (use constant-time comparison to prevent timing attacks)
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (error) {
+    console.error('Error verifying webhook signature:', error);
+    return false;
+  }
 }
 
 // Validate address format
