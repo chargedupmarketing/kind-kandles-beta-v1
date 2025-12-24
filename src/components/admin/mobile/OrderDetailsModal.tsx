@@ -1,6 +1,6 @@
 'use client';
 
-import { X, Package, Mail, Phone, MapPin, Calendar, DollarSign, Truck, Copy, CheckCircle } from 'lucide-react';
+import { X, Package, Mail, Phone, MapPin, Calendar, DollarSign, Truck, Copy, CheckCircle, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { hapticLight, hapticSuccess } from '@/lib/haptics';
 
@@ -51,10 +51,19 @@ interface OrderDetailsModalProps {
     updated_at?: string;
   };
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
+export default function OrderDetailsModal({ order, onClose, onUpdate }: OrderDetailsModalProps) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    status: order.status,
+    tracking_number: order.tracking_number || '',
+    tracking_url: order.tracking_url || '',
+    notes: order.notes || ''
+  });
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -74,6 +83,34 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
       setTimeout(() => setCopiedField(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+    }
+  };
+
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
+        body: JSON.stringify(editForm)
+      });
+
+      if (response.ok) {
+        hapticSuccess();
+        setIsEditing(false);
+        if (onUpdate) onUpdate();
+        setTimeout(() => onClose(), 500);
+      } else {
+        alert('Failed to update order');
+      }
+    } catch (error) {
+      console.error('Error updating order:', error);
+      alert('Failed to update order');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -113,21 +150,62 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
 
   return (
     <div className="fixed inset-0 z-[9999] bg-white flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-10">
+      {/* Header - Fixed at top */}
+      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 safe-area-top">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={() => {
+              hapticLight();
+              onClose();
+            }}
+            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <X className="h-5 w-5 text-gray-500" />
+          </button>
+          <div className="flex items-center space-x-2">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => {
+                    hapticLight();
+                    setIsEditing(false);
+                    setEditForm({
+                      status: order.status,
+                      tracking_number: order.tracking_number || '',
+                      tracking_url: order.tracking_url || '',
+                      notes: order.notes || ''
+                    });
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveChanges}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  hapticLight();
+                  setIsEditing(true);
+                }}
+                className="px-4 py-2 text-sm text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                Edit Order
+              </button>
+            )}
+          </div>
+        </div>
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Order Details</h2>
           <p className="text-xs text-gray-500">#{order.order_number}</p>
         </div>
-        <button
-          onClick={() => {
-            hapticLight();
-            onClose();
-          }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <X className="h-5 w-5 text-gray-500" />
-        </button>
       </div>
 
       {/* Content - Scrollable */}
@@ -333,8 +411,76 @@ export default function OrderDetailsModal({ order, onClose }: OrderDetailsModalP
             </div>
           </div>
 
-          {/* Notes */}
-          {order.notes && (
+          {/* Update Order Section */}
+          {isEditing && (
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Update Order</h3>
+              <div className="space-y-4">
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+
+                {/* Tracking Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tracking Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.tracking_number}
+                    onChange={(e) => setEditForm({ ...editForm, tracking_number: e.target.value })}
+                    placeholder="Enter tracking number"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                  />
+                </div>
+
+                {/* Tracking URL */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tracking URL
+                  </label>
+                  <input
+                    type="url"
+                    value={editForm.tracking_url}
+                    onChange={(e) => setEditForm({ ...editForm, tracking_url: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base"
+                  />
+                </div>
+
+                {/* Internal Notes */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Internal Notes
+                  </label>
+                  <textarea
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                    placeholder="Add internal notes..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-base resize-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Display Notes when not editing */}
+          {!isEditing && order.notes && (
             <div>
               <h3 className="text-base font-semibold text-gray-900 mb-4">Order Notes</h3>
               <div className="bg-blue-50 rounded-lg p-5">

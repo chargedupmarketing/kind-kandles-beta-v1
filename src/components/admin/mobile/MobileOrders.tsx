@@ -418,6 +418,10 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
         <OrderDetailsModal
           order={detailsOrder}
           onClose={() => setDetailsOrder(null)}
+          onUpdate={() => {
+            fetchOrders(true);
+            setDetailsOrder(null);
+          }}
         />
       )}
     </div>
