@@ -104,18 +104,33 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [maintenanceEstimatedTime, setMaintenanceEstimatedTimeState] = useState(DEFAULT_MAINTENANCE_TIME);
 
   // Fetch maintenance settings from API
-  const fetchMaintenanceSettings = useCallback(async () => {
+  const fetchMaintenanceSettings = useCallback(async (isAdmin = false) => {
     try {
-      const response = await fetch('/api/admin/maintenance', {
-        headers: { 'Authorization': 'Bearer admin-token' }
-      });
+      // Use admin endpoint if authenticated admin, otherwise use public endpoint
+      const endpoint = isAdmin ? '/api/admin/maintenance' : '/api/maintenance/status';
+      const headers: HeadersInit = isAdmin 
+        ? { 'Authorization': 'Bearer admin-token' } 
+        : {};
+      
+      const response = await fetch(endpoint, { headers });
       if (response.ok) {
         const data = await response.json();
-        const settings: MaintenanceSettings = data.settings;
-        setIsMaintenanceModeState(settings.enabled);
-        setMaintenanceAccessCodeState(settings.access_code);
-        setMaintenanceMessageState(settings.message);
-        setMaintenanceEstimatedTimeState(settings.estimated_time);
+        
+        if (isAdmin && data.settings) {
+          // Admin endpoint returns full settings including access code
+          const settings: MaintenanceSettings = data.settings;
+          setIsMaintenanceModeState(settings.enabled);
+          setMaintenanceAccessCodeState(settings.access_code);
+          setMaintenanceMessageState(settings.message);
+          setMaintenanceEstimatedTimeState(settings.estimated_time);
+        } else {
+          // Public endpoint returns only public info (no access code)
+          setIsMaintenanceModeState(data.enabled || false);
+          setMaintenanceMessageState(data.message || DEFAULT_MAINTENANCE_MESSAGE);
+          setMaintenanceEstimatedTimeState(data.estimated_time || DEFAULT_MAINTENANCE_TIME);
+          // Keep default access code for public users
+          setMaintenanceAccessCodeState(DEFAULT_MAINTENANCE_CODE);
+        }
       }
     } catch (error) {
       console.error('Error fetching maintenance settings:', error);
@@ -216,10 +231,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     };
 
     verifyAuth();
-    
-    // Fetch maintenance settings from database
-    fetchMaintenanceSettings();
-  }, [fetchMaintenanceSettings]);
+  }, []);
+
+  // Fetch maintenance settings after auth check
+  useEffect(() => {
+    if (!isLoading) {
+      // Pass true if user is authenticated admin, false for public users
+      fetchMaintenanceSettings(isAuthenticated);
+    }
+  }, [isLoading, isAuthenticated, fetchMaintenanceSettings]);
 
   // Login - Step 1: Validate credentials
   const login = async (email: string, password: string): Promise<{ 
@@ -348,7 +368,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMaintenanceSettings = async () => {
     setIsMaintenanceLoading(true);
-    await fetchMaintenanceSettings();
+    await fetchMaintenanceSettings(isAuthenticated);
   };
 
   // Permission helpers
