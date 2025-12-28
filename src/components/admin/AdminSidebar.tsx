@@ -77,7 +77,7 @@ export default function AdminSidebar({ groups, standaloneItems, activeSection, o
       )}
       
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50
+        fixed lg:static inset-y-0 left-0 z-50 lg:z-10
         w-72 lg:w-64 
         bg-white dark:bg-slate-800 
         shadow-xl lg:shadow-sm 
