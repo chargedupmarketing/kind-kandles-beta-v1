@@ -22,7 +22,8 @@ import {
   ChevronLeft,
   Search,
   X,
-  Sparkles
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 import { hapticLight } from '@/lib/haptics';
 import { useAdmin } from '@/contexts/AdminContext';
@@ -78,6 +79,7 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
       items: [
         { id: 'customers', label: 'Customers', icon: Users, color: 'text-green-600', bgColor: 'bg-green-50' },
         { id: 'shipping', label: 'Shipping', icon: Truck, color: 'text-purple-600', bgColor: 'bg-purple-50' },
+        { id: 'shipping-guide', label: 'Ship Guide', icon: HelpCircle, color: 'text-blue-600', bgColor: 'bg-blue-50', description: 'Pirate Ship Workflow' },
         { id: 'fulfillment', label: 'Fulfill', icon: ClipboardList, color: 'text-blue-600', bgColor: 'bg-blue-50' },
         { id: 'reviews', label: 'Reviews', icon: Star, color: 'text-amber-600', bgColor: 'bg-amber-50' },
         { id: 'discounts', label: 'Discounts', icon: Tag, color: 'text-pink-600', bgColor: 'bg-pink-50' },

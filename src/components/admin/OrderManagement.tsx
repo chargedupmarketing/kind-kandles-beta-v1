@@ -16,9 +16,11 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
-  Upload
+  Upload,
+  HelpCircle
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
+import ShippingWorkflowGuide from './ShippingWorkflowGuide';
 
 interface OrderItem {
   id: string;
@@ -86,6 +88,7 @@ export default function OrderManagement() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{updated: number; errors?: string[]} | null>(null);
+  const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
 
   // Update form state
   const [updateForm, setUpdateForm] = useState({
@@ -342,9 +345,18 @@ export default function OrderManagement() {
         {/* Pirate Ship Export/Import Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
           <div className="flex-1">
-            <p className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">
-              🚢 Pirate Ship Integration
-            </p>
+            <div className="flex items-center gap-2 mb-1">
+              <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                🚢 Pirate Ship Integration
+              </p>
+              <button
+                onClick={() => setShowWorkflowGuide(true)}
+                className="p-1 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full transition-colors"
+                title="View workflow guide"
+              >
+                <HelpCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+              </button>
+            </div>
             <p className="text-xs text-purple-700 dark:text-purple-300">
               Export orders to CSV, create labels in Pirate Ship, then import tracking numbers
             </p>
@@ -708,6 +720,11 @@ export default function OrderManagement() {
           </div>
         )}
       </div>
+
+      {/* Shipping Workflow Guide Modal */}
+      {showWorkflowGuide && (
+        <ShippingWorkflowGuide onClose={() => setShowWorkflowGuide(false)} />
+      )}
     </div>
   );
 }

@@ -6,11 +6,12 @@ import BottomTabBar from './BottomTabBar';
 import MobileDashboard from './MobileDashboard';
 import MobileOrders from './MobileOrders';
 import MobileProducts from './MobileProducts';
+import MobileShippingGuide from './MobileShippingGuide';
 import MoreMenu from './MoreMenu';
 import { Shield, AlertTriangle, LogOut, Bell, User } from 'lucide-react';
 
 export type MobileTab = 'home' | 'orders' | 'products' | 'more';
-export type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
+export type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 interface MobileAppShellProps {
   children?: ReactNode;
@@ -83,6 +84,15 @@ export default function MobileAppShell({
   };
 
   const renderContent = () => {
+    // Handle special sections that need custom mobile views
+    if (activeSection === 'shipping-guide') {
+      return (
+        <MobileShippingGuide 
+          onBack={() => onSectionChange('dashboard')}
+        />
+      );
+    }
+
     switch (activeTab) {
       case 'home':
         return (
