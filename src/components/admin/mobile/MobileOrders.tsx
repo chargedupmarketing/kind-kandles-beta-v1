@@ -168,6 +168,12 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   };
 
   const handleExportOrders = async () => {
+    if (orders.length === 0) {
+      alert('No orders to export. Try changing your filter or add some orders first.');
+      setShowActions(false);
+      return;
+    }
+
     hapticMedium();
     setIsExporting(true);
     setShowActions(false);
@@ -195,13 +201,14 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         hapticSuccess();
+        alert(`Successfully exported ${orders.length} order(s) to CSV!`);
       } else {
         const data = await response.json();
         alert(data.error || 'Failed to export orders');
       }
     } catch (error) {
       console.error('Error exporting orders:', error);
-      alert('Failed to export orders');
+      alert('Failed to export orders. Please try again.');
     } finally {
       setIsExporting(false);
     }

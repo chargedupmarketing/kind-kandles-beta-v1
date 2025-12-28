@@ -183,6 +183,11 @@ export default function OrderManagement() {
   };
 
   const handleExportOrders = async () => {
+    if (filteredOrders.length === 0) {
+      alert('No orders to export. Try changing your filter or add some orders first.');
+      return;
+    }
+
     setIsExporting(true);
     try {
       // Export orders that match current filters
@@ -208,13 +213,14 @@ export default function OrderManagement() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        alert(`Successfully exported ${filteredOrders.length} order(s) to CSV!`);
       } else {
         const data = await response.json();
         alert(data.error || 'Failed to export orders');
       }
     } catch (error) {
       console.error('Error exporting orders:', error);
-      alert('Failed to export orders');
+      alert('Failed to export orders. Please try again.');
     } finally {
       setIsExporting(false);
     }

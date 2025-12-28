@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     if (orderIds && Array.isArray(orderIds) && orderIds.length > 0) {
       query = query.in('id', orderIds);
     } else {
-      // Otherwise, export only pending/processing orders
+      // Otherwise, export only pending/processing/paid orders
       query = query.in('status', ['pending', 'processing', 'paid']);
     }
 
@@ -32,12 +32,21 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching orders:', error);
-      return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to fetch orders from database',
+        details: error.message 
+      }, { status: 500 });
     }
 
     if (!orders || orders.length === 0) {
-      return NextResponse.json({ error: 'No orders to export' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'No orders found to export. Make sure you have orders with status: pending, processing, or paid.',
+        orderCount: 0
+      }, { status: 400 });
     }
+
+    console.log(`Exporting ${orders.length} orders to CSV`);
+
 
     // Format for Pirate Ship CSV
     // Required columns: Name, Address 1, Address 2, City, State, Zip, Country, Email, Phone, Order Number, Weight (oz)
