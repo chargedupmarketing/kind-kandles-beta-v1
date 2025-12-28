@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
-import QuickShipModal from './QuickShipModal';
 import OrderDetailsModal from './OrderDetailsModal';
 
 interface MobileOrdersProps {
@@ -57,7 +56,6 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
-  const [quickShipOrder, setQuickShipOrder] = useState<Order | null>(null);
   const [detailsOrder, setDetailsOrder] = useState<any | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [page, setPage] = useState(1);
@@ -126,16 +124,6 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
-  const handleQuickShip = (order: Order) => {
-    hapticMedium();
-    setQuickShipOrder(order);
-  };
-
-  const handleShipSuccess = () => {
-    hapticSuccess();
-    setQuickShipOrder(null);
-    fetchOrders(true);
-  };
 
   const handleViewDetails = async (order: Order) => {
     hapticMedium();
@@ -602,27 +590,15 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
 
                       {/* Action Buttons */}
                       <div className="flex items-center space-x-2 mt-3">
-                        {(order.status === 'pending' || order.status === 'processing') && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleQuickShip(order);
-                            }}
-                            className="flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-xs font-medium"
-                          >
-                            <Truck className="h-3.5 w-3.5" />
-                            <span>Ship</span>
-                          </button>
-                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleViewDetails(order);
                           }}
                           disabled={loadingDetails}
-                          className="flex items-center justify-center space-x-1 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
+                          className="w-full flex items-center justify-center space-x-1 px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors text-xs font-medium disabled:opacity-50"
                         >
-                          <span>{loadingDetails ? 'Loading...' : 'Details'}</span>
+                          <span>{loadingDetails ? 'Loading...' : 'View Details'}</span>
                           {!loadingDetails && <ChevronRight className="h-3.5 w-3.5" />}
                         </button>
                       </div>
@@ -645,15 +621,6 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
           </div>
         )}
       </div>
-
-      {/* Quick Ship Modal */}
-      {quickShipOrder && (
-        <QuickShipModal
-          order={quickShipOrder}
-          onClose={() => setQuickShipOrder(null)}
-          onSuccess={handleShipSuccess}
-        />
-      )}
 
       {/* Order Details Modal */}
       {detailsOrder && (
