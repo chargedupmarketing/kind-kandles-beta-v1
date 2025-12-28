@@ -17,7 +17,9 @@ import {
   ChevronUp,
   Download,
   Upload,
-  HelpCircle
+  HelpCircle,
+  Square,
+  CheckSquare
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 import ShippingWorkflowGuide from './ShippingWorkflowGuide';
@@ -89,6 +91,7 @@ export default function OrderManagement() {
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{updated: number; errors?: string[]} | null>(null);
   const [showWorkflowGuide, setShowWorkflowGuide] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
   // Update form state
   const [updateForm, setUpdateForm] = useState({
@@ -182,24 +185,46 @@ export default function OrderManagement() {
     }
   };
 
+  const handleToggleSelectOrder = (orderId: string) => {
+    const newSelected = new Set(selectedOrderIds);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrderIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrderIds.size === filteredOrders.length) {
+      // Deselect all
+      setSelectedOrderIds(new Set());
+    } else {
+      // Select all filtered orders
+      setSelectedOrderIds(new Set(filteredOrders.map(o => o.id)));
+    }
+  };
+
   const handleExportOrders = async () => {
-    if (filteredOrders.length === 0) {
+    // Determine which orders to export
+    const ordersToExport = selectedOrderIds.size > 0 
+      ? Array.from(selectedOrderIds)
+      : filteredOrders.map(o => o.id);
+
+    if (ordersToExport.length === 0) {
       alert('No orders to export. Try changing your filter or add some orders first.');
       return;
     }
 
     setIsExporting(true);
     try {
-      // Export orders that match current filters
-      const orderIds = filteredOrders.map(o => o.id);
-      
       const response = await fetch('/api/admin/orders/export-csv', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-        body: JSON.stringify({ orderIds })
+        body: JSON.stringify({ orderIds: ordersToExport })
       });
 
       if (response.ok) {
@@ -213,7 +238,9 @@ export default function OrderManagement() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        alert(`Successfully exported ${filteredOrders.length} order(s) to CSV!`);
+        alert(`Successfully exported ${ordersToExport.length} order(s) to CSV!`);
+        // Clear selection after export
+        setSelectedOrderIds(new Set());
       } else {
         const data = await response.json();
         alert(data.error || 'Failed to export orders');
@@ -364,6 +391,9 @@ export default function OrderManagement() {
               </button>
             </div>
             <p className="text-xs text-purple-700 dark:text-purple-300">
+              {selectedOrderIds.size > 0 ? (
+                <span className="font-semibold">{selectedOrderIds.size} order(s) selected • </span>
+              ) : null}
               Export orders to CSV, create labels in Pirate Ship, then import tracking numbers
             </p>
           </div>
@@ -371,7 +401,7 @@ export default function OrderManagement() {
             <button
               onClick={handleExportOrders}
               disabled={isExporting || filteredOrders.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
             >
               {isExporting ? (
                 <>
@@ -381,7 +411,11 @@ export default function OrderManagement() {
               ) : (
                 <>
                   <Download className="h-4 w-4" />
-                  <span>Export CSV</span>
+                  <span>
+                    {selectedOrderIds.size > 0 
+                      ? `Export ${selectedOrderIds.size}` 
+                      : 'Export All'}
+                  </span>
                 </>
               )}
             </button>
@@ -582,6 +616,19 @@ export default function OrderManagement() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-slate-700/50">
               <tr>
+                <th className="px-4 py-3 text-left">
+                  <button
+                    onClick={handleSelectAll}
+                    className="flex items-center justify-center w-5 h-5 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                    title={selectedOrderIds.size === filteredOrders.length ? 'Deselect all' : 'Select all'}
+                  >
+                    {selectedOrderIds.size === filteredOrders.length && filteredOrders.length > 0 ? (
+                      <CheckSquare className="h-5 w-5" />
+                    ) : (
+                      <Square className="h-5 w-5" />
+                    )}
+                  </button>
+                </th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Order</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Customer</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
@@ -593,8 +640,21 @@ export default function OrderManagement() {
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
               {filteredOrders.map((order) => {
                 const StatusIcon = statusIcons[order.status] || Clock;
+                const isSelected = selectedOrderIds.has(order.id);
                 return (
-                  <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/30">
+                  <tr key={order.id} className={`hover:bg-gray-50 dark:hover:bg-slate-700/30 ${isSelected ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`}>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleToggleSelectOrder(order.id)}
+                        className="flex items-center justify-center w-5 h-5 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                      >
+                        {isSelected ? (
+                          <CheckSquare className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        ) : (
+                          <Square className="h-5 w-5" />
+                        )}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900 dark:text-white">{order.order_number}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">{order.items.length} items</p>
@@ -640,30 +700,43 @@ export default function OrderManagement() {
           {filteredOrders.map((order) => {
             const StatusIcon = statusIcons[order.status] || Clock;
             const isExpanded = expandedOrderId === order.id;
+            const isSelected = selectedOrderIds.has(order.id);
             
             return (
-              <div key={order.id} className="p-4">
+              <div key={order.id} className={`p-4 ${isSelected ? 'bg-teal-50 dark:bg-teal-900/20' : ''}`}>
                 {/* Main card content */}
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-slate-900 dark:text-white text-sm">
-                        {order.order_number}
-                      </span>
-                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        {order.status}
-                      </span>
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={() => handleToggleSelectOrder(order.id)}
+                    className="flex items-center justify-center w-5 h-5 mt-0.5 text-gray-600 dark:text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition-colors flex-shrink-0"
+                  >
+                    {isSelected ? (
+                      <CheckSquare className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                    ) : (
+                      <Square className="h-5 w-5" />
+                    )}
+                  </button>
+                  <div className="flex items-start justify-between flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-slate-900 dark:text-white text-sm">
+                          {order.order_number}
+                        </span>
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                        {order.customer_name}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                      {order.customer_name}
-                    </p>
-                  </div>
-                  <div className="text-right ml-3 flex-shrink-0">
-                    <p className="font-semibold text-slate-900 dark:text-white">{formatPrice(order.total)}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(order.created_at).toLocaleDateString()}
-                    </p>
+                    <div className="text-right ml-3 flex-shrink-0">
+                      <p className="font-semibold text-slate-900 dark:text-white">{formatPrice(order.total)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
 

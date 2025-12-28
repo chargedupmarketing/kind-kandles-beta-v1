@@ -17,7 +17,9 @@ import {
   Filter,
   Download,
   Upload,
-  MoreVertical
+  MoreVertical,
+  Square,
+  CheckSquare
 } from 'lucide-react';
 import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
@@ -64,6 +66,7 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   const [showActions, setShowActions] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
   const fetchOrders = useCallback(async (reset = false) => {
     try {
@@ -167,8 +170,32 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     }
   };
 
+  const handleToggleSelectOrder = (orderId: string) => {
+    hapticLight();
+    const newSelected = new Set(selectedOrderIds);
+    if (newSelected.has(orderId)) {
+      newSelected.delete(orderId);
+    } else {
+      newSelected.add(orderId);
+    }
+    setSelectedOrderIds(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    hapticMedium();
+    if (selectedOrderIds.size === orders.length) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(orders.map(o => o.id)));
+    }
+  };
+
   const handleExportOrders = async () => {
-    if (orders.length === 0) {
+    const ordersToExport = selectedOrderIds.size > 0 
+      ? Array.from(selectedOrderIds)
+      : orders.map(o => o.id);
+
+    if (ordersToExport.length === 0) {
       alert('No orders to export. Try changing your filter or add some orders first.');
       setShowActions(false);
       return;
@@ -179,15 +206,13 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     setShowActions(false);
     
     try {
-      const orderIds = orders.map(o => o.id);
-      
       const response = await fetch('/api/admin/orders/export-csv', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer admin-token'
         },
-        body: JSON.stringify({ orderIds })
+        body: JSON.stringify({ orderIds: ordersToExport })
       });
 
       if (response.ok) {
@@ -201,7 +226,8 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
         hapticSuccess();
-        alert(`Successfully exported ${orders.length} order(s) to CSV!`);
+        alert(`Successfully exported ${ordersToExport.length} order(s) to CSV!`);
+        setSelectedOrderIds(new Set());
       } else {
         const data = await response.json();
         alert(data.error || 'Failed to export orders');
@@ -308,6 +334,33 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     <div className="flex flex-col h-full bg-gray-50">
       {/* Compact Header */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm">
+        {/* Selection Bar */}
+        {selectedOrderIds.size > 0 && (
+          <div className="flex items-center justify-between px-3 py-2 bg-teal-50 border-b border-teal-200">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSelectAll}
+                className="p-1 hover:bg-teal-100 rounded transition-colors"
+              >
+                {selectedOrderIds.size === orders.length ? (
+                  <CheckSquare className="h-5 w-5 text-teal-600" />
+                ) : (
+                  <Square className="h-5 w-5 text-teal-600" />
+                )}
+              </button>
+              <span className="text-sm font-medium text-teal-900">
+                {selectedOrderIds.size} selected
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedOrderIds(new Set())}
+              className="text-xs text-teal-700 hover:text-teal-900 font-medium"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         {/* Status Filter Pills */}
         <div className="flex items-center px-3 py-2 space-x-1 overflow-x-auto scrollbar-hide">
           {statusFilters.map((filter) => (
@@ -384,7 +437,11 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                 ) : (
                   <>
                     <Download className="h-4 w-4" />
-                    <span>Export to CSV</span>
+                    <span>
+                      {selectedOrderIds.size > 0 
+                        ? `Export ${selectedOrderIds.size}` 
+                        : 'Export All'}
+                    </span>
                   </>
                 )}
               </button>
@@ -448,48 +505,64 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
             {orders.map((order) => {
               const statusConfig = getStatusConfig(order.status);
               const isExpanded = expandedOrder === order.id;
+              const isSelected = selectedOrderIds.has(order.id);
 
               return (
                 <div
                   key={order.id}
-                  className="bg-white rounded-lg overflow-hidden shadow-sm border border-gray-100"
+                  className={`bg-white rounded-lg overflow-hidden shadow-sm border ${isSelected ? 'border-teal-500 bg-teal-50' : 'border-gray-100'}`}
                 >
                   {/* Compact Order Row */}
-                  <button
-                    onClick={() => handleOrderExpand(order.id)}
-                    className="w-full px-3 py-2.5 text-left flex items-center"
-                  >
-                    {/* Status Badge */}
-                    <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${statusConfig.bg} ${statusConfig.text} mr-2.5`}>
-                      {statusConfig.label}
-                    </span>
+                  <div className="flex items-center px-3 py-2.5">
+                    {/* Checkbox */}
+                    <button
+                      onClick={() => handleToggleSelectOrder(order.id)}
+                      className="flex items-center justify-center w-5 h-5 mr-2 text-gray-600 hover:text-teal-600 transition-colors flex-shrink-0"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="h-5 w-5 text-teal-600" />
+                      ) : (
+                        <Square className="h-5 w-5" />
+                      )}
+                    </button>
 
-                    {/* Order Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900 truncate pr-2">
-                          {order.customer_name || 'Unknown'}
-                        </span>
-                        <span className="text-sm font-bold text-gray-900">
-                          {formatCurrency(order.total || 0)}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-[10px] text-gray-500 mt-0.5">
-                        <span>#{order.order_number?.slice(-6)}</span>
-                        <span className="mx-1">•</span>
-                        <span>{formatTimeAgo(order.created_at)}</span>
-                        {order.items_count && (
-                          <>
-                            <span className="mx-1">•</span>
-                            <span>{order.items_count} items</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
+                    {/* Order Content */}
+                    <button
+                      onClick={() => handleOrderExpand(order.id)}
+                      className="flex-1 text-left flex items-center min-w-0"
+                    >
+                      {/* Status Badge */}
+                      <span className={`w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-bold ${statusConfig.bg} ${statusConfig.text} mr-2.5 flex-shrink-0`}>
+                        {statusConfig.label}
+                      </span>
 
-                    {/* Expand Indicator */}
-                    <ChevronDown className={`h-4 w-4 text-gray-400 ml-2 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                  </button>
+                      {/* Order Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900 truncate pr-2">
+                            {order.customer_name || 'Unknown'}
+                          </span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {formatCurrency(order.total || 0)}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-[10px] text-gray-500 mt-0.5">
+                          <span>#{order.order_number?.slice(-6)}</span>
+                          <span className="mx-1">•</span>
+                          <span>{formatTimeAgo(order.created_at)}</span>
+                          {order.items_count && (
+                            <>
+                              <span className="mx-1">•</span>
+                              <span>{order.items_count} items</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expand Indicator */}
+                      <ChevronDown className={`h-4 w-4 text-gray-400 ml-2 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
 
                   {/* Expanded Details */}
                   {isExpanded && (
