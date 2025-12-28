@@ -55,7 +55,7 @@ import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
