@@ -3,11 +3,10 @@ import { createServerClient } from '@/lib/supabase';
 import crypto from 'crypto';
 
 const webhookSignatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || '';
-const webhookUrl = 'https://kind-kandles-beta-v1.vercel.app/api/webhooks/square';
 
 // Verify Square webhook signature
 // Square uses: HMAC-SHA256(webhookUrl + body, signatureKey)
-function verifySignature(body: string, signature: string): boolean {
+function verifySignature(body: string, signature: string, webhookUrl: string): boolean {
   if (!webhookSignatureKey) {
     console.warn('Square webhook signature key not configured');
     return false;
@@ -21,6 +20,7 @@ function verifySignature(body: string, signature: string): boolean {
     const expectedSignature = hmac.digest('base64');
     
     console.log('Webhook signature verification:');
+    console.log('- Webhook URL:', webhookUrl);
     console.log('- Received signature:', signature);
     console.log('- Expected signature:', expectedSignature);
     console.log('- Match:', signature === expectedSignature);
@@ -36,19 +36,40 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get('x-square-hmacsha256-signature') || '';
+    
+    // Construct the webhook URL from the request
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    const host = request.headers.get('host') || 'www.kindkandlesboutique.com';
+    const webhookUrl = `${protocol}://${host}/api/webhooks/square`;
 
     console.log('Square webhook received');
+    console.log('- Webhook URL:', webhookUrl);
     console.log('- Has signature key:', !!webhookSignatureKey);
     console.log('- Has signature header:', !!signature);
 
-    // Verify webhook signature
+    // Parse the event first to check if it's a test/validation request
+    let event;
+    try {
+      event = JSON.parse(body);
+    } catch (parseError) {
+      console.error('Failed to parse webhook body:', parseError);
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    // Handle webhook validation/test events immediately
+    if (event.type === 'webhook.test' || event.type === 'webhook.subscription.created') {
+      console.log('Webhook test/validation event received');
+      return NextResponse.json({ received: true, status: 'ok' }, { status: 200 });
+    }
+
+    // Verify webhook signature for actual events
     if (webhookSignatureKey) {
       if (!signature) {
         console.error('Missing Square webhook signature header');
         return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
       }
       
-      if (!verifySignature(body, signature)) {
+      if (!verifySignature(body, signature, webhookUrl)) {
         console.error('Invalid Square webhook signature');
         // In sandbox mode, we might want to still process the webhook
         // but log the error for debugging
@@ -59,8 +80,6 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-
-    const event = JSON.parse(body);
     const supabase = createServerClient();
 
     console.log('Square webhook event:', event.type);
@@ -124,9 +143,19 @@ export async function POST(request: NextRequest) {
         console.log(`Unhandled Square event type: ${event.type}`);
     }
 
-    return NextResponse.json({ received: true });
+    return NextResponse.json({ received: true, status: 'ok' }, { status: 200 });
   } catch (error) {
     console.error('Square webhook error:', error);
-    return NextResponse.json({ error: 'Webhook error' }, { status: 500 });
+    // Still return 200 to prevent Square from retrying on our internal errors
+    return NextResponse.json({ received: true, error: 'Internal processing error' }, { status: 200 });
   }
+}
+
+// Handle GET requests for webhook verification
+export async function GET(request: NextRequest) {
+  console.log('Square webhook GET request received (verification)');
+  return NextResponse.json({ 
+    status: 'ok', 
+    message: 'Square webhook endpoint is active' 
+  }, { status: 200 });
 }
