@@ -14,7 +14,9 @@ import {
   X,
   ExternalLink,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Download,
+  Upload
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
 
@@ -81,6 +83,9 @@ export default function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{updated: number; errors?: string[]} | null>(null);
 
   // Update form state
   const [updateForm, setUpdateForm] = useState({
@@ -174,6 +179,89 @@ export default function OrderManagement() {
     }
   };
 
+  const handleExportOrders = async () => {
+    setIsExporting(true);
+    try {
+      // Export orders that match current filters
+      const orderIds = filteredOrders.map(o => o.id);
+      
+      const response = await fetch('/api/admin/orders/export-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
+        body: JSON.stringify({ orderIds })
+      });
+
+      if (response.ok) {
+        // Download the CSV file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pirateship-orders-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to export orders');
+      }
+    } catch (error) {
+      console.error('Error exporting orders:', error);
+      alert('Failed to export orders');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportTracking = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/orders/import-tracking', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer admin-token'
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setImportResult(data);
+        fetchOrders(); // Refresh orders list
+        
+        // Show success message
+        if (data.errors && data.errors.length > 0) {
+          alert(`Imported ${data.updated} tracking numbers with ${data.errors.length} errors. Check console for details.`);
+          console.log('Import errors:', data.errors);
+        } else {
+          alert(`Successfully imported ${data.updated} tracking numbers!`);
+        }
+      } else {
+        alert(data.error || 'Failed to import tracking numbers');
+      }
+    } catch (error) {
+      console.error('Error importing tracking:', error);
+      alert('Failed to import tracking numbers');
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   const filteredOrders = orders.filter(order =>
     order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
     order.customer_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -222,32 +310,85 @@ export default function OrderManagement() {
         </div>
       </div>
 
-      {/* Filters - Stack on mobile */}
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search orders..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
-          />
+      {/* Filters and Actions - Stack on mobile */}
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search orders..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
+            />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="refunded">Refunded</option>
+          </select>
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal-500 text-base"
-        >
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="paid">Paid</option>
-          <option value="processing">Processing</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-          <option value="refunded">Refunded</option>
-        </select>
+
+        {/* Pirate Ship Export/Import Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-purple-900 dark:text-purple-100 mb-1">
+              🚢 Pirate Ship Integration
+            </p>
+            <p className="text-xs text-purple-700 dark:text-purple-300">
+              Export orders to CSV, create labels in Pirate Ship, then import tracking numbers
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportOrders}
+              disabled={isExporting || filteredOrders.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              {isExporting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  <span>Export CSV</span>
+                </>
+              )}
+            </button>
+            <label className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg transition-colors text-sm font-medium cursor-pointer">
+              {isImporting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Importing...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  <span>Import Tracking</span>
+                </>
+              )}
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleImportTracking}
+                disabled={isImporting}
+                className="hidden"
+              />
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Order Detail Modal - Full screen on mobile */}

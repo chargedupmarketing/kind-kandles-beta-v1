@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateAddress } from '@/lib/pirateship';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * Address Validation API
+ * 
+ * This endpoint is not used in the current Pirate Ship manual workflow.
+ * Address validation happens automatically in Pirate Ship when you upload the CSV.
+ * 
+ * Pirate Ship will flag any invalid addresses before you create labels.
+ */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { address } = body;
-
-    // Validate with Pirate Ship
-    const result = await validateAddress(address);
-
-    return NextResponse.json(result);
-
-  } catch (error: any) {
-    console.error('Error validating address:', error);
-    return NextResponse.json(
-      { error: 'Failed to validate address', details: error.message },
-      { status: 500 }
-    );
-  }
+  const body = await request.json();
+  
+  return NextResponse.json({
+    message: 'Address validation handled by Pirate Ship',
+    workflow: 'manual-csv',
+    address: body.address,
+    instructions: 'Pirate Ship validates addresses automatically during CSV import',
+    isValid: true, // Assume valid, will be checked in Pirate Ship
+  }, { status: 200 });
 }
-

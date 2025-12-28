@@ -14,7 +14,10 @@ import {
   Mail,
   MapPin,
   ChevronDown,
-  Filter
+  Filter,
+  Download,
+  Upload,
+  MoreVertical
 } from 'lucide-react';
 import { hapticLight, hapticSuccess, hapticMedium } from '@/lib/haptics';
 import type { AdminSection } from './MobileAppShell';
@@ -58,6 +61,9 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [showSearch, setShowSearch] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const fetchOrders = useCallback(async (reset = false) => {
     try {
@@ -161,6 +167,89 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
     }
   };
 
+  const handleExportOrders = async () => {
+    hapticMedium();
+    setIsExporting(true);
+    setShowActions(false);
+    
+    try {
+      const orderIds = orders.map(o => o.id);
+      
+      const response = await fetch('/api/admin/orders/export-csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer admin-token'
+        },
+        body: JSON.stringify({ orderIds })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pirateship-orders-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        hapticSuccess();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to export orders');
+      }
+    } catch (error) {
+      console.error('Error exporting orders:', error);
+      alert('Failed to export orders');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportTracking = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    hapticMedium();
+    setIsImporting(true);
+    setShowActions(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/admin/orders/import-tracking', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer admin-token'
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        fetchOrders(true); // Refresh orders list
+        hapticSuccess();
+        
+        if (data.errors && data.errors.length > 0) {
+          alert(`Imported ${data.updated} tracking numbers with ${data.errors.length} errors.`);
+        } else {
+          alert(`Successfully imported ${data.updated} tracking numbers!`);
+        }
+      } else {
+        alert(data.error || 'Failed to import tracking numbers');
+      }
+    } catch (error) {
+      console.error('Error importing tracking:', error);
+      alert('Failed to import tracking numbers');
+    } finally {
+      setIsImporting(false);
+      event.target.value = '';
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -228,6 +317,17 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
             </button>
           ))}
           
+          {/* Actions Menu Button */}
+          <button
+            onClick={() => {
+              hapticLight();
+              setShowActions(!showActions);
+            }}
+            className="ml-auto p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <MoreVertical className="h-5 w-5 text-gray-600" />
+          </button>
+          
           {/* Search Toggle */}
           <button
             onClick={() => setShowSearch(!showSearch)}
@@ -252,6 +352,55 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                 autoFocus
                 className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
+            </div>
+          </div>
+        )}
+
+        {/* Actions Dropdown */}
+        {showActions && (
+          <div className="px-3 pb-2">
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 space-y-2">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">🚢</span>
+                <span className="text-xs font-medium text-purple-900">Pirate Ship</span>
+              </div>
+              <button
+                onClick={handleExportOrders}
+                disabled={isExporting || orders.length === 0}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                {isExporting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    <span>Export to CSV</span>
+                  </>
+                )}
+              </button>
+              <label className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg transition-colors text-sm font-medium cursor-pointer">
+                {isImporting ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Importing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-4 w-4" />
+                    <span>Import Tracking</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportTracking}
+                  disabled={isImporting}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
         )}
