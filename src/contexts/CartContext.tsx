@@ -89,7 +89,6 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'mkk-shopping-cart';
 const SHIPPING_STORAGE_KEY = 'mkk-shipping-address';
-const FREE_SHIPPING_THRESHOLD = 50;
 const TAX_RATE = 0.06; // 6% Maryland tax
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -180,18 +179,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setSelectedShippingRateState(rate);
   }, []);
 
+  // Calculate totals first (needed by callbacks below)
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0) * item.quantity, 0);
+
   // Fetch shipping rates based on address and cart weight
   const fetchShippingRates = useCallback(async () => {
     if (!shippingAddress) return;
 
     try {
-      const response = await fetch('/api/shipping/rates', {
+      const response = await fetch('/api/shipping/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          address: shippingAddress,
           weight: totalWeight,
-          subtotal: subtotal
+          state: shippingAddress.state,
+          postalCode: shippingAddress.postalCode
         })
       });
 
@@ -209,20 +213,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error fetching shipping rates:', error);
-      // Fallback to default rates
+      // Fallback to weight-based default rates
+      const weightLbs = totalWeight / 16;
+      let defaultPrice = 9.00;
+      if (weightLbs <= 1) defaultPrice = 5.50;
+      else if (weightLbs <= 2) defaultPrice = 9.00;
+      else if (weightLbs <= 3) defaultPrice = 11.00;
+      else defaultPrice = 14.00;
+      
       const defaultRates: ShippingRate[] = [
-        { id: 'standard', name: 'Standard Shipping', price: subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 5.99, estimatedDays: '5-7 business days' },
-        { id: 'express', name: 'Express Shipping', price: 12.99, estimatedDays: '2-3 business days' }
+        { id: 'standard', name: 'Standard Shipping', price: defaultPrice, estimatedDays: '3-5 business days' },
+        { id: 'express', name: 'Express Shipping', price: defaultPrice * 1.5, estimatedDays: '2-3 business days' }
       ];
       setShippingRates(defaultRates);
       setSelectedShippingRateState(defaultRates[0]);
     }
-  }, [shippingAddress]);
-
-  // Calculate totals (moved before callbacks that use them)
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0) * item.quantity, 0);
+  }, [shippingAddress, totalWeight]);
 
   // Apply discount code
   const applyDiscountCode = useCallback(async (code: string): Promise<boolean> => {
@@ -261,10 +267,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const closeCart = useCallback(() => setIsCartOpen(false), []);
   const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
   
-  // Calculate shipping (free over threshold or selected rate)
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD 
-    ? 0 
-    : (selectedShippingRate?.price || 0);
+  // Calculate shipping based on selected rate
+  const shipping = selectedShippingRate?.price || 0;
   
   // Calculate discount
   let discount = 0;

@@ -80,27 +80,8 @@ export default function ShippingOptions({
 
       setShipmentId(data.shipmentId);
       
-      // If qualifies for free shipping, add a free option
-      let allRates = data.rates || [];
-      
-      if (qualifiesForFreeShipping && allRates.length > 0) {
-        // Find the cheapest rate and make it free
-        const cheapestRate = allRates.reduce((min: ShippingRate, rate: ShippingRate) => 
-          rate.price < min.price ? rate : min
-        );
-        
-        const freeRate: ShippingRate = {
-          id: 'free-shipping',
-          carrier: cheapestRate.carrier,
-          service: 'Standard Free Shipping',
-          price: 0,
-          estimatedDays: cheapestRate.estimatedDays + 2, // Add buffer for free shipping
-          estimatedDelivery: getDeliveryDate(cheapestRate.estimatedDays + 2),
-        };
-        
-        allRates = [freeRate, ...allRates];
-      }
-      
+      // Set rates directly without free shipping logic
+      const allRates = data.rates || [];
       setRates(allRates);
       
       // Auto-select first rate if none selected

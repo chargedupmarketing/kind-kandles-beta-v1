@@ -44,6 +44,7 @@ export default function CheckoutPage() {
     tax,
     discount,
     total,
+    totalWeight,
     shippingAddress,
     setShippingAddress,
     shippingRates,
@@ -593,14 +594,9 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {subtotal < 50 && (
+            {totalWeight > 0 && (
               <p className="text-sm text-center text-gray-600 mt-4">
-                Add {formatPrice(50 - subtotal)} more for free shipping!
-              </p>
-            )}
-            {subtotal >= 50 && (
-              <p className="text-sm text-center text-green-600 mt-4 font-semibold">
-                🎉 You qualify for free shipping!
+                Total weight: {(totalWeight / 16).toFixed(2)} lbs
               </p>
             )}
           </div>
