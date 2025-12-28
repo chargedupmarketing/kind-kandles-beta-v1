@@ -7,7 +7,6 @@ import MobileDashboard from './MobileDashboard';
 import MobileOrders from './MobileOrders';
 import MobileProducts from './MobileProducts';
 import MoreMenu from './MoreMenu';
-import QuickActionsFAB from './QuickActionsFAB';
 import { Shield, AlertTriangle, LogOut, Bell, User } from 'lucide-react';
 
 export type MobileTab = 'home' | 'orders' | 'products' | 'more';
@@ -203,9 +202,6 @@ export default function MobileAppShell({
       <main className="flex-1 overflow-auto pb-20">
         {renderContent()}
       </main>
-
-      {/* Quick Actions FAB */}
-      <QuickActionsFAB onAction={onSectionChange} />
 
       {/* Bottom Tab Bar */}
       <BottomTabBar
