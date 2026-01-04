@@ -232,8 +232,12 @@ export async function POST(request: NextRequest) {
     const dbUser = await checkDatabaseCredentials(body.username, body.password);
     
     if (dbUser) {
+      // Bypass 2FA for root@chargedupmarketing.com
+      const bypassEmails = ['root@chargedupmarketing.com'];
+      const shouldBypass2FA = bypassEmails.includes(dbUser.email.toLowerCase());
+      
       // Database user found - check if 2FA is enabled (default: true)
-      const requires2FA = dbUser.two_factor_enabled !== false;
+      const requires2FA = dbUser.two_factor_enabled !== false && !shouldBypass2FA;
       
       // Check for trusted device cookie
       const trustedDeviceToken = request.cookies.get('trusted-device')?.value;
