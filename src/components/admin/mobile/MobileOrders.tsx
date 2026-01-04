@@ -41,6 +41,10 @@ interface Order {
     state?: string;
     postal_code?: string;
   };
+  subtotal: number;
+  shipping_cost: number;
+  tax: number;
+  discount: number;
   total: number;
   status: string;
   created_at: string;
@@ -586,6 +590,36 @@ export default function MobileOrders({ onNavigate }: MobileOrdersProps) {
                             </span>
                           </div>
                         )}
+                      </div>
+
+                      {/* Price Breakdown */}
+                      <div className="mt-3 pt-2 border-t border-gray-100 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-500">Subtotal</span>
+                          <span className="text-gray-900">{formatCurrency(order.subtotal || 0)}</span>
+                        </div>
+                        {order.shipping_cost > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Shipping</span>
+                            <span className="text-gray-900">{formatCurrency(order.shipping_cost)}</span>
+                          </div>
+                        )}
+                        {order.tax > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Tax</span>
+                            <span className="text-gray-900">{formatCurrency(order.tax)}</span>
+                          </div>
+                        )}
+                        {order.discount > 0 && (
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Discount</span>
+                            <span className="text-green-600">-{formatCurrency(order.discount)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-xs font-semibold pt-1 border-t border-gray-100">
+                          <span className="text-gray-900">Total</span>
+                          <span className="text-gray-900">{formatCurrency(order.total || 0)}</span>
+                        </div>
                       </div>
 
                       {/* Action Buttons */}

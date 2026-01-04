@@ -632,6 +632,8 @@ export default function OrderManagement() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Order</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Customer</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Subtotal</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Tax</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Total</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Date</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
@@ -668,6 +670,12 @@ export default function OrderManagement() {
                         <StatusIcon className="h-3 w-3" />
                         {order.status}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-slate-900 dark:text-white">{formatPrice(order.subtotal)}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-sm text-slate-900 dark:text-white">{formatPrice(order.tax || 0)}</p>
                     </td>
                     <td className="px-4 py-3">
                       <p className="font-medium text-slate-900 dark:text-white">{formatPrice(order.total)}</p>

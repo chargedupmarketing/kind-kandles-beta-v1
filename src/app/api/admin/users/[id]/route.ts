@@ -36,6 +36,10 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
+    // Get the requesting user's role from headers (set by middleware)
+    const requestingUserRole = request.headers.get('x-user-role');
+    const isSuperAdmin = requestingUserRole === 'super_admin';
+
     // Check if user exists and get their role
     const { data: existingUser, error: fetchError } = await supabase
       .from('admin_users')
@@ -47,9 +51,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Prevent modifying super_admin users
-    if (existingUser.role === 'super_admin') {
-      return NextResponse.json({ error: 'Cannot modify super admin' }, { status: 403 });
+    // Only super admins can modify other super admins
+    if (existingUser.role === 'super_admin' && !isSuperAdmin) {
+      return NextResponse.json({ error: 'Only super admins can modify other super admins' }, { status: 403 });
     }
 
     // Build update object
@@ -59,10 +63,10 @@ export async function PATCH(
     if (body.last_name !== undefined) updateData.last_name = body.last_name;
     if (body.is_active !== undefined) updateData.is_active = body.is_active;
     
-    // Role change - don't allow setting to super_admin
+    // Role change - only super admins can set super_admin role
     if (body.role !== undefined) {
-      if (body.role === 'super_admin') {
-        return NextResponse.json({ error: 'Cannot set role to super_admin' }, { status: 403 });
+      if (body.role === 'super_admin' && !isSuperAdmin) {
+        return NextResponse.json({ error: 'Only super admins can assign super admin role' }, { status: 403 });
       }
       updateData.role = body.role;
     }
@@ -75,6 +79,11 @@ export async function PATCH(
       updateData.password_hash = await bcrypt.hash(body.password, 12);
     }
 
+    // Sub-levels update
+    if (body.sub_levels !== undefined) {
+      updateData.sub_levels = body.sub_levels;
+    }
+
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
@@ -83,7 +92,7 @@ export async function PATCH(
       .from('admin_users')
       .update(updateData)
       .eq('id', id)
-      .select('id, email, first_name, last_name, role, is_active, last_login, created_at')
+      .select('id, email, first_name, last_name, role, is_active, last_login, created_at, sub_levels')
       .single();
 
     if (error) {
@@ -106,6 +115,10 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Get the requesting user's role from headers (set by middleware)
+    const requestingUserRole = request.headers.get('x-user-role');
+    const isSuperAdmin = requestingUserRole === 'super_admin';
+
     // Check if user exists and get their role
     const { data: existingUser, error: fetchError } = await supabase
       .from('admin_users')
@@ -117,9 +130,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Prevent deleting super_admin users
-    if (existingUser.role === 'super_admin') {
-      return NextResponse.json({ error: 'Cannot delete super admin' }, { status: 403 });
+    // Only super admins can delete other super admins
+    if (existingUser.role === 'super_admin' && !isSuperAdmin) {
+      return NextResponse.json({ error: 'Only super admins can delete other super admins' }, { status: 403 });
     }
 
     const { error } = await supabase

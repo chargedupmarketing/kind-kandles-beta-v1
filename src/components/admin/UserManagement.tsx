@@ -74,6 +74,19 @@ export default function UserManagement() {
   const [showPassword, setShowPassword] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
   
+  // Edit user state
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    first_name: '',
+    last_name: '',
+    role: 'user' as 'super_admin' | 'admin' | 'user',
+    password: '',
+    confirmPassword: '',
+    sub_levels: [] as string[]
+  });
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  
   // Sub-level state
   const [subLevels, setSubLevels] = useState<SubLevel[]>([]);
   const [subLevelsLoading, setSubLevelsLoading] = useState(true);
@@ -232,6 +245,85 @@ export default function UserManagement() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update user');
     }
+  };
+
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user);
+    setEditFormData({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      role: user.role,
+      password: '',
+      confirmPassword: '',
+      sub_levels: user.sub_levels || []
+    });
+    setShowEditPassword(false);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    
+    setError(null);
+    setSuccess(null);
+
+    // Validate password if provided
+    if (editFormData.password) {
+      if (editFormData.password.length < 8) {
+        setError('Password must be at least 8 characters');
+        return;
+      }
+      if (editFormData.password !== editFormData.confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+    }
+
+    setIsUpdating(true);
+    try {
+      const updatePayload: Record<string, unknown> = {
+        first_name: editFormData.first_name,
+        last_name: editFormData.last_name,
+        role: editFormData.role,
+        sub_levels: editFormData.sub_levels
+      };
+
+      // Only include password if it was changed
+      if (editFormData.password) {
+        updatePayload.password = editFormData.password;
+      }
+
+      const response = await fetch(`/api/admin/users/${editingUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update user');
+      }
+
+      setSuccess(`User ${editFormData.first_name} ${editFormData.last_name} updated successfully`);
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update user');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleToggleSubLevel = (subLevelId: string) => {
+    setEditFormData(prev => ({
+      ...prev,
+      sub_levels: prev.sub_levels.includes(subLevelId)
+        ? prev.sub_levels.filter(id => id !== subLevelId)
+        : [...prev.sub_levels, subLevelId]
+    }));
   };
 
   // Sub-level handlers
@@ -622,6 +714,187 @@ export default function UserManagement() {
             </div>
           )}
 
+          {/* Edit User Modal */}
+          {editingUser && (
+            <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 sm:p-4">
+              <div className="bg-white dark:bg-slate-800 w-full sm:rounded-xl shadow-xl sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto rounded-t-2xl">
+                <div className="sticky top-0 bg-white dark:bg-slate-800 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700 z-10">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                      Edit User
+                    </h3>
+                    <button
+                      onClick={() => setEditingUser(null)}
+                      className="p-2 -mr-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+                    >
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleUpdateUser} className="p-4 sm:p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        First Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.first_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+                        className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                        Last Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={editFormData.last_name}
+                        onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+                        className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+                      <input
+                        type="email"
+                        value={editingUser.email}
+                        disabled
+                        className="w-full pl-10 pr-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 cursor-not-allowed text-base"
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Email cannot be changed</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                      Role *
+                    </label>
+                    <select
+                      value={editFormData.role}
+                      onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'super_admin' | 'admin' | 'user' })}
+                      className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                    >
+                      <option value="user">User - View only</option>
+                      <option value="admin">Admin - Store access</option>
+                      <option value="super_admin">Super Admin - Full access</option>
+                    </select>
+                  </div>
+
+                  {/* Teams/Sub-levels */}
+                  {subLevels.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Teams
+                      </label>
+                      <div className="space-y-2 max-h-32 overflow-y-auto border border-slate-200 dark:border-slate-600 rounded-lg p-3">
+                        {subLevels.map((subLevel) => (
+                          <label key={subLevel.id} className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editFormData.sub_levels.includes(subLevel.id)}
+                              onChange={() => handleToggleSubLevel(subLevel.id)}
+                              className="w-4 h-4 text-teal-600 border-slate-300 rounded focus:ring-teal-500"
+                            />
+                            <span className="text-sm text-slate-700 dark:text-slate-300">{subLevel.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Password Change Section */}
+                  <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Change Password
+                      </label>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">(Optional)</span>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                          <input
+                            type={showEditPassword ? 'text' : 'password'}
+                            value={editFormData.password}
+                            onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+                            className="w-full pl-10 pr-10 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                            placeholder="Min. 8 characters"
+                            minLength={8}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowEditPassword(!showEditPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                          >
+                            {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {editFormData.password && (
+                        <div>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
+                            Confirm New Password
+                          </label>
+                          <input
+                            type={showEditPassword ? 'text' : 'password'}
+                            value={editFormData.confirmPassword}
+                            onChange={(e) => setEditFormData({ ...editFormData, confirmPassword: e.target.value })}
+                            className="w-full px-3 py-2.5 sm:py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent text-base"
+                            placeholder="Confirm password"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => setEditingUser(null)}
+                      className="w-full sm:w-auto px-4 py-3 sm:py-2 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-base"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isUpdating}
+                      className="w-full sm:w-auto flex items-center justify-center space-x-2 px-4 py-3 sm:py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white rounded-lg transition-colors text-base"
+                    >
+                      {isUpdating ? (
+                        <>
+                          <Loader className="h-4 w-4 animate-spin" />
+                          <span>Updating...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>Save Changes</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           {/* Users List */}
           <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
             {isLoading ? (
@@ -702,9 +975,18 @@ export default function UserManagement() {
                             {formatDate(user.created_at)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            {user.role !== 'super_admin' && (
-                              deleteConfirm === user.id ? (
-                                <div className="flex items-center justify-end space-x-2">
+                            <div className="flex items-center justify-end space-x-2">
+                              {isSuperAdmin && (
+                                <button
+                                  onClick={() => handleEditUser(user)}
+                                  className="p-2 text-teal-600 hover:bg-teal-100 dark:hover:bg-teal-900/30 rounded-lg transition-colors"
+                                  title="Edit user"
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </button>
+                              )}
+                              {isSuperAdmin && deleteConfirm === user.id ? (
+                                <div className="flex items-center space-x-2">
                                   <span className="text-sm text-slate-600 dark:text-slate-400">Confirm?</span>
                                   <button
                                     onClick={() => handleDeleteUser(user.id)}
@@ -720,7 +1002,7 @@ export default function UserManagement() {
                                     <X className="h-4 w-4" />
                                   </button>
                                 </div>
-                              ) : (
+                              ) : isSuperAdmin ? (
                                 <button
                                   onClick={() => setDeleteConfirm(user.id)}
                                   className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
@@ -728,8 +1010,8 @@ export default function UserManagement() {
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
-                              )
-                            )}
+                              ) : null}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -759,7 +1041,7 @@ export default function UserManagement() {
                           </div>
                         </div>
                         
-                        {user.role !== 'super_admin' && (
+                        {isSuperAdmin && (
                           <div className="relative ml-2">
                             <button
                               onClick={() => setMobileMenuOpen(mobileMenuOpen === user.id ? null : user.id)}
@@ -772,6 +1054,13 @@ export default function UserManagement() {
                               <>
                                 <div className="fixed inset-0 z-10" onClick={() => setMobileMenuOpen(null)} />
                                 <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-700 rounded-lg shadow-lg border border-slate-200 dark:border-slate-600 z-20 py-1">
+                                  <button
+                                    onClick={() => { handleEditUser(user); setMobileMenuOpen(null); }}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 flex items-center space-x-2"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                    <span>Edit User</span>
+                                  </button>
                                   <button
                                     onClick={() => { handleToggleActive(user.id, user.is_active); setMobileMenuOpen(null); }}
                                     className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-600"
