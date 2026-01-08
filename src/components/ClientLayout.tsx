@@ -59,6 +59,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     return false;
   };
 
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        {/* Minimal loading state to prevent flash */}
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+        </div>
+      </div>
+    );
+  }
+
   // Show maintenance page if maintenance mode is active and user doesn't have access
   if (isMaintenanceMode && !hasMaintenanceAccess && !isAdminPage) {
     return (
