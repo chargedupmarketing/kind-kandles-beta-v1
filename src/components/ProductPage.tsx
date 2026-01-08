@@ -242,7 +242,7 @@ export default function ProductPage({ product }: ProductPageProps) {
                   </span>
                   <span className="flex items-center gap-1 text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
                     <Truck className="h-3 w-3" />
-                    Free shipping over $50
+                    Fast shipping available
                   </span>
                   <span className="flex items-center gap-1 text-purple-700 bg-purple-100 px-2 py-1 rounded-full">
                     <Heart className="h-3 w-3" />

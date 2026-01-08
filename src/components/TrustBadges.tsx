@@ -15,8 +15,8 @@ export default function TrustBadges({ variant = 'horizontal', showAll = true }: 
     },
     {
       icon: Truck,
-      text: 'Free Shipping',
-      subtext: 'On orders over $50',
+      text: 'Fast Shipping',
+      subtext: 'Multiple options available',
       color: 'blue'
     },
     {

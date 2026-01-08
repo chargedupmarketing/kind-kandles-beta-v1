@@ -580,7 +580,17 @@ export default function CheckoutPage() {
               
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
-                <span>{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
+                <span>
+                  {currentStep === 'cart' ? (
+                    <span className="text-gray-500">Calculated at next step</span>
+                  ) : shipping === 0 && selectedShippingRate ? (
+                    'FREE'
+                  ) : shipping > 0 ? (
+                    formatPrice(shipping)
+                  ) : (
+                    <span className="text-gray-500">Enter address</span>
+                  )}
+                </span>
               </div>
               
               <div className="flex justify-between text-sm">

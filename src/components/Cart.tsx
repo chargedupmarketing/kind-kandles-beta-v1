@@ -146,17 +146,10 @@ export default function Cart({ isOpen, onClose }: CartProps) {
               </span>
             </div>
 
-            {/* Free Shipping Message */}
-            {subtotal < 50 && (
-              <p className="text-sm text-center text-gray-600 dark:text-gray-400">
-                Add {formatPrice(50 - subtotal)} more for free shipping!
-              </p>
-            )}
-            {subtotal >= 50 && (
-              <p className="text-sm text-center text-green-600 dark:text-green-400 font-semibold">
-                🎉 You qualify for free shipping!
-              </p>
-            )}
+            {/* Shipping Note */}
+            <p className="text-sm text-center text-gray-600 dark:text-gray-400">
+              Shipping calculated at checkout
+            </p>
 
             {/* Checkout Button */}
             <Link
