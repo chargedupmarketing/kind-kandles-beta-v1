@@ -218,6 +218,11 @@ export default function ProductManagement() {
   const [stockUpdates, setStockUpdates] = useState<{ [variantId: string]: number }>({});
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [isSavingStock, setIsSavingStock] = useState(false);
+  
+  // Variant management state
+  const [editingVariants, setEditingVariants] = useState<any[]>([]);
+  const [showVariantModal, setShowVariantModal] = useState(false);
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -618,6 +623,131 @@ export default function ProductManagement() {
     } catch (error) {
       console.error('Error updating variant inventory:', error);
       alert('Failed to update inventory');
+    }
+  };
+
+  // Variant management functions
+  const openVariantEditor = (variant?: any, index?: number) => {
+    if (variant && index !== undefined) {
+      setEditingVariantIndex(index);
+      setEditingVariants([{ ...variant }]);
+    } else {
+      setEditingVariantIndex(null);
+      setEditingVariants([{
+        title: '',
+        sku: '',
+        price: selectedProduct?.price || formData.price || '',
+        compare_at_price: '',
+        inventory_quantity: 0,
+        weight: '',
+        weight_unit: 'oz',
+        option1_name: 'Size',
+        option1_value: '',
+        option2_name: '',
+        option2_value: '',
+        option3_name: '',
+        option3_value: '',
+        available_for_sale: true
+      }]);
+    }
+    setShowVariantModal(true);
+  };
+
+  const saveVariant = async () => {
+    if (!selectedProduct || editingVariants.length === 0) return;
+    
+    const variant = editingVariants[0];
+    
+    // Validate required fields
+    if (!variant.title || !variant.price) {
+      alert('Title and price are required');
+      return;
+    }
+
+    try {
+      if (editingVariantIndex !== null) {
+        // Update existing variant
+        const existingVariant = selectedProduct.variants[editingVariantIndex];
+        const response = await fetch(`/api/admin/products/variants/${existingVariant.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...variant,
+            price: parseFloat(variant.price),
+            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
+            inventory_quantity: parseInt(variant.inventory_quantity) || 0,
+            weight: variant.weight ? parseFloat(variant.weight) : null,
+          })
+        });
+
+        if (!response.ok) {
+          alert('Failed to update variant');
+          return;
+        }
+      } else {
+        // Create new variant
+        const response = await fetch(`/api/admin/products/variants`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            product_id: selectedProduct.id,
+            ...variant,
+            price: parseFloat(variant.price),
+            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
+            inventory_quantity: parseInt(variant.inventory_quantity) || 0,
+            weight: variant.weight ? parseFloat(variant.weight) : null,
+          })
+        });
+
+        if (!response.ok) {
+          alert('Failed to create variant');
+          return;
+        }
+      }
+
+      // Refresh and close
+      await fetchProducts();
+      const updatedProduct = products.find(p => p.id === selectedProduct.id);
+      if (updatedProduct) {
+        setSelectedProduct(updatedProduct);
+      }
+      setShowVariantModal(false);
+      setSuccessMessage(editingVariantIndex !== null ? 'Variant updated!' : 'Variant created!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (error) {
+      console.error('Error saving variant:', error);
+      alert('Failed to save variant');
+    }
+  };
+
+  const deleteVariant = async (variantId: string) => {
+    if (!confirm('Are you sure you want to delete this variant? This cannot be undone.')) return;
+
+    try {
+      const response = await fetch(`/api/admin/products/variants/${variantId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        await fetchProducts();
+        if (selectedProduct) {
+          const updatedProduct = products.find(p => p.id === selectedProduct.id);
+          if (updatedProduct) {
+            setSelectedProduct(updatedProduct);
+          }
+        }
+        setSuccessMessage('Variant deleted!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        alert('Failed to delete variant');
+      }
+    } catch (error) {
+      console.error('Error deleting variant:', error);
+      alert('Failed to delete variant');
     }
   };
 
@@ -1386,104 +1516,145 @@ export default function ProductManagement() {
                   </div>
 
                   {/* All Variants Display */}
-                  {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                  {selectedProduct && (
                     <div className="mt-6 border-t pt-6 dark:border-gray-700">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <Layers className="h-5 w-5" />
-                          Product Variants & Inventory
-                        </h3>
-                        <span className="text-sm text-gray-500">
-                          Total QOH: {selectedProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
-                        </span>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <Layers className="h-5 w-5" />
+                            Product Variants & Inventory
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Manage different sizes, scents, or options for this product
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                            <span className="text-sm text-gray-500">
+                              Total QOH: {selectedProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => openVariantEditor()}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add Variant
+                          </button>
+                        </div>
                       </div>
-                      <div className="space-y-3">
-                        {selectedProduct.variants.map((variant: any, index: number) => {
-                          const variantStock = variant.inventory_quantity || 0;
-                          const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
-                          
-                          return (
-                            <div 
-                              key={variant.id} 
-                              className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
-                            >
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="font-medium text-gray-900 dark:text-white">
-                                      {variant.title || `Variant ${index + 1}`}
-                                    </span>
-                                    {variant.sku && (
-                                      <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded">
-                                        {variant.sku}
+                      {selectedProduct.variants && selectedProduct.variants.length > 0 ? (
+                        <div className="space-y-3">
+                          {selectedProduct.variants.map((variant: any, index: number) => {
+                            const variantStock = variant.inventory_quantity || 0;
+                            const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
+                            
+                            return (
+                              <div 
+                                key={variant.id} 
+                                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <span className="font-medium text-gray-900 dark:text-white">
+                                        {variant.title || `Variant ${index + 1}`}
                                       </span>
-                                    )}
+                                      {variant.sku && (
+                                        <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded">
+                                          {variant.sku}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                      {variant.option1_value && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="font-medium">{variant.option1_name || 'Option'}:</span>
+                                          {variant.option1_value}
+                                        </span>
+                                      )}
+                                      {variant.option2_value && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="font-medium">{variant.option2_name || 'Option 2'}:</span>
+                                          {variant.option2_value}
+                                        </span>
+                                      )}
+                                      {variant.option3_value && (
+                                        <span className="flex items-center gap-1">
+                                          <span className="font-medium">{variant.option3_name || 'Option 3'}:</span>
+                                          {variant.option3_value}
+                                        </span>
+                                      )}
+                                      <span className="flex items-center gap-1">
+                                        <DollarSign className="h-3 w-3" />
+                                        {formatPrice(variant.price)}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                    {variant.option1_value && (
-                                      <span className="flex items-center gap-1">
-                                        <span className="font-medium">{variant.option1_name || 'Option'}:</span>
-                                        {variant.option1_value}
+                                  <div className="flex items-center gap-2">
+                                    <div className="text-right">
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">QOH</div>
+                                      <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
+                                        stockStatus === 'out'
+                                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                          : stockStatus === 'critical'
+                                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                          : stockStatus === 'low'
+                                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                          : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                      }`}>
+                                        <Boxes className="h-3.5 w-3.5" />
+                                        {variantStock}
                                       </span>
+                                    </div>
+                                    <button
+                                      onClick={() => openVariantEditor(variant, index)}
+                                      className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                      title="Edit variant"
+                                    >
+                                      <Edit2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                    </button>
+                                    {selectedProduct.variants.length > 1 && (
+                                      <button
+                                        onClick={() => deleteVariant(variant.id)}
+                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                        title="Delete variant"
+                                      >
+                                        <Trash2 className="h-4 w-4 text-red-500" />
+                                      </button>
                                     )}
-                                    {variant.option2_value && (
-                                      <span className="flex items-center gap-1">
-                                        <span className="font-medium">{variant.option2_name || 'Option 2'}:</span>
-                                        {variant.option2_value}
-                                      </span>
-                                    )}
-                                    <span className="flex items-center gap-1">
-                                      <DollarSign className="h-3 w-3" />
-                                      {formatPrice(variant.price)}
-                                    </span>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="text-right">
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">QOH</div>
-                                    <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
-                                      stockStatus === 'out'
-                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                        : stockStatus === 'critical'
-                                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                        : stockStatus === 'low'
-                                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                    }`}>
-                                      <Boxes className="h-3.5 w-3.5" />
-                                      {variantStock}
-                                    </span>
+                                {variantStock <= 5 && variantStock > 0 && (
+                                  <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Low stock - consider reordering
                                   </div>
-                                  <button
-                                    onClick={() => {
-                                      const newQty = prompt(`Update inventory for "${variant.title || 'Default'}"`, variantStock.toString());
-                                      if (newQty !== null && !isNaN(parseInt(newQty))) {
-                                        handleUpdateVariantInventory(variant.id, parseInt(newQty));
-                                      }
-                                    }}
-                                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                    title="Update inventory"
-                                  >
-                                    <Edit2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                                  </button>
-                                </div>
+                                )}
+                                {variantStock === 0 && (
+                                  <div className="mt-2 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Out of stock - customers cannot purchase
+                                  </div>
+                                )}
                               </div>
-                              {variantStock <= 5 && variantStock > 0 && (
-                                <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-                                  <AlertCircle className="h-3 w-3" />
-                                  Low stock - consider reordering
-                                </div>
-                              )}
-                              {variantStock === 0 && (
-                                <div className="mt-2 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                                  <AlertCircle className="h-3 w-3" />
-                                  Out of stock - customers cannot purchase
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                          <Layers className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                          <p className="text-gray-600 dark:text-gray-400 mb-2">No variants yet</p>
+                          <p className="text-sm text-gray-500 mb-4">Add variants for different sizes, scents, or options</p>
+                          <button
+                            onClick={() => openVariantEditor()}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add First Variant
+                          </button>
+                        </div>
+                      )}
                       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                         <p className="text-xs text-blue-700 dark:text-blue-400">
                           <strong>Note:</strong> Each variant tracks its own inventory. The QOH shown on the product page updates based on the selected variant.
@@ -1670,6 +1841,258 @@ export default function ProductManagement() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Variant Editor Modal */}
+      {showVariantModal && editingVariants.length > 0 && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700 bg-gradient-to-r from-purple-500 to-pink-500">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Layers className="h-5 w-5" />
+                {editingVariantIndex !== null ? 'Edit Variant' : 'Add New Variant'}
+              </h3>
+              <button 
+                onClick={() => setShowVariantModal(false)} 
+                className="p-2 hover:bg-white/20 rounded-lg text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {/* Variant Title */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Variant Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingVariants[0].title}
+                    onChange={(e) => setEditingVariants([{ ...editingVariants[0], title: e.target.value }])}
+                    placeholder="e.g., 8oz Eucalyptus"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                  />
+                </div>
+
+                {/* Options Row 1 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 1 Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option1_name || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option1_name: e.target.value }])}
+                      placeholder="e.g., Size"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 1 Value
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option1_value || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option1_value: e.target.value }])}
+                      placeholder="e.g., 8oz"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Options Row 2 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 2 Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option2_name || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option2_name: e.target.value }])}
+                      placeholder="e.g., Scent"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 2 Value
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option2_value || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option2_value: e.target.value }])}
+                      placeholder="e.g., Eucalyptus"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Options Row 3 */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 3 Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option3_name || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option3_name: e.target.value }])}
+                      placeholder="e.g., Color"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Option 3 Value
+                    </label>
+                    <input
+                      type="text"
+                      value={editingVariants[0].option3_value || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], option3_value: e.target.value }])}
+                      placeholder="e.g., Green"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                </div>
+
+                {/* SKU */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    SKU
+                  </label>
+                  <input
+                    type="text"
+                    value={editingVariants[0].sku || ''}
+                    onChange={(e) => setEditingVariants([{ ...editingVariants[0], sku: e.target.value.toUpperCase() }])}
+                    placeholder="e.g., CDG-EUC-8OZ"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700 font-mono"
+                  />
+                </div>
+
+                {/* Price & Compare Price */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Price *
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editingVariants[0].price}
+                        onChange={(e) => setEditingVariants([{ ...editingVariants[0], price: e.target.value }])}
+                        className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Compare at Price
+                    </label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editingVariants[0].compare_at_price || ''}
+                        onChange={(e) => setEditingVariants([{ ...editingVariants[0], compare_at_price: e.target.value }])}
+                        className="w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inventory Quantity */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                    Inventory Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingVariants[0].inventory_quantity}
+                    onChange={(e) => setEditingVariants([{ ...editingVariants[0], inventory_quantity: e.target.value }])}
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700 text-lg font-semibold"
+                  />
+                </div>
+
+                {/* Weight */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Weight
+                    </label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={editingVariants[0].weight || ''}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], weight: e.target.value }])}
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Weight Unit
+                    </label>
+                    <select
+                      value={editingVariants[0].weight_unit || 'oz'}
+                      onChange={(e) => setEditingVariants([{ ...editingVariants[0], weight_unit: e.target.value }])}
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-800 dark:border-gray-700"
+                    >
+                      <option value="oz">Ounces (oz)</option>
+                      <option value="lb">Pounds (lb)</option>
+                      <option value="g">Grams (g)</option>
+                      <option value="kg">Kilograms (kg)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Available for Sale */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="available_for_sale"
+                    checked={editingVariants[0].available_for_sale !== false}
+                    onChange={(e) => setEditingVariants([{ ...editingVariants[0], available_for_sale: e.target.checked }])}
+                    className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                  />
+                  <label htmlFor="available_for_sale" className="text-sm text-gray-700 dark:text-gray-300">
+                    Available for sale
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end items-center gap-3 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+              <button
+                onClick={() => setShowVariantModal(false)}
+                className="px-6 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveVariant}
+                disabled={!editingVariants[0].title || !editingVariants[0].price}
+                className="flex items-center gap-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+              >
+                <Save className="h-4 w-4" />
+                {editingVariantIndex !== null ? 'Update Variant' : 'Create Variant'}
+              </button>
             </div>
           </div>
         </div>
