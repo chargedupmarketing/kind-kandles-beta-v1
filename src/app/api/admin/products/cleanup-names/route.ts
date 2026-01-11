@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 
 // Common size patterns to remove from product names
 const SIZE_PATTERNS = [
@@ -175,8 +175,10 @@ function generateHandle(title: string): string {
 // GET - Preview what will be changed
 export async function GET(request: NextRequest) {
   try {
+    const serverClient = createServerClient();
+    
     // Fetch all products with their variants, tags, and product_type
-    const { data: products, error } = await supabase
+    const { data: products, error } = await serverClient
       .from('products')
       .select(`
         id,
@@ -244,11 +246,12 @@ export async function GET(request: NextRequest) {
 // POST - Execute the cleanup
 export async function POST(request: NextRequest) {
   try {
+    const serverClient = createServerClient();
     const body = await request.json();
     const { productIds } = body; // Optional: specific product IDs to update
 
     // Fetch products to update
-    let query = supabase
+    let query = serverClient
       .from('products')
       .select(`
         id,
@@ -321,7 +324,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update the product
-        const { error: updateError } = await supabase
+        const { error: updateError } = await serverClient
           .from('products')
           .update(updateData)
           .eq('id', product.id);
@@ -358,6 +361,7 @@ export async function POST(request: NextRequest) {
 // PUT - Revert changes
 export async function PUT(request: NextRequest) {
   try {
+    const serverClient = createServerClient();
     const body = await request.json();
     const { backup } = body;
 
@@ -368,7 +372,7 @@ export async function PUT(request: NextRequest) {
     const reverted = [];
 
     for (const item of backup) {
-      const { error: revertError } = await supabase
+      const { error: revertError } = await serverClient
         .from('products')
         .update({
           title: item.originalTitle,
