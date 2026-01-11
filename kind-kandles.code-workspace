@@ -1,0 +1,189 @@
+{
+  "folders": [
+    {
+      "name": "🎨 Frontend - Components",
+      "path": "src/components"
+    },
+    {
+      "name": "🎨 Frontend - Pages",
+      "path": "src/app"
+    },
+    {
+      "name": "🎨 Frontend - Contexts",
+      "path": "src/contexts"
+    },
+    {
+      "name": "🎨 Frontend - Hooks",
+      "path": "src/hooks"
+    },
+    {
+      "name": "🎨 Frontend - Styles",
+      "path": "src/app/globals.css"
+    },
+    {
+      "name": "⚙️ Backend - API Routes",
+      "path": "src/app/api"
+    },
+    {
+      "name": "⚙️ Backend - Libraries",
+      "path": "src/lib"
+    },
+    {
+      "name": "📦 Public Assets",
+      "path": "public"
+    },
+    {
+      "name": "🗄️ Database",
+      "path": "supabase"
+    },
+    {
+      "name": "📝 Documentation",
+      "path": ".",
+      "pattern": "**/*.md"
+    },
+    {
+      "name": "⚙️ Configuration",
+      "path": ".",
+      "pattern": "{*.config.*,*.json,.*rc,.*ignore}"
+    },
+    {
+      "name": "📁 Project Root",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/.next": true,
+      "**/node_modules": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/.git": true,
+      "**/package-lock.json": true
+    },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "files.associations": {
+      "*.css": "tailwindcss"
+    },
+    "tailwindCSS.experimental.classRegex": [
+      ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+      ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ],
+    "emmet.includeLanguages": {
+      "typescript": "html",
+      "typescriptreact": "html"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-typescript-next",
+      "formulahendry.auto-rename-tag",
+      "christian-kohler.path-intellisense",
+      "zignd.html-css-class-completion",
+      "supabase.supabase-vscode"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "🚀 Next.js: Debug Server",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "npm run dev"
+      },
+      {
+        "name": "🌐 Next.js: Debug Client",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000"
+      },
+      {
+        "name": "🔍 Next.js: Debug Full Stack",
+        "type": "node-terminal",
+        "request": "launch",
+        "command": "npm run dev",
+        "serverReadyAction": {
+          "pattern": "started server on .+, url: (https?://.+)",
+          "uriFormat": "%s",
+          "action": "debugWithChrome"
+        }
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Start Development Server",
+        "type": "npm",
+        "script": "dev",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "🏗️ Build Production",
+        "type": "npm",
+        "script": "build",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "🧪 Run Linter",
+        "type": "npm",
+        "script": "lint",
+        "problemMatcher": ["$eslint-stylish"],
+        "presentation": {
+          "reveal": "always",
+          "panel": "shared"
+        }
+      },
+      {
+        "label": "🧹 Clean Build",
+        "type": "shell",
+        "command": "rm -rf .next && npm run build",
+        "windows": {
+          "command": "if exist .next rmdir /s /q .next && npm run build"
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        }
+      }
+    ]
+  }
+}
+
