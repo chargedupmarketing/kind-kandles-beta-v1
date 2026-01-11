@@ -29,7 +29,8 @@ import {
   UserCog,
   PanelLeft,
   Truck,
-  HardDrive
+  HardDrive,
+  Sparkles
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -37,6 +38,7 @@ import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
 import ProductManagement from './ProductManagement';
+import ProductNameCleanup from './ProductNameCleanup';
 import OrderManagement from './OrderManagement';
 import OrderFulfillment from './OrderFulfillment';
 import CustomerManagement from './CustomerManagement';
@@ -55,7 +57,7 @@ import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -127,6 +129,11 @@ export default function AdminDashboard() {
           id: 'products' as AdminSection,
           label: 'Products',
           icon: Package,
+        },
+        {
+          id: 'cleanup-names' as AdminSection,
+          label: 'Cleanup Names',
+          icon: Sparkles,
         },
         {
           id: 'customers' as AdminSection,
@@ -248,6 +255,8 @@ export default function AdminDashboard() {
         return <AnalyticsDashboard />;
       case 'products':
         return <ProductManagement />;
+      case 'cleanup-names':
+        return <ProductNameCleanup />;
       case 'fulfillment':
         return <OrderFulfillment />;
       case 'shipping':
