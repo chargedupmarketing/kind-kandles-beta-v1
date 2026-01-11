@@ -50,10 +50,11 @@ export async function GET(request: NextRequest) {
     const serverClient = createServerClient();
 
     // Get orders in date range
+    // Include orders that are paid OR have progressed beyond pending status
     const { data: orders } = await serverClient
       .from('orders')
       .select('id')
-      .eq('payment_status', 'paid')
+      .or('payment_status.eq.paid,status.in.(processing,shipped,delivered,paid)')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', now.toISOString());
 

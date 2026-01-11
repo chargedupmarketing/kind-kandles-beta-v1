@@ -61,26 +61,43 @@ export async function GET(request: NextRequest) {
     const serverClient = createServerClient();
 
     // Get current period stats
-    const { data: currentOrders } = await serverClient
+    // Include orders that are paid OR have progressed beyond pending status
+    // (processing, shipped, delivered indicate payment was successful)
+    const { data: currentOrders, error: currentError } = await serverClient
       .from('orders')
-      .select('total, customer_email')
-      .eq('payment_status', 'paid')
+      .select('total, customer_email, status, payment_status, created_at')
+      .or('payment_status.eq.paid,status.in.(processing,shipped,delivered,paid)')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', now.toISOString());
 
+    if (currentError) {
+      console.error('Error fetching current orders:', currentError);
+    }
+
+    console.log(`Analytics: Found ${currentOrders?.length || 0} orders in current period (${startDate.toISOString()} to ${now.toISOString()})`);
+    if (currentOrders && currentOrders.length > 0) {
+      console.log('Sample order:', currentOrders[0]);
+    }
+
     // Get previous period stats
-    const { data: previousOrders } = await serverClient
+    const { data: previousOrders, error: previousError } = await serverClient
       .from('orders')
-      .select('total')
-      .eq('payment_status', 'paid')
+      .select('total, status, payment_status, created_at')
+      .or('payment_status.eq.paid,status.in.(processing,shipped,delivered,paid)')
       .gte('created_at', previousStartDate.toISOString())
       .lt('created_at', previousEndDate.toISOString());
 
-    // Get all-time customers in current period
+    if (previousError) {
+      console.error('Error fetching previous orders:', previousError);
+    }
+
+    console.log(`Analytics: Found ${previousOrders?.length || 0} orders in previous period (${previousStartDate.toISOString()} to ${previousEndDate.toISOString()})`);
+
+    // Get all-time customers before current period
     const { data: allCustomers } = await serverClient
       .from('orders')
       .select('customer_email')
-      .eq('payment_status', 'paid')
+      .or('payment_status.eq.paid,status.in.(processing,shipped,delivered,paid)')
       .lt('created_at', startDate.toISOString());
 
     const existingCustomerEmails = new Set(allCustomers?.map(o => o.customer_email) || []);
