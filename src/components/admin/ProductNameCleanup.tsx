@@ -9,15 +9,28 @@ interface PreviewItem {
   cleanedTitle: string;
   originalHandle: string;
   newHandle: string;
+  originalType: string;
+  newType: string;
+  originalTags: string;
+  newTags: string;
   variantCount: number;
+  changes: {
+    title: boolean;
+    type: boolean;
+    tags: boolean;
+  };
 }
 
 interface BackupData {
   id: string;
   originalTitle: string;
   originalHandle: string;
+  originalTags: string;
+  originalType: string;
   cleanedTitle: string;
   newHandle: string;
+  newTags: string;
+  newType: string;
 }
 
 export default function ProductNameCleanup() {
@@ -175,10 +188,11 @@ export default function ProductNameCleanup() {
           <div className="text-sm text-blue-700 dark:text-blue-300">
             <p className="font-semibold mb-1">What this does:</p>
             <ul className="list-disc list-inside space-y-1">
-              <li>Finds products with <strong>multiple variants</strong> (different sizes/scents)</li>
-              <li>Removes size information like "8oz", "16oz" from product names</li>
+              <li>Cleans up product names by removing size info, redundant descriptors, and BBW references</li>
+              <li>Standardizes product types (e.g., "CANDLE" → "Candle", "ROOM SPRAY" → "Room Spray")</li>
+              <li>Organizes and cleans up product tags for better categorization</li>
               <li>Creates a backup so you can revert changes if needed</li>
-              <li>Only affects products with 2+ variants</li>
+              <li>Works on all products, not just multi-variant ones</li>
             </ul>
           </div>
         </div>
@@ -291,21 +305,53 @@ export default function ProductNameCleanup() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Original Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Field</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Original</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">→</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">New Name</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">New</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">Variants</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-gray-700">
                 {preview.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{item.originalTitle}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 align-top">
+                      <div className="space-y-2">
+                        {item.changes.title && (
+                          <span className="inline-block px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">
+                            Title
+                          </span>
+                        )}
+                        {item.changes.type && (
+                          <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded">
+                            Type
+                          </span>
+                        )}
+                        {item.changes.tags && (
+                          <span className="inline-block px-2 py-1 text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded">
+                            Tags
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 align-top">
+                      <div className="space-y-2">
+                        {item.changes.title && <div className="line-through">{item.originalTitle}</div>}
+                        {item.changes.type && <div className="line-through text-xs">{item.originalType}</div>}
+                        {item.changes.tags && <div className="line-through text-xs truncate max-w-xs">{item.originalTags || '(none)'}</div>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center align-top">
                       <span className="text-purple-600 dark:text-purple-400">→</span>
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">{item.cleanedTitle}</td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white align-top">
+                      <div className="space-y-2">
+                        {item.changes.title && <div>{item.cleanedTitle}</div>}
+                        {item.changes.type && <div className="text-xs text-green-600 dark:text-green-400">{item.newType}</div>}
+                        {item.changes.tags && <div className="text-xs text-amber-600 dark:text-amber-400 truncate max-w-xs">{item.newTags}</div>}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center align-top">
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                         {item.variantCount}
                       </span>

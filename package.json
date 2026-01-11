@@ -11,7 +11,8 @@
     "build:analyze": "npm run analyze",
     "lighthouse": "lhci autorun",
     "perf:test": "npm run build && npm run start & sleep 5 && npm run lighthouse && kill %1",
-    "cleanup-names": "tsx scripts/cleanup-product-names.ts"
+    "cleanup-names": "tsx scripts/cleanup-product-names.ts",
+    "manual-cleanup": "tsx scripts/manual-cleanup-names.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
