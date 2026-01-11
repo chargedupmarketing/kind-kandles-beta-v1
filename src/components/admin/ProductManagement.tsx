@@ -1971,6 +1971,21 @@ export default function ProductManagement() {
                       <Flame className="h-3 w-3" />
                     </span>
                   )}
+                  {(() => {
+                    const totalQty = product.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) || 0;
+                    return (
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        totalQty === 0
+                          ? 'bg-red-100 text-red-700'
+                          : totalQty <= 5
+                          ? 'bg-yellow-100 text-yellow-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        <Boxes className="h-3 w-3" />
+                        {totalQty}
+                      </span>
+                    );
+                  })()}
                   <span className="font-semibold text-pink-600 ml-auto">{formatPrice(product.price)}</span>
                 </div>
               </div>
@@ -2024,6 +2039,7 @@ export default function ProductManagement() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 hidden lg:table-cell">Type / Tags</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Price</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400">QOH</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
@@ -2114,6 +2130,25 @@ export default function ProductManagement() {
                           {formatPrice(product.compare_at_price)}
                         </p>
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center">
+                      {(() => {
+                        const totalQty = product.variants?.reduce((sum, v) => sum + (v.inventory_quantity || 0), 0) || 0;
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-semibold ${
+                            totalQty === 0
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : totalQty <= 5
+                              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          }`}>
+                            <Boxes className="h-3.5 w-3.5" />
+                            {totalQty}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </td>
                   <td className="px-4 py-3">
