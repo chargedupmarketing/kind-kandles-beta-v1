@@ -159,20 +159,38 @@ export async function GET(request: NextRequest) {
   try {
     const serverClient = createServerClient();
 
+    // Check if table exists first by trying to count
+    const { count, error: countError } = await serverClient
+      .from('contact_submissions')
+      .select('*', { count: 'exact', head: true });
+
+    // If table doesn't exist, return empty array
+    if (countError && countError.code === 'PGRST205') {
+      console.warn('⚠️ contact_submissions table does not exist yet');
+      return NextResponse.json({ 
+        submissions: [],
+        tableExists: false,
+        message: 'Table not created yet. Please run the migration.'
+      });
+    }
+
     const { data: submissions, error } = await serverClient
       .from('contact_submissions')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('submitted_at', { ascending: false });
 
     if (error) {
       console.error('Error fetching contact submissions:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch submissions' },
+        { error: 'Failed to fetch submissions', details: error },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ submissions });
+    return NextResponse.json({ 
+      submissions: submissions || [],
+      tableExists: true 
+    });
 
   } catch (error) {
     console.error('Error in GET /api/contact:', error);

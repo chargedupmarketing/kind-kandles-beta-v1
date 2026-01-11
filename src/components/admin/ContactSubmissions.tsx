@@ -38,19 +38,26 @@ export default function ContactSubmissions() {
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
   const [filter, setFilter] = useState<'all' | 'unread' | 'starred' | 'archived'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [tableExists, setTableExists] = useState(true);
+  const [loading, setLoading] = useState(true);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Fetch submissions from database
   const fetchSubmissions = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/contact');
       if (!response.ok) {
         throw new Error('Failed to fetch submissions');
       }
       const data = await response.json();
       setSubmissions(data.submissions || []);
+      setTableExists(data.tableExists !== false);
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
+      setTableExists(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -193,6 +200,54 @@ export default function ContactSubmissions() {
   };
 
   const stats = getStats();
+
+  // Show setup message if table doesn't exist
+  if (!tableExists && !loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Contact Form Submissions</h2>
+          <p className="text-slate-600 dark:text-slate-400">Manage and respond to customer inquiries</p>
+        </div>
+        
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-lg p-8">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <svg className="h-12 w-12 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-yellow-900 dark:text-yellow-100 mb-2">
+                Database Table Not Created
+              </h3>
+              <p className="text-yellow-800 dark:text-yellow-200 mb-4">
+                The <code className="bg-yellow-100 dark:bg-yellow-900 px-2 py-1 rounded">contact_submissions</code> table hasn't been created yet. Please run the migration in your Supabase dashboard.
+              </p>
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 mb-4">
+                <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">Steps to Fix:</h4>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-slate-700 dark:text-slate-300">
+                  <li>Go to <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Supabase Dashboard</a></li>
+                  <li>Select your project</li>
+                  <li>Click <strong>SQL Editor</strong> in the left sidebar</li>
+                  <li>Click <strong>New Query</strong></li>
+                  <li>Copy the SQL from <code className="bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded text-xs">supabase/migrations/20260111_contact_submissions.sql</code></li>
+                  <li>Paste it into the SQL editor and click <strong>Run</strong></li>
+                  <li>Refresh this page</li>
+                </ol>
+              </div>
+              <button
+                onClick={fetchSubmissions}
+                className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Retry Connection
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
