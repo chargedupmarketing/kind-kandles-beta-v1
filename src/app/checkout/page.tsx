@@ -142,10 +142,18 @@ export default function CheckoutPage() {
     setShippingAddress(address);
     
     // Fetch shipping rates one more time before proceeding to payment
+    console.log('🚚 Fetching shipping rates before payment...', {
+      state: address.state,
+      postalCode: address.postalCode,
+      totalWeight
+    });
+    
     await fetchShippingRates({
       state: address.state,
       postalCode: address.postalCode
     });
+    
+    console.log('✅ Shipping rates fetched. Selected rate:', selectedShippingRate, 'Shipping cost:', shipping);
     
     setCurrentStep('payment');
   };
@@ -593,15 +601,28 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-sm">
                 <span>Shipping</span>
                 <span>
-                  {currentStep === 'cart' ? (
-                    <span className="text-gray-500">Calculated at next step</span>
-                  ) : shipping === 0 && selectedShippingRate ? (
-                    'FREE'
-                  ) : shipping > 0 ? (
-                    formatPrice(shipping)
-                  ) : (
-                    <span className="text-gray-500">Enter address</span>
-                  )}
+                  {(() => {
+                    // Debug logging
+                    if (currentStep === 'payment') {
+                      console.log('📦 Order Summary - Shipping Debug:', {
+                        currentStep,
+                        shipping,
+                        selectedShippingRate,
+                        shippingRates,
+                        totalWeight
+                      });
+                    }
+                    
+                    if (currentStep === 'cart') {
+                      return <span className="text-gray-500">Calculated at next step</span>;
+                    } else if (shipping === 0 && selectedShippingRate) {
+                      return 'FREE';
+                    } else if (shipping > 0) {
+                      return formatPrice(shipping);
+                    } else {
+                      return <span className="text-gray-500">Enter address</span>;
+                    }
+                  })()}
                 </span>
               </div>
               
