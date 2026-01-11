@@ -2631,6 +2631,7 @@ export default function ProductManagement() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400 hidden lg:table-cell">Type / Tags</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Price</th>
+                <th className="px-4 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400">Variants</th>
                 <th className="px-4 py-3 text-center text-sm font-medium text-gray-600 dark:text-gray-400">QOH</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
               </tr>
@@ -2722,6 +2723,14 @@ export default function ProductManagement() {
                           {formatPrice(product.compare_at_price)}
                         </p>
                       )}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-center">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-semibold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                        <Layers className="h-3.5 w-3.5" />
+                        {product.variants?.length || 0}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">

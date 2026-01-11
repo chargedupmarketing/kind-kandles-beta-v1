@@ -10,7 +10,8 @@
     "analyze": "ANALYZE=true npm run build",
     "build:analyze": "npm run analyze",
     "lighthouse": "lhci autorun",
-    "perf:test": "npm run build && npm run start & sleep 5 && npm run lighthouse && kill %1"
+    "perf:test": "npm run build && npm run start & sleep 5 && npm run lighthouse && kill %1",
+    "cleanup-names": "tsx scripts/cleanup-product-names.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -36,6 +37,7 @@
     "eslint-config-next": "^16.0.7",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
