@@ -88,7 +88,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'mkk-shopping-cart';
-const SHIPPING_STORAGE_KEY = 'mkk-shipping-address';
+const SHIPPING_STORAGE_KEY = 'mkk-shipping-address'; // Only used to remove old data
 const TAX_RATE = 0.06; // 6% Maryland tax
 
 export function CartProvider({ children }: { children: ReactNode }) {
@@ -101,7 +101,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Load cart from localStorage on mount (but NOT shipping address for security)
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem(CART_STORAGE_KEY);
@@ -109,10 +109,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setItems(JSON.parse(savedCart));
       }
       
-      const savedAddress = localStorage.getItem(SHIPPING_STORAGE_KEY);
-      if (savedAddress) {
-        setShippingAddressState(JSON.parse(savedAddress));
-      }
+      // Remove any previously saved shipping address for security
+      localStorage.removeItem(SHIPPING_STORAGE_KEY);
     } catch (error) {
       console.error('Error loading cart:', error);
     }
@@ -126,12 +124,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [items, isHydrated]);
 
-  // Save shipping address to localStorage
-  useEffect(() => {
-    if (isHydrated && shippingAddress) {
-      localStorage.setItem(SHIPPING_STORAGE_KEY, JSON.stringify(shippingAddress));
-    }
-  }, [shippingAddress, isHydrated]);
+  // NOTE: Shipping address is NOT saved to localStorage for security/privacy reasons
+  // Customer must re-enter their information on each checkout
 
   const addItem = useCallback((item: CartItem) => {
     setItems((prevItems) => {
@@ -169,6 +163,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
     setDiscountCode(null);
     setSelectedShippingRateState(null);
+    setShippingAddressState(null); // Clear shipping address for security
   }, []);
 
   const setShippingAddress = useCallback((address: ShippingAddress) => {

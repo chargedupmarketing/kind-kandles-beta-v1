@@ -123,10 +123,10 @@ export default function CheckoutPage() {
     setIsApplyingDiscount(false);
   };
 
-  const handleShippingSubmit = (e: React.FormEvent) => {
+  const handleShippingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setShippingAddress({
+    const address = {
       firstName: shippingForm.firstName,
       lastName: shippingForm.lastName,
       email: shippingForm.email,
@@ -137,6 +137,14 @@ export default function CheckoutPage() {
       state: shippingForm.state,
       postalCode: shippingForm.postalCode,
       country: shippingForm.country
+    };
+    
+    setShippingAddress(address);
+    
+    // Fetch shipping rates one more time before proceeding to payment
+    await fetchShippingRates({
+      state: address.state,
+      postalCode: address.postalCode
     });
     
     setCurrentStep('payment');
