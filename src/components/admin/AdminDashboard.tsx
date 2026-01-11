@@ -30,7 +30,8 @@ import {
   PanelLeft,
   Truck,
   HardDrive,
-  Sparkles
+  Sparkles,
+  Trash2
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -39,6 +40,7 @@ import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
 import ProductManagement from './ProductManagement';
 import ProductNameCleanup from './ProductNameCleanup';
+import DefaultTitleCleanup from './DefaultTitleCleanup';
 import OrderManagement from './OrderManagement';
 import OrderFulfillment from './OrderFulfillment';
 import CustomerManagement from './CustomerManagement';
@@ -57,7 +59,7 @@ import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -134,6 +136,11 @@ export default function AdminDashboard() {
           id: 'cleanup-names' as AdminSection,
           label: 'Cleanup Names',
           icon: Sparkles,
+        },
+        {
+          id: 'cleanup-default-titles' as AdminSection,
+          label: 'Remove Default Titles',
+          icon: Trash2,
         },
         {
           id: 'customers' as AdminSection,
@@ -257,6 +264,8 @@ export default function AdminDashboard() {
         return <ProductManagement />;
       case 'cleanup-names':
         return <ProductNameCleanup />;
+      case 'cleanup-default-titles':
+        return <DefaultTitleCleanup />;
       case 'fulfillment':
         return <OrderFulfillment />;
       case 'shipping':
