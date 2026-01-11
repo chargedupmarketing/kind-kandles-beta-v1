@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 
 export async function PATCH(
   request: NextRequest,
@@ -8,6 +8,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+    const serverClient = createServerClient();
 
     // Build update object dynamically based on what's provided
     const updateData: any = {
@@ -36,7 +37,7 @@ export async function PATCH(
     if (body.available_for_sale !== undefined) updateData.available_for_sale = body.available_for_sale;
 
     // Update the variant
-    const { data, error } = await supabase
+    const { data, error } = await serverClient
       .from('product_variants')
       .update(updateData)
       .eq('id', id)
@@ -70,16 +71,17 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const serverClient = createServerClient();
 
     // Check if this is the last variant for the product
-    const { data: variant } = await supabase
+    const { data: variant } = await serverClient
       .from('product_variants')
       .select('product_id')
       .eq('id', id)
       .single();
 
     if (variant) {
-      const { count } = await supabase
+      const { count } = await serverClient
         .from('product_variants')
         .select('*', { count: 'exact', head: true })
         .eq('product_id', variant.product_id);
@@ -93,7 +95,7 @@ export async function DELETE(
     }
 
     // Delete the variant
-    const { error } = await supabase
+    const { error } = await serverClient
       .from('product_variants')
       .delete()
       .eq('id', id);

@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 
 // POST /api/admin/products/variants - Create a new variant
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const serverClient = createServerClient();
+    
     const {
       product_id,
       title,
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the variant
-    const { data, error } = await supabase
+    const { data, error } = await serverClient
       .from('product_variants')
       .insert({
         product_id,
