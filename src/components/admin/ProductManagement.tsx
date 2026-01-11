@@ -604,11 +604,10 @@ export default function ProductManagement() {
       if (response.ok) {
         // Refresh the product data
         await fetchProducts();
-        // Update the editing product if it's currently open
-        if (editingProduct) {
-          const updatedProduct = products.find(p => p.id === editingProduct.id);
+        // Update the selected product if it's currently open
+        if (selectedProduct) {
+          const updatedProduct = products.find(p => p.id === selectedProduct.id);
           if (updatedProduct) {
-            setEditingProduct(updatedProduct);
             setSelectedProduct(updatedProduct);
           }
         }
@@ -1397,7 +1396,7 @@ export default function ProductManagement() {
                   </div>
 
                   {/* All Variants Display */}
-                  {editingProduct && editingProduct.variants && editingProduct.variants.length > 0 && (
+                  {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 && (
                     <div className="mt-6 border-t pt-6 dark:border-gray-700">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1405,11 +1404,11 @@ export default function ProductManagement() {
                           Product Variants & Inventory
                         </h3>
                         <span className="text-sm text-gray-500">
-                          Total QOH: {editingProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
+                          Total QOH: {selectedProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
                         </span>
                       </div>
                       <div className="space-y-3">
-                        {editingProduct.variants.map((variant: any, index: number) => {
+                        {selectedProduct.variants.map((variant: any, index: number) => {
                           const variantStock = variant.inventory_quantity || 0;
                           const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
                           
