@@ -177,7 +177,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Calculate totals first (needed by callbacks below)
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0) * item.quantity, 0);
+  // Default to 8oz (0.5 lbs) per item if weight not specified
+  const DEFAULT_ITEM_WEIGHT_OZ = 8;
+  const totalWeight = items.reduce((sum, item) => sum + (item.weight || DEFAULT_ITEM_WEIGHT_OZ) * item.quantity, 0);
 
   // Fetch shipping rates based on address and cart weight
   const fetchShippingRates = useCallback(async (address?: { state: string; postalCode: string }) => {
@@ -190,8 +192,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     // Don't calculate if cart is empty
-    if (totalWeight <= 0) {
-      console.log('Cart is empty, skipping shipping calculation');
+    if (totalWeight <= 0 || items.length === 0) {
+      console.log('Cart is empty or has no weight, skipping shipping calculation');
       return;
     }
 
