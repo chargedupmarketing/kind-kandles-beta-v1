@@ -72,10 +72,19 @@ const PRODUCT_TYPE_MAPPINGS: Record<string, string> = {
 };
 
 // Tag cleanup and standardization
-function cleanupTags(tags: string | null, productType: string): string {
+function cleanupTags(tags: any, productType: string): string {
   if (!tags) return '';
   
-  const tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+  // Handle both string and array formats
+  let tagArray: string[] = [];
+  if (typeof tags === 'string') {
+    tagArray = tags.split(',').map(t => t.trim()).filter(Boolean);
+  } else if (Array.isArray(tags)) {
+    tagArray = (tags as any[]).map(t => String(t).trim()).filter(Boolean);
+  } else {
+    return '';
+  }
+  
   const cleanedTags = new Set<string>();
   
   // Add product type as a tag if not present
