@@ -159,6 +159,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create order items' }, { status: 500 });
     }
 
+    // Decrement inventory for each item
+    for (const item of body.items) {
+      if (item.variant_id) {
+        // Get current inventory
+        const { data: variant } = await serverClient
+          .from('product_variants')
+          .select('inventory_quantity')
+          .eq('id', item.variant_id)
+          .single();
+
+        if (variant) {
+          const newQuantity = Math.max(0, variant.inventory_quantity - item.quantity);
+          
+          // Update inventory
+          const { error: inventoryError } = await serverClient
+            .from('product_variants')
+            .update({ 
+              inventory_quantity: newQuantity,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', item.variant_id);
+
+          if (inventoryError) {
+            console.error(`Failed to update inventory for variant ${item.variant_id}:`, inventoryError);
+            // Log but don't fail the order - inventory can be manually adjusted
+          } else {
+            console.log(`✅ Decremented inventory for variant ${item.variant_id}: ${variant.inventory_quantity} → ${newQuantity}`);
+          }
+        }
+      }
+    }
+
     // Fetch complete order with items
     const { data: completeOrder } = await serverClient
       .from('orders')
