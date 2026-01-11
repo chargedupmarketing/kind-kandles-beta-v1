@@ -44,6 +44,11 @@ export default function ProductPage({ product }: ProductPageProps) {
   const [showReviews, setShowReviews] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
   
+  // Get the currently selected variant
+  const selectedVariant = product.variants?.find(v => v.id === selectedVariantId) || product.variants?.[0];
+  const currentStockLevel = selectedVariant?.inventory_quantity || 0;
+  const isCurrentVariantInStock = selectedVariant?.available_for_sale && currentStockLevel > 0;
+  
   // Real reviews state
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
@@ -148,10 +153,10 @@ export default function ProductPage({ product }: ProductPageProps) {
                 </div>
                 
                 {/* Stock Level Indicator */}
-                {product.stockLevel && product.stockLevel <= 5 && (
+                {currentStockLevel > 0 && currentStockLevel <= 5 && (
                   <div className="absolute bottom-4 right-4">
                     <span className="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
-                      Only {product.stockLevel} left!
+                      Only {currentStockLevel} left!
                     </span>
                   </div>
                 )}
@@ -253,17 +258,17 @@ export default function ProductPage({ product }: ProductPageProps) {
 
               {/* Enhanced Stock Status with Inventory Alert */}
               <div className="mb-6">
-                {product.inStock ? (
+                {isCurrentVariantInStock ? (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-green-600 font-medium">✅ In Stock - Ready to ship</span>
+                      <span className="text-green-600 font-medium">✅ In Stock ({currentStockLevel} available) - Ready to ship</span>
                     </div>
                     
                     {/* Advanced Inventory Alert */}
-                    {product.stockLevel && product.stockLevel <= 15 && (
+                    {currentStockLevel <= 15 && (
                       <InventoryAlert 
-                        stockLevel={product.stockLevel}
+                        stockLevel={currentStockLevel}
                         productName={product.name}
                         variant="detailed"
                         showTrending={true}
@@ -278,8 +283,81 @@ export default function ProductPage({ product }: ProductPageProps) {
                 )}
               </div>
 
-{/* Size Selection */}
-              {product.sizes && product.sizes.length > 0 && (
+{/* Size/Variant Selection with QOH */}
+              {product.variants && product.variants.length > 1 && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Option
+                  </label>
+                  <div className="space-y-2">
+                    {product.variants.map((variant: any) => {
+                      const variantStock = variant.inventory_quantity || 0;
+                      const variantAvailable = variant.available_for_sale && variantStock > 0;
+                      const variantTitle = variant.title || variant.option1_value || 'Default';
+                      
+                      return (
+                        <button
+                          key={variant.id}
+                          onClick={() => {
+                            setSelectedVariantId(variant.id);
+                            if (variant.option1_value) setSelectedSize(variant.option1_value);
+                          }}
+                          disabled={!variantAvailable}
+                          className={`w-full px-4 py-3 border rounded-lg text-left transition-all ${
+                            selectedVariantId === variant.id
+                              ? 'border-amber-600 bg-amber-50 dark:bg-amber-900/20 ring-2 ring-amber-600'
+                              : variantAvailable
+                              ? 'border-gray-300 dark:border-gray-600 hover:border-amber-400'
+                              : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60 cursor-not-allowed'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <span className={`font-medium ${
+                                selectedVariantId === variant.id 
+                                  ? 'text-amber-700 dark:text-amber-400' 
+                                  : 'text-gray-900 dark:text-white'
+                              }`}>
+                                {variantTitle}
+                              </span>
+                              {variant.price && (
+                                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                  {formatPrice(variant.price)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {variantAvailable ? (
+                                <>
+                                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                    variantStock <= 5 
+                                      ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                      : variantStock <= 15
+                                      ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                      : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                  }`}>
+                                    QOH: {variantStock}
+                                  </span>
+                                  {selectedVariantId === variant.id && (
+                                    <span className="text-amber-600">✓</span>
+                                  )}
+                                </>
+                              ) : (
+                                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                  Out of Stock
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Legacy Size Selection (fallback for products without full variant data) */}
+              {product.sizes && product.sizes.length > 0 && (!product.variants || product.variants.length <= 1) && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Size
@@ -330,13 +408,12 @@ export default function ProductPage({ product }: ProductPageProps) {
               <div className="mb-8 space-y-4">
                 <button
                   onClick={() => {
-                    const selectedVariant = product.variants?.find(v => v.id === selectedVariantId) || product.variants?.[0];
                     addItem({
                       variantId: selectedVariantId || product.id,
                       productId: product.id,
                       title: product.name,
                       variantTitle: selectedVariant?.title || 'Default',
-                      price: typeof product.price === 'string' ? parseFloat(product.price.replace('$', '')) : product.price,
+                      price: selectedVariant?.price || (typeof product.price === 'string' ? parseFloat(product.price.replace('$', '')) : product.price),
                       quantity: quantity,
                       image: product.image,
                       handle: product.handle,
@@ -344,21 +421,21 @@ export default function ProductPage({ product }: ProductPageProps) {
                     setAddedToCart(true);
                     setTimeout(() => setAddedToCart(false), 2000);
                   }}
-                  disabled={!product.inStock || (product.stockLevel ?? 0) === 0}
+                  disabled={!isCurrentVariantInStock || currentStockLevel === 0}
                   className={`w-full py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-300 transform ${
-                    product.inStock && (product.stockLevel ?? 0) > 0
+                    isCurrentVariantInStock && currentStockLevel > 0
                       ? 'btn-candle hover:scale-105 shadow-lg hover:shadow-xl'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
-                  {product.inStock && (product.stockLevel ?? 0) > 0 ? (
+                  {isCurrentVariantInStock && currentStockLevel > 0 ? (
                     <span className="flex items-center justify-center gap-2">
                       {addedToCart ? (
                         <>✓ Added to Cart!</>
                       ) : (
                         <>
                           <ShoppingCart className="h-5 w-5" />
-                          Add to Cart - {formatPrice(product.price)}
+                          Add to Cart - {selectedVariant?.price ? formatPrice(selectedVariant.price) : formatPrice(product.price)}
                         </>
                       )}
                     </span>

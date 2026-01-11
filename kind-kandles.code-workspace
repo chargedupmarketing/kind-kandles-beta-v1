@@ -1,54 +1,24 @@
 {
   "folders": [
     {
-      "name": "🎨 Frontend - Components",
-      "path": "src/components"
+      "name": "🎨 FRONTEND",
+      "path": "src"
     },
     {
-      "name": "🎨 Frontend - Pages",
-      "path": "src/app"
-    },
-    {
-      "name": "🎨 Frontend - Contexts",
-      "path": "src/contexts"
-    },
-    {
-      "name": "🎨 Frontend - Hooks",
-      "path": "src/hooks"
-    },
-    {
-      "name": "🎨 Frontend - Styles",
-      "path": "src/app/globals.css"
-    },
-    {
-      "name": "⚙️ Backend - API Routes",
+      "name": "⚙️ BACKEND",
       "path": "src/app/api"
     },
     {
-      "name": "⚙️ Backend - Libraries",
-      "path": "src/lib"
-    },
-    {
-      "name": "📦 Public Assets",
-      "path": "public"
-    },
-    {
-      "name": "🗄️ Database",
+      "name": "🗄️ DATABASE",
       "path": "supabase"
     },
     {
-      "name": "📝 Documentation",
-      "path": ".",
-      "pattern": "**/*.md"
+      "name": "📦 PUBLIC ASSETS",
+      "path": "public"
     },
     {
-      "name": "⚙️ Configuration",
-      "path": ".",
-      "pattern": "{*.config.*,*.json,.*rc,.*ignore}"
-    },
-    {
-      "name": "📁 Project Root",
-      "path": "."
+      "name": "📝 CHANGELOG",
+      "path": "changelog"
     }
   ],
   "settings": {

@@ -589,6 +589,39 @@ export default function ProductManagement() {
     setSelectedProduct(null);
   };
 
+  const handleUpdateVariantInventory = async (variantId: string, newQuantity: number) => {
+    try {
+      const response = await fetch(`/api/admin/products/variants/${variantId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inventory_quantity: newQuantity
+        })
+      });
+
+      if (response.ok) {
+        // Refresh the product data
+        await fetchProducts();
+        // Update the editing product if it's currently open
+        if (editingProduct) {
+          const updatedProduct = products.find(p => p.id === editingProduct.id);
+          if (updatedProduct) {
+            setEditingProduct(updatedProduct);
+            setSelectedProduct(updatedProduct);
+          }
+        }
+        alert('Inventory updated successfully!');
+      } else {
+        alert('Failed to update inventory');
+      }
+    } catch (error) {
+      console.error('Error updating variant inventory:', error);
+      alert('Failed to update inventory');
+    }
+  };
+
   // Auto-detect product type and tags from title
   const detectProductInfo = (title: string): { type: string; tags: string[] } => {
     const lowerTitle = title.toLowerCase();
@@ -1362,6 +1395,113 @@ export default function ProductManagement() {
                       className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
                     />
                   </div>
+
+                  {/* All Variants Display */}
+                  {editingProduct && editingProduct.variants && editingProduct.variants.length > 0 && (
+                    <div className="mt-6 border-t pt-6 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          <Layers className="h-5 w-5" />
+                          Product Variants & Inventory
+                        </h3>
+                        <span className="text-sm text-gray-500">
+                          Total QOH: {editingProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {editingProduct.variants.map((variant: any, index: number) => {
+                          const variantStock = variant.inventory_quantity || 0;
+                          const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
+                          
+                          return (
+                            <div 
+                              key={variant.id} 
+                              className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="font-medium text-gray-900 dark:text-white">
+                                      {variant.title || `Variant ${index + 1}`}
+                                    </span>
+                                    {variant.sku && (
+                                      <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded">
+                                        {variant.sku}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                    {variant.option1_value && (
+                                      <span className="flex items-center gap-1">
+                                        <span className="font-medium">{variant.option1_name || 'Option'}:</span>
+                                        {variant.option1_value}
+                                      </span>
+                                    )}
+                                    {variant.option2_value && (
+                                      <span className="flex items-center gap-1">
+                                        <span className="font-medium">{variant.option2_name || 'Option 2'}:</span>
+                                        {variant.option2_value}
+                                      </span>
+                                    )}
+                                    <span className="flex items-center gap-1">
+                                      <DollarSign className="h-3 w-3" />
+                                      {formatPrice(variant.price)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">QOH</div>
+                                    <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
+                                      stockStatus === 'out'
+                                        ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                        : stockStatus === 'critical'
+                                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                        : stockStatus === 'low'
+                                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                    }`}>
+                                      <Boxes className="h-3.5 w-3.5" />
+                                      {variantStock}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      const newQty = prompt(`Update inventory for "${variant.title || 'Default'}"`, variantStock.toString());
+                                      if (newQty !== null && !isNaN(parseInt(newQty))) {
+                                        handleUpdateVariantInventory(variant.id, parseInt(newQty));
+                                      }
+                                    }}
+                                    className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                    title="Update inventory"
+                                  >
+                                    <Edit2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                  </button>
+                                </div>
+                              </div>
+                              {variantStock <= 5 && variantStock > 0 && (
+                                <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Low stock - consider reordering
+                                </div>
+                              )}
+                              {variantStock === 0 && (
+                                <div className="mt-2 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                                  <AlertCircle className="h-3 w-3" />
+                                  Out of stock - customers cannot purchase
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-xs text-blue-700 dark:text-blue-400">
+                          <strong>Note:</strong> Each variant tracks its own inventory. The QOH shown on the product page updates based on the selected variant.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
