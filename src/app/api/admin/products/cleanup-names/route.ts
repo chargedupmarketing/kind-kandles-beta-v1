@@ -72,8 +72,8 @@ const PRODUCT_TYPE_MAPPINGS: Record<string, string> = {
 };
 
 // Tag cleanup and standardization
-function cleanupTags(tags: any, productType: string): string {
-  if (!tags) return '';
+function cleanupTags(tags: any, productType: string): string[] {
+  if (!tags) return [];
   
   // Handle both string and array formats
   let tagArray: string[] = [];
@@ -82,7 +82,7 @@ function cleanupTags(tags: any, productType: string): string {
   } else if (Array.isArray(tags)) {
     tagArray = (tags as any[]).map(t => String(t).trim()).filter(Boolean);
   } else {
-    return '';
+    return [];
   }
   
   const cleanedTags = new Set<string>();
@@ -124,7 +124,7 @@ function cleanupTags(tags: any, productType: string): string {
     }
   });
   
-  return Array.from(cleanedTags).join(', ');
+  return Array.from(cleanedTags);
 }
 
 function cleanProductName(title: string): string {
@@ -199,17 +199,17 @@ export async function GET(request: NextRequest) {
     for (const product of products || []) {
       const variantCount = product.variants?.length || 0;
       const originalTitle = product.title;
-      const originalTags = product.tags || '';
+      const originalTags = product.tags || [];
       const originalType = product.product_type || 'Other';
       
       const cleanedTitle = cleanProductName(originalTitle);
       const standardizedType = PRODUCT_TYPE_MAPPINGS[originalType] || originalType;
-      const cleanedTags = cleanupTags(originalTags, standardizedType);
+      const cleanedTagsArray = cleanupTags(originalTags, standardizedType);
 
       // Check if anything will change
       const titleChanged = cleanedTitle !== originalTitle && cleanedTitle.length > 0;
       const typeChanged = standardizedType !== originalType;
-      const tagsChanged = cleanedTags !== originalTags;
+      const tagsChanged = JSON.stringify(cleanedTagsArray.sort()) !== JSON.stringify((Array.isArray(originalTags) ? originalTags : []).sort());
 
       if (titleChanged || typeChanged || tagsChanged) {
         preview.push({
@@ -220,8 +220,8 @@ export async function GET(request: NextRequest) {
           newHandle: titleChanged ? generateHandle(cleanedTitle) : product.handle,
           originalType,
           newType: standardizedType,
-          originalTags,
-          newTags: cleanedTags,
+          originalTags: Array.isArray(originalTags) ? originalTags.join(', ') : String(originalTags || ''),
+          newTags: cleanedTagsArray.join(', '),
           variantCount,
           changes: {
             title: titleChanged,
@@ -279,17 +279,17 @@ export async function POST(request: NextRequest) {
       const variantCount = product.variants?.length || 0;
       const originalTitle = product.title;
       const originalHandle = product.handle;
-      const originalTags = product.tags || '';
+      const originalTags = product.tags || [];
       const originalType = product.product_type || 'Other';
       
       const cleanedTitle = cleanProductName(originalTitle);
       const standardizedType = PRODUCT_TYPE_MAPPINGS[originalType] || originalType;
-      const cleanedTags = cleanupTags(originalTags, standardizedType);
+      const cleanedTagsArray = cleanupTags(originalTags, standardizedType);
 
       // Check if anything needs updating
       const titleChanged = cleanedTitle !== originalTitle && cleanedTitle.length > 0;
       const typeChanged = standardizedType !== originalType;
-      const tagsChanged = cleanedTags !== originalTags;
+      const tagsChanged = JSON.stringify(cleanedTagsArray.sort()) !== JSON.stringify((Array.isArray(originalTags) ? originalTags : []).sort());
 
       if (titleChanged || typeChanged || tagsChanged) {
         const newHandle = titleChanged ? generateHandle(cleanedTitle) : originalHandle;
@@ -299,11 +299,11 @@ export async function POST(request: NextRequest) {
           id: product.id,
           originalTitle,
           originalHandle,
-          originalTags,
+          originalTags: Array.isArray(originalTags) ? originalTags : [],
           originalType,
           cleanedTitle: titleChanged ? cleanedTitle : originalTitle,
           newHandle,
-          newTags: cleanedTags,
+          newTags: cleanedTagsArray,
           newType: standardizedType
         });
 
@@ -320,7 +320,7 @@ export async function POST(request: NextRequest) {
           updateData.product_type = standardizedType;
         }
         if (tagsChanged) {
-          updateData.tags = cleanedTags;
+          updateData.tags = cleanedTagsArray; // Send as array, not string
         }
 
         // Update the product
@@ -337,7 +337,7 @@ export async function POST(request: NextRequest) {
             changes: {
               title: titleChanged ? { from: originalTitle, to: cleanedTitle } : null,
               type: typeChanged ? { from: originalType, to: standardizedType } : null,
-              tags: tagsChanged ? { from: originalTags, to: cleanedTags } : null
+              tags: tagsChanged ? { from: originalTags, to: cleanedTagsArray } : null
             }
           });
         }
