@@ -68,7 +68,6 @@ const PRODUCT_TYPE_MAPPINGS: Record<string, string> = {
   'BODY OIL': 'Body Oil',
   'body-oil': 'Body Oil',
   'BODY SPRAY MIST': 'Body Spray',
-  'room-spray': 'Room Spray',
   'OTHER': 'Other',
 };
 
