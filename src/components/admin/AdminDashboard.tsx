@@ -31,7 +31,8 @@ import {
   Truck,
   HardDrive,
   Sparkles,
-  Trash2
+  Trash2,
+  Code
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -133,16 +134,6 @@ export default function AdminDashboard() {
           icon: Package,
         },
         {
-          id: 'cleanup-names' as AdminSection,
-          label: 'Cleanup Names',
-          icon: Sparkles,
-        },
-        {
-          id: 'cleanup-default-titles' as AdminSection,
-          label: 'Remove Default Titles',
-          icon: Trash2,
-        },
-        {
           id: 'customers' as AdminSection,
           label: 'Customers',
           icon: Users,
@@ -239,12 +230,6 @@ export default function AdminDashboard() {
           badge: isMaintenanceMode ? 'MAINT' : undefined,
           badgeColor: isMaintenanceMode ? 'bg-red-500' : undefined
         },
-        // User Management - Super Admin only (includes users and teams)
-        ...(isSuperAdmin ? [{
-          id: 'users' as AdminSection,
-          label: 'User Management',
-          icon: UserCog,
-        }] : []),
         {
           id: 'ai-assistant' as AdminSection,
           label: 'AI Assistant',
@@ -252,6 +237,30 @@ export default function AdminDashboard() {
           badge: 'NEW',
           badgeColor: 'bg-purple-500'
         },
+      ]
+    },
+    {
+      id: 'developer',
+      label: 'Developer Tools',
+      icon: Code,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'cleanup-names' as AdminSection,
+          label: 'Cleanup Names',
+          icon: Sparkles,
+        },
+        {
+          id: 'cleanup-default-titles' as AdminSection,
+          label: 'Remove Default Titles',
+          icon: Trash2,
+        },
+        // User Management - Super Admin only (includes users and teams)
+        ...(isSuperAdmin ? [{
+          id: 'users' as AdminSection,
+          label: 'User Management',
+          icon: UserCog,
+        }] : []),
       ]
     }
   ];
