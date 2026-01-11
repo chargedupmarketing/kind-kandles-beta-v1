@@ -231,13 +231,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Error fetching shipping rates:', error);
-      // Fallback to weight-based default rates
+      // Fallback to weight-based default rates (doubled)
       const weightLbs = totalWeight / 16;
-      let defaultPrice = 9.00;
-      if (weightLbs <= 1) defaultPrice = 5.50;
-      else if (weightLbs <= 2) defaultPrice = 9.00;
-      else if (weightLbs <= 3) defaultPrice = 11.00;
-      else defaultPrice = 14.00;
+      let defaultPrice = 18.00; // Doubled from 9.00
+      if (weightLbs <= 1) defaultPrice = 11.00; // Doubled from 5.50
+      else if (weightLbs <= 2) defaultPrice = 18.00; // Doubled from 9.00
+      else if (weightLbs <= 3) defaultPrice = 22.00; // Doubled from 11.00
+      else defaultPrice = 28.00; // Doubled from 14.00
       
       const defaultRates: ShippingRate[] = [
         { id: 'standard', name: 'Standard Shipping', price: defaultPrice, estimatedDays: '3-5 business days' },

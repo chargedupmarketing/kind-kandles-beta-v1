@@ -5,14 +5,15 @@ export const dynamic = 'force-dynamic';
 /**
  * Calculate shipping rates based on weight and destination
  * 
- * Weight-based USPS rates (approximate):
- * - 0-8 oz: $4.50 (First Class)
- * - 8-16 oz (1 lb): $5.50 (First Class)
- * - 1-2 lbs: $9.00 (Priority Mail)
- * - 2-3 lbs: $11.00 (Priority Mail)
- * - 3-5 lbs: $14.00 (Priority Mail)
- * - 5-10 lbs: $18.00 (Priority Mail)
- * - 10+ lbs: $25.00 (Priority Mail)
+ * Weight-based shipping rates (doubled for profit margin):
+ * - 0-4 oz: $7.98 (First Class)
+ * - 4-8 oz: $9.00 (First Class)
+ * - 8-16 oz (1 lb): $11.00 (First Class)
+ * - 1-2 lbs: $18.00 (Priority Mail)
+ * - 2-3 lbs: $22.00 (Priority Mail)
+ * - 3-5 lbs: $26.00 (Priority Mail)
+ * - 5-10 lbs: $32.00 (Priority Mail)
+ * - 10+ lbs: $40.00+ (Priority Mail)
  */
 
 interface ShippingRequest {
@@ -39,10 +40,10 @@ function calculateShippingCost(weightOz: number, state: string): ShippingRate[] 
   
   // USPS First Class (under 1 lb only)
   if (weightOz <= 16) {
-    let firstClassPrice = 4.50;
-    if (weightOz <= 4) firstClassPrice = 3.99;
-    else if (weightOz <= 8) firstClassPrice = 4.50;
-    else firstClassPrice = 5.50;
+    let firstClassPrice = 9.00; // Doubled from 4.50
+    if (weightOz <= 4) firstClassPrice = 7.98; // Doubled from 3.99
+    else if (weightOz <= 8) firstClassPrice = 9.00; // Doubled from 4.50
+    else firstClassPrice = 11.00; // Doubled from 5.50
     
     rates.push({
       id: 'usps-first-class',
@@ -55,13 +56,13 @@ function calculateShippingCost(weightOz: number, state: string): ShippingRate[] 
   }
   
   // USPS Priority Mail (any weight)
-  let priorityPrice = 9.00;
-  if (weightLbs <= 1) priorityPrice = 9.00;
-  else if (weightLbs <= 2) priorityPrice = 11.00;
-  else if (weightLbs <= 3) priorityPrice = 13.00;
-  else if (weightLbs <= 5) priorityPrice = 16.00;
-  else if (weightLbs <= 10) priorityPrice = 20.00;
-  else priorityPrice = 25.00 + Math.floor((weightLbs - 10) / 5) * 5;
+  let priorityPrice = 18.00; // Doubled from 9.00
+  if (weightLbs <= 1) priorityPrice = 18.00; // Doubled from 9.00
+  else if (weightLbs <= 2) priorityPrice = 22.00; // Doubled from 11.00
+  else if (weightLbs <= 3) priorityPrice = 26.00; // Doubled from 13.00
+  else if (weightLbs <= 5) priorityPrice = 32.00; // Doubled from 16.00
+  else if (weightLbs <= 10) priorityPrice = 40.00; // Doubled from 20.00
+  else priorityPrice = 50.00 + Math.floor((weightLbs - 10) / 5) * 10; // Doubled from 25.00 + 5
   
   rates.push({
     id: 'usps-priority',
@@ -85,11 +86,11 @@ function calculateShippingCost(weightOz: number, state: string): ShippingRate[] 
   
   // UPS Ground (for heavier items)
   if (weightLbs >= 2) {
-    let upsPrice = 12.00;
-    if (weightLbs <= 3) upsPrice = 12.00;
-    else if (weightLbs <= 5) upsPrice = 15.00;
-    else if (weightLbs <= 10) upsPrice = 22.00;
-    else upsPrice = 28.00 + Math.floor((weightLbs - 10) / 5) * 6;
+    let upsPrice = 24.00; // Doubled from 12.00
+    if (weightLbs <= 3) upsPrice = 24.00; // Doubled from 12.00
+    else if (weightLbs <= 5) upsPrice = 30.00; // Doubled from 15.00
+    else if (weightLbs <= 10) upsPrice = 44.00; // Doubled from 22.00
+    else upsPrice = 56.00 + Math.floor((weightLbs - 10) / 5) * 12; // Doubled from 28.00 + 6
     
     rates.push({
       id: 'ups-ground',
