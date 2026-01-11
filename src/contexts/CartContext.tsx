@@ -67,7 +67,7 @@ interface CartContextType {
   shippingRates: ShippingRate[];
   selectedShippingRate: ShippingRate | null;
   setSelectedShippingRate: (rate: ShippingRate) => void;
-  fetchShippingRates: () => Promise<void>;
+  fetchShippingRates: (address?: { state: string; postalCode: string }) => Promise<void>;
   
   // Discount
   discountCode: DiscountInfo | null;
@@ -185,22 +185,41 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0) * item.quantity, 0);
 
   // Fetch shipping rates based on address and cart weight
-  const fetchShippingRates = useCallback(async () => {
-    if (!shippingAddress) return;
+  const fetchShippingRates = useCallback(async (address?: { state: string; postalCode: string }) => {
+    // Use provided address or fall back to stored shipping address
+    const addressToUse = address || shippingAddress;
+    
+    if (!addressToUse || !addressToUse.state || !addressToUse.postalCode) {
+      console.log('No valid address for shipping calculation');
+      return;
+    }
+
+    // Don't calculate if cart is empty
+    if (totalWeight <= 0) {
+      console.log('Cart is empty, skipping shipping calculation');
+      return;
+    }
 
     try {
+      console.log('Fetching shipping rates for:', {
+        weight: totalWeight,
+        state: addressToUse.state,
+        postalCode: addressToUse.postalCode
+      });
+
       const response = await fetch('/api/shipping/calculate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           weight: totalWeight,
-          state: shippingAddress.state,
-          postalCode: shippingAddress.postalCode
+          state: addressToUse.state,
+          postalCode: addressToUse.postalCode
         })
       });
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Shipping rates received:', data);
         setShippingRates(data.rates || []);
         
         // Auto-select cheapest rate
@@ -210,6 +229,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           );
           setSelectedShippingRateState(cheapest);
         }
+      } else {
+        console.error('Failed to fetch shipping rates:', await response.text());
       }
     } catch (error) {
       console.error('Error fetching shipping rates:', error);

@@ -98,7 +98,11 @@ export default function CheckoutPage() {
   // Fetch shipping rates when address changes
   useEffect(() => {
     if (currentStep === 'shipping' && shippingForm.postalCode && shippingForm.state) {
-      fetchShippingRates();
+      // Pass the form address directly to fetch rates
+      fetchShippingRates({
+        state: shippingForm.state,
+        postalCode: shippingForm.postalCode
+      });
     }
   }, [currentStep, shippingForm.postalCode, shippingForm.state, fetchShippingRates]);
 
