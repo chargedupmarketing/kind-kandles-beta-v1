@@ -215,7 +215,7 @@ export default function ProductManagement() {
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>('');
   const [showStockModal, setShowStockModal] = useState(false);
-  const [stockUpdates, setStockUpdates] = useState<{ [productId: string]: number }>({});
+  const [stockUpdates, setStockUpdates] = useState<{ [variantId: string]: number }>({});
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [isSavingStock, setIsSavingStock] = useState(false);
 
@@ -806,49 +806,57 @@ export default function ProductManagement() {
 
   // Stock Management Functions
   const openStockModal = () => {
-    // Initialize stock updates with current values
-    const initialStock: { [productId: string]: number } = {};
+    // Initialize stock updates with current values for ALL variants
+    const initialStock: { [variantId: string]: number } = {};
     products.forEach(product => {
-      initialStock[product.id] = product.variants?.[0]?.inventory_quantity || 0;
+      product.variants?.forEach((variant: any) => {
+        initialStock[variant.id] = variant.inventory_quantity || 0;
+      });
     });
     setStockUpdates(initialStock);
     setShowStockModal(true);
   };
 
-  const updateStockValue = (productId: string, value: number) => {
+  const updateStockValue = (variantId: string, value: number) => {
     setStockUpdates(prev => ({
       ...prev,
-      [productId]: Math.max(0, value)
+      [variantId]: Math.max(0, value)
     }));
   };
 
-  const adjustStock = (productId: string, adjustment: number) => {
+  const adjustStock = (variantId: string, adjustment: number) => {
     setStockUpdates(prev => ({
       ...prev,
-      [productId]: Math.max(0, (prev[productId] || 0) + adjustment)
+      [variantId]: Math.max(0, (prev[variantId] || 0) + adjustment)
     }));
   };
 
   const getStockFilteredProducts = () => {
     return products.filter(product => {
-      const currentStock = product.variants?.[0]?.inventory_quantity || 0;
-      if (stockFilter === 'low') return currentStock > 0 && currentStock <= 5;
-      if (stockFilter === 'out') return currentStock === 0;
+      const totalStock = product.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0;
+      if (stockFilter === 'low') return totalStock > 0 && totalStock <= 5;
+      if (stockFilter === 'out') return totalStock === 0;
       return true;
     });
   };
 
-  const getChangedStockProducts = () => {
-    return products.filter(product => {
-      const originalStock = product.variants?.[0]?.inventory_quantity || 0;
-      const newStock = stockUpdates[product.id];
-      return newStock !== undefined && newStock !== originalStock;
+  const getChangedStockVariants = () => {
+    const changedVariants: Array<{ variant: any; product: any; newStock: number }> = [];
+    products.forEach(product => {
+      product.variants?.forEach((variant: any) => {
+        const originalStock = variant.inventory_quantity || 0;
+        const newStock = stockUpdates[variant.id];
+        if (newStock !== undefined && newStock !== originalStock) {
+          changedVariants.push({ variant, product, newStock });
+        }
+      });
     });
+    return changedVariants;
   };
 
   const saveStockUpdates = async () => {
-    const changedProducts = getChangedStockProducts();
-    if (changedProducts.length === 0) {
+    const changedVariants = getChangedStockVariants();
+    if (changedVariants.length === 0) {
       setSuccessMessage('No changes to save');
       setTimeout(() => setSuccessMessage(''), 3000);
       return;
@@ -858,16 +866,15 @@ export default function ProductManagement() {
     let successCount = 0;
     let errorCount = 0;
 
-    for (const product of changedProducts) {
+    for (const { variant, newStock } of changedVariants) {
       try {
-        const response = await fetch(`/api/admin/products/${product.id}/stock`, {
+        const response = await fetch(`/api/admin/products/variants/${variant.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer admin-token'
           },
           body: JSON.stringify({
-            inventory_quantity: stockUpdates[product.id]
+            inventory_quantity: newStock
           })
         });
 
@@ -877,7 +884,7 @@ export default function ProductManagement() {
           errorCount++;
         }
       } catch (error) {
-        console.error('Error updating stock:', error);
+        console.error('Error updating variant stock:', error);
         errorCount++;
       }
     }
@@ -886,9 +893,9 @@ export default function ProductManagement() {
     setShowStockModal(false);
 
     if (errorCount === 0) {
-      setSuccessMessage(`Successfully updated stock for ${successCount} products!`);
+      setSuccessMessage(`Successfully updated stock for ${successCount} variant${successCount > 1 ? 's' : ''}!`);
     } else {
-      setSuccessMessage(`Updated ${successCount} products (${errorCount} failed)`);
+      setSuccessMessage(`Updated ${successCount} variants (${errorCount} failed)`);
     }
     setTimeout(() => setSuccessMessage(''), 5000);
     
@@ -1314,38 +1321,21 @@ export default function ProductManagement() {
                     </div>
                   </div>
 
-                  {/* SKU & Inventory */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        SKU (Stock Keeping Unit)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.sku}
-                        onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
-                        placeholder="e.g., CDG-EUC-8OZ"
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700 font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Inventory Quantity
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.inventory_quantity}
-                        onChange={(e) => setFormData({ ...formData, inventory_quantity: e.target.value })}
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700 text-lg font-semibold"
-                      />
-                      {parseInt(formData.inventory_quantity) < 5 && parseInt(formData.inventory_quantity) > 0 && (
-                        <p className="mt-1 text-sm text-orange-600 flex items-center gap-1">
-                          <AlertCircle className="h-4 w-4" />
-                          Low stock warning
-                        </p>
-                      )}
-                    </div>
+                  {/* SKU */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      SKU (Stock Keeping Unit) - Default Variant
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                      placeholder="e.g., CDG-EUC-8OZ"
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700 font-mono"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      This SKU applies to the default variant. Scroll down to manage inventory for all variants.
+                    </p>
                   </div>
 
                   {/* Weight */}
@@ -1769,8 +1759,14 @@ export default function ProductManagement() {
               <div className="flex gap-2">
                 {[
                   { value: 'all', label: 'All Products', count: products.length },
-                  { value: 'low', label: 'Low Stock', count: products.filter(p => (p.variants?.[0]?.inventory_quantity || 0) > 0 && (p.variants?.[0]?.inventory_quantity || 0) <= 5).length },
-                  { value: 'out', label: 'Out of Stock', count: products.filter(p => (p.variants?.[0]?.inventory_quantity || 0) === 0).length },
+                  { value: 'low', label: 'Low Stock', count: products.filter(p => {
+                    const total = p.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0;
+                    return total > 0 && total <= 5;
+                  }).length },
+                  { value: 'out', label: 'Out of Stock', count: products.filter(p => {
+                    const total = p.variants?.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0) || 0;
+                    return total === 0;
+                  }).length },
                 ].map(filter => (
                   <button
                     key={filter.value}
@@ -1785,103 +1781,137 @@ export default function ProductManagement() {
                   </button>
                 ))}
               </div>
-              {getChangedStockProducts().length > 0 && (
+              {getChangedStockVariants().length > 0 && (
                 <span className="ml-auto text-sm text-teal-600 dark:text-teal-400 font-medium">
-                  {getChangedStockProducts().length} pending changes
+                  {getChangedStockVariants().length} pending change{getChangedStockVariants().length > 1 ? 's' : ''}
                 </span>
               )}
             </div>
 
             {/* Modal Content */}
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {getStockFilteredProducts().map((product) => {
-                  const originalStock = product.variants?.[0]?.inventory_quantity || 0;
-                  const newStock = stockUpdates[product.id] ?? originalStock;
-                  const hasChanged = newStock !== originalStock;
-                  const stockStatus = newStock === 0 ? 'out' : newStock <= 5 ? 'low' : 'good';
+                  const productVariants = product.variants || [];
+                  const hasMultipleVariants = productVariants.length > 1;
                   
                   return (
                     <div 
                       key={product.id}
-                      className={`flex items-center gap-4 p-3 rounded-lg border transition-colors ${
-                        hasChanged 
-                          ? 'border-teal-300 bg-teal-50 dark:border-teal-700 dark:bg-teal-900/20' 
-                          : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'
-                      }`}
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800"
                     >
-                      {/* Product Image */}
-                      {product.images?.[0]?.url ? (
-                        <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden">
-                          <Image
-                            src={product.images[0].url}
-                            alt={product.title}
-                            fill
-                            className="object-cover"
-                          />
+                      {/* Product Header */}
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 border-b dark:border-gray-700">
+                        {product.images?.[0]?.url ? (
+                          <div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden">
+                            <Image
+                              src={product.images[0].url}
+                              alt={product.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Package className="h-5 w-5 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                            {product.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {hasMultipleVariants ? `${productVariants.length} variants` : '1 variant'}
+                          </p>
                         </div>
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Package className="h-5 w-5 text-gray-400" />
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">Total QOH</p>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white">
+                            {productVariants.reduce((sum: number, v: any) => sum + ((stockUpdates[v.id] ?? v.inventory_quantity) || 0), 0)}
+                          </p>
                         </div>
-                      )}
-
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
-                          {product.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          SKU: {product.variants?.[0]?.sku || 'N/A'}
-                        </p>
                       </div>
 
-                      {/* Stock Status Badge */}
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        stockStatus === 'out' 
-                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          : stockStatus === 'low'
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      }`}>
-                        {stockStatus === 'out' ? 'Out of Stock' : stockStatus === 'low' ? 'Low Stock' : 'In Stock'}
-                      </div>
+                      {/* Variants List */}
+                      <div className="divide-y dark:divide-gray-700">
+                        {productVariants.map((variant: any) => {
+                          const originalStock = variant.inventory_quantity || 0;
+                          const newStock = stockUpdates[variant.id] ?? originalStock;
+                          const hasChanged = newStock !== originalStock;
+                          const stockStatus = newStock === 0 ? 'out' : newStock <= 5 ? 'low' : 'good';
+                          
+                          return (
+                            <div 
+                              key={variant.id}
+                              className={`flex items-center gap-3 p-3 transition-colors ${
+                                hasChanged 
+                                  ? 'bg-teal-50 dark:bg-teal-900/20' 
+                                  : 'bg-white dark:bg-gray-800'
+                              }`}
+                            >
+                              {/* Variant Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-900 dark:text-white text-sm">
+                                  {variant.title || 'Default'}
+                                  {hasMultipleVariants && variant.option1_value && (
+                                    <span className="ml-2 text-gray-500">({variant.option1_value})</span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  SKU: {variant.sku || 'N/A'}
+                                </p>
+                              </div>
 
-                      {/* Stock Controls */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => adjustStock(product.id, -1)}
-                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                          disabled={newStock <= 0}
-                        >
-                          <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                        <input
-                          type="number"
-                          min="0"
-                          value={newStock}
-                          onChange={(e) => updateStockValue(product.id, parseInt(e.target.value) || 0)}
-                          className={`w-16 px-2 py-1.5 text-center border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 ${
-                            hasChanged 
-                              ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-600' 
-                              : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
-                          }`}
-                        />
-                        <button
-                          onClick={() => adjustStock(product.id, 1)}
-                          className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-                        </button>
-                      </div>
+                              {/* Stock Status Badge */}
+                              <div className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                                stockStatus === 'out' 
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                  : stockStatus === 'low'
+                                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              }`}>
+                                {stockStatus === 'out' ? 'Out' : stockStatus === 'low' ? 'Low' : 'Good'}
+                              </div>
 
-                      {/* Change Indicator */}
-                      {hasChanged && (
-                        <div className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
-                          <ArrowUpDown className="h-3 w-3" />
-                          <span>{originalStock} → {newStock}</span>
-                        </div>
-                      )}
+                              {/* Stock Controls */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => adjustStock(variant.id, -1)}
+                                  className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                                  disabled={newStock <= 0}
+                                >
+                                  <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                </button>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={newStock}
+                                  onChange={(e) => updateStockValue(variant.id, parseInt(e.target.value) || 0)}
+                                  className={`w-16 px-2 py-1.5 text-center border rounded-lg text-sm font-semibold focus:ring-2 focus:ring-teal-500 ${
+                                    hasChanged 
+                                      ? 'border-teal-400 bg-teal-50 dark:bg-teal-900/30 dark:border-teal-600' 
+                                      : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700'
+                                  }`}
+                                />
+                                <button
+                                  onClick={() => adjustStock(variant.id, 1)}
+                                  className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                </button>
+                              </div>
+
+                              {/* Change Indicator */}
+                              {hasChanged && (
+                                <div className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400 whitespace-nowrap">
+                                  <ArrowUpDown className="h-3 w-3" />
+                                  <span>{originalStock} → {newStock}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
@@ -1898,9 +1928,9 @@ export default function ProductManagement() {
             {/* Modal Footer */}
             <div className="flex justify-between items-center gap-3 p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <div className="text-sm text-gray-500">
-                {getChangedStockProducts().length > 0 ? (
+                {getChangedStockVariants().length > 0 ? (
                   <span className="text-teal-600 dark:text-teal-400 font-medium">
-                    {getChangedStockProducts().length} products will be updated
+                    {getChangedStockVariants().length} variant{getChangedStockVariants().length > 1 ? 's' : ''} will be updated
                   </span>
                 ) : (
                   'No changes made'
@@ -1915,7 +1945,7 @@ export default function ProductManagement() {
                 </button>
                 <button
                   onClick={saveStockUpdates}
-                  disabled={isSavingStock || getChangedStockProducts().length === 0}
+                  disabled={isSavingStock || getChangedStockVariants().length === 0}
                   className="flex items-center gap-2 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
                 >
                   {isSavingStock ? (
