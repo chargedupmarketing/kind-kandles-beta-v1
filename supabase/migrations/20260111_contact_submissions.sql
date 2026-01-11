@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
   is_archived BOOLEAN DEFAULT FALSE,
   ip_address TEXT,
   user_agent TEXT,
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
