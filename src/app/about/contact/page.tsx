@@ -78,50 +78,39 @@ export default function ContactPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Create submission object
-      const submission: ContactSubmission = {
-        id: Date.now().toString(),
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        subject: formData.subject,
-        message: formData.message,
-        submittedAt: new Date(),
-        isRead: false,
-        isStarred: false,
-        isArchived: false,
-        ipAddress: '192.168.1.' + Math.floor(Math.random() * 255), // Mock IP
-        userAgent: navigator.userAgent
-      };
-
-      // Get existing submissions from localStorage
-      const existingSubmissions = localStorage.getItem('contactSubmissions');
-      const submissions = existingSubmissions ? JSON.parse(existingSubmissions) : [];
-      
-      // Add new submission to the beginning of the array
-      submissions.unshift(submission);
-      
-      // Save back to localStorage
-      localStorage.setItem('contactSubmissions', JSON.stringify(submissions));
-
-      // Reset form and show success
-      setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
-      setIsSubmitted(true);
 
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 5000);
+      if (!response.ok) {
+        throw new Error('Failed to submit contact form');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Reset form and show success
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+        setIsSubmitted(true);
+
+        // Hide success message after 5 seconds
+        setTimeout(() => {
+          setIsSubmitted(false);
+        }, 5000);
+      } else {
+        throw new Error(data.error || 'Failed to submit');
+      }
 
     } catch (error) {
       console.error('Error submitting form:', error);

@@ -25,12 +25,12 @@ interface ContactSubmission {
   phone?: string;
   subject: string;
   message: string;
-  submittedAt: Date;
-  isRead: boolean;
-  isStarred: boolean;
-  isArchived: boolean;
-  ipAddress?: string;
-  userAgent?: string;
+  created_at: string;
+  is_read: boolean;
+  is_starred: boolean;
+  is_archived: boolean;
+  ip_address?: string;
+  user_agent?: string;
 }
 
 export default function ContactSubmissions() {
@@ -40,117 +40,40 @@ export default function ContactSubmissions() {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Load mock data on component mount
-  useEffect(() => {
-    const mockSubmissions: ContactSubmission[] = [
-      {
-        id: '1',
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@email.com',
-        phone: '(555) 123-4567',
-        subject: 'Question about candle ingredients',
-        message: 'Hi! I love your candles and was wondering if you could tell me more about the ingredients you use. I have sensitive skin and want to make sure they\'re safe for me to use. Also, do you offer any unscented options? Thank you!',
-        submittedAt: new Date('2024-11-10T14:30:00'),
-        isRead: false,
-        isStarred: true,
-        isArchived: false,
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      {
-        id: '2',
-        name: 'Michael Chen',
-        email: 'mchen@company.com',
-        phone: '(555) 987-6543',
-        subject: 'Bulk order inquiry',
-        message: 'Hello, I\'m interested in placing a bulk order for our office. We\'d like to order about 50 candles for our holiday gifts. Could you provide pricing for bulk orders and let me know about customization options?',
-        submittedAt: new Date('2024-11-10T11:15:00'),
-        isRead: true,
-        isStarred: false,
-        isArchived: false,
-        ipAddress: '192.168.1.101',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-      },
-      {
-        id: '3',
-        name: 'Emily Rodriguez',
-        email: 'emily.r.designs@gmail.com',
-        subject: 'Collaboration opportunity',
-        message: 'Hi there! I\'m a local artist and I love what you\'re doing with Kind Kandles. I was wondering if you\'d be interested in collaborating on some custom candle designs for my upcoming art show. I think our aesthetics would work really well together!',
-        submittedAt: new Date('2024-11-09T16:45:00'),
-        isRead: true,
-        isStarred: true,
-        isArchived: false,
-        ipAddress: '192.168.1.102',
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15'
-      },
-      {
-        id: '4',
-        name: 'David Thompson',
-        email: 'dthompson@email.com',
-        phone: '(555) 456-7890',
-        subject: 'Shipping issue',
-        message: 'I placed an order last week (Order #1234) and haven\'t received any shipping updates. Could you please check on the status? I ordered it as a gift and need it by this weekend.',
-        submittedAt: new Date('2024-11-08T09:20:00'),
-        isRead: true,
-        isStarred: false,
-        isArchived: true,
-        ipAddress: '192.168.1.103',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      {
-        id: '5',
-        name: 'Lisa Park',
-        email: 'lisa.park.wellness@gmail.com',
-        subject: 'Product feedback',
-        message: 'I recently purchased your lavender candle and I absolutely love it! The scent is perfect and it burns so evenly. I wanted to let you know how much I appreciate the quality. I\'ll definitely be ordering more soon!',
-        submittedAt: new Date('2024-11-07T20:10:00'),
-        isRead: false,
-        isStarred: false,
-        isArchived: false,
-        ipAddress: '192.168.1.104',
-        userAgent: 'Mozilla/5.0 (Android 14; Mobile; rv:109.0) Gecko/111.0 Firefox/119.0'
+  // Fetch submissions from database
+  const fetchSubmissions = async () => {
+    try {
+      const response = await fetch('/api/contact');
+      if (!response.ok) {
+        throw new Error('Failed to fetch submissions');
       }
-    ];
-
-    // Load from localStorage or use mock data
-    const savedSubmissions = localStorage.getItem('contactSubmissions');
-    if (savedSubmissions) {
-      const parsed = JSON.parse(savedSubmissions);
-      // Convert date strings back to Date objects
-      const withDates = parsed.map((sub: any) => ({
-        ...sub,
-        submittedAt: new Date(sub.submittedAt)
-      }));
-      setSubmissions(withDates);
-    } else {
-      setSubmissions(mockSubmissions);
-      localStorage.setItem('contactSubmissions', JSON.stringify(mockSubmissions));
+      const data = await response.json();
+      setSubmissions(data.submissions || []);
+    } catch (error) {
+      console.error('Error fetching contact submissions:', error);
     }
-  }, []);
+  };
 
-  // Save submissions to localStorage whenever they change
+  // Load submissions on component mount
   useEffect(() => {
-    if (submissions.length > 0) {
-      localStorage.setItem('contactSubmissions', JSON.stringify(submissions));
-    }
-  }, [submissions]);
+    fetchSubmissions();
+  }, []);
 
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(submission => {
       // Apply filter
       switch (filter) {
         case 'unread':
-          if (submission.isRead) return false;
+          if (submission.is_read) return false;
           break;
         case 'starred':
-          if (!submission.isStarred) return false;
+          if (!submission.is_starred) return false;
           break;
         case 'archived':
-          if (!submission.isArchived) return false;
+          if (!submission.is_archived) return false;
           break;
         default:
-          if (submission.isArchived) return false; // Don't show archived in 'all'
+          if (submission.is_archived) return false; // Don't show archived in 'all'
       }
 
       // Apply search
@@ -165,38 +88,88 @@ export default function ContactSubmissions() {
       }
 
       return true;
-    }).sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [submissions, filter, debouncedSearchTerm]);
 
-  const handleMarkAsRead = (id: string) => {
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === id ? { ...sub, isRead: true } : sub
-    ));
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      const response = await fetch(`/api/contact/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_read: true }),
+      });
+      if (response.ok) {
+        setSubmissions(prev => prev.map(sub => 
+          sub.id === id ? { ...sub, is_read: true } : sub
+        ));
+      }
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
   };
 
-  const handleToggleStar = (id: string) => {
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === id ? { ...sub, isStarred: !sub.isStarred } : sub
-    ));
+  const handleToggleStar = async (id: string) => {
+    const submission = submissions.find(s => s.id === id);
+    if (!submission) return;
+
+    try {
+      const response = await fetch(`/api/contact/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_starred: !submission.is_starred }),
+      });
+      if (response.ok) {
+        setSubmissions(prev => prev.map(sub => 
+          sub.id === id ? { ...sub, is_starred: !sub.is_starred } : sub
+        ));
+      }
+    } catch (error) {
+      console.error('Error toggling star:', error);
+    }
   };
 
-  const handleArchive = (id: string) => {
-    setSubmissions(prev => prev.map(sub => 
-      sub.id === id ? { ...sub, isArchived: !sub.isArchived } : sub
-    ));
-    setSelectedSubmission(null);
+  const handleArchive = async (id: string) => {
+    const submission = submissions.find(s => s.id === id);
+    if (!submission) return;
+
+    try {
+      const response = await fetch(`/api/contact/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_archived: !submission.is_archived }),
+      });
+      if (response.ok) {
+        setSubmissions(prev => prev.map(sub => 
+          sub.id === id ? { ...sub, is_archived: !sub.is_archived } : sub
+        ));
+        setSelectedSubmission(null);
+      }
+    } catch (error) {
+      console.error('Error archiving:', error);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to permanently delete this submission?')) {
-      setSubmissions(prev => prev.filter(sub => sub.id !== id));
-      setSelectedSubmission(null);
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this submission?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/contact/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setSubmissions(prev => prev.filter(sub => sub.id !== id));
+        setSelectedSubmission(null);
+      }
+    } catch (error) {
+      console.error('Error deleting submission:', error);
     }
   };
 
   const handleViewSubmission = (submission: ContactSubmission) => {
     setSelectedSubmission(submission);
-    if (!submission.isRead) {
+    if (!submission.is_read) {
       handleMarkAsRead(submission.id);
     }
   };
@@ -212,10 +185,10 @@ export default function ContactSubmissions() {
   };
 
   const getStats = () => {
-    const total = submissions.filter(s => !s.isArchived).length;
-    const unread = submissions.filter(s => !s.isRead && !s.isArchived).length;
-    const starred = submissions.filter(s => s.isStarred && !s.isArchived).length;
-    const archived = submissions.filter(s => s.isArchived).length;
+    const total = submissions.filter(s => !s.is_archived).length;
+    const unread = submissions.filter(s => !s.is_read && !s.is_archived).length;
+    const starred = submissions.filter(s => s.is_starred && !s.is_archived).length;
+    const archived = submissions.filter(s => s.is_archived).length;
     return { total, unread, starred, archived };
   };
 
@@ -317,7 +290,7 @@ export default function ContactSubmissions() {
                     key={submission.id}
                     onClick={() => handleViewSubmission(submission)}
                     className={`p-4 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${
-                      !submission.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      !submission.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''
                     } ${
                       selectedSubmission?.id === submission.id ? 'bg-blue-100 dark:bg-blue-900/30' : ''
                     }`}
@@ -326,24 +299,24 @@ export default function ContactSubmissions() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
                           <p className={`font-medium truncate ${
-                            !submission.isRead ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-300'
+                            !submission.is_read ? 'text-slate-900 dark:text-slate-100' : 'text-slate-700 dark:text-slate-300'
                           }`}>
                             {submission.name}
                           </p>
-                          {submission.isStarred && (
+                          {submission.is_starred && (
                             <Star className="h-4 w-4 text-yellow-500 fill-current" />
                           )}
-                          {!submission.isRead && (
+                          {!submission.is_read && (
                             <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                           )}
                         </div>
                         <p className={`text-sm truncate ${
-                          !submission.isRead ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
+                          !submission.is_read ? 'text-slate-700 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
                         }`}>
                           {submission.subject}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                          {submission.submittedAt.toLocaleDateString()} at {submission.submittedAt.toLocaleTimeString()}
+                          {new Date(submission.created_at).toLocaleDateString()} at {new Date(submission.created_at).toLocaleTimeString()}
                         </p>
                       </div>
                     </div>
@@ -365,19 +338,19 @@ export default function ContactSubmissions() {
                     {selectedSubmission.subject}
                   </h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {selectedSubmission.submittedAt.toLocaleDateString()} at {selectedSubmission.submittedAt.toLocaleTimeString()}
+                    {new Date(selectedSubmission.created_at).toLocaleDateString()} at {new Date(selectedSubmission.created_at).toLocaleTimeString()}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleToggleStar(selectedSubmission.id)}
                     className={`p-2 rounded-lg transition-colors ${
-                      selectedSubmission.isStarred
+                      selectedSubmission.is_starred
                         ? 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30'
                         : 'text-slate-400 hover:text-yellow-600 hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
                     }`}
                   >
-                    <Star className={`h-4 w-4 ${selectedSubmission.isStarred ? 'fill-current' : ''}`} />
+                    <Star className={`h-4 w-4 ${selectedSubmission.is_starred ? 'fill-current' : ''}`} />
                   </button>
                   <button
                     onClick={() => handleArchive(selectedSubmission.id)}
@@ -436,11 +409,11 @@ export default function ContactSubmissions() {
               <div className="border-t border-slate-200 dark:border-slate-600 pt-4">
                 <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Technical Details</h4>
                 <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                  {selectedSubmission.ipAddress && (
-                    <p>IP Address: {selectedSubmission.ipAddress}</p>
+                  {selectedSubmission.ip_address && (
+                    <p>IP Address: {selectedSubmission.ip_address}</p>
                   )}
-                  {selectedSubmission.userAgent && (
-                    <p>User Agent: {selectedSubmission.userAgent}</p>
+                  {selectedSubmission.user_agent && (
+                    <p>User Agent: {selectedSubmission.user_agent}</p>
                   )}
                 </div>
               </div>
