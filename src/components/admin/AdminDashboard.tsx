@@ -176,16 +176,6 @@ export default function AdminDashboard() {
           label: 'Blog Posts',
           icon: FileText,
         },
-        {
-          id: 'menu' as AdminSection,
-          label: 'Navigation Menu',
-          icon: Menu,
-        },
-        {
-          id: 'files' as AdminSection,
-          label: 'File Storage',
-          icon: HardDrive,
-        },
       ]
     },
     {
@@ -245,6 +235,16 @@ export default function AdminDashboard() {
       icon: Code,
       defaultOpen: false,
       items: [
+        {
+          id: 'menu' as AdminSection,
+          label: 'Navigation Menu',
+          icon: Menu,
+        },
+        {
+          id: 'files' as AdminSection,
+          label: 'File Storage',
+          icon: HardDrive,
+        },
         {
           id: 'cleanup-names' as AdminSection,
           label: 'Cleanup Names',
