@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/localStore';
 import JsonLd from '@/components/JsonLd';
 import { generateProductSchema, generateBreadcrumbSchema, SITE_CONFIG, SEO_KEYWORDS } from '@/lib/seo';
+import { stripHTML } from '@/lib/htmlUtils';
 
 interface ProductPageProps {
   params: Promise<{
@@ -143,8 +144,9 @@ export async function generateMetadata({ params }: ProductPageProps) {
       ? SEO_KEYWORDS.skincare
       : SEO_KEYWORDS.general;
 
-  const description = product.description 
-    ? product.description.substring(0, 160) 
+  const plainDescription = stripHTML(product.description || '');
+  const description = plainDescription 
+    ? plainDescription.substring(0, 160) 
     : `Shop ${product.title} at My Kind Kandles & Boutique. Handmade with natural ingredients.`;
 
   return {

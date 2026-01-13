@@ -3,6 +3,7 @@ import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import { supabase } from '@/lib/supabase';
 import { formatPrice } from '@/lib/localStore';
+import { stripHTML } from '@/lib/htmlUtils';
 
 interface CollectionPageProps {
   params: Promise<{
@@ -101,6 +102,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
   const products = (collection.products || []).map((product: any) => {
     const image = product.images?.[0];
+    const plainDescription = stripHTML(product.description || '');
     
     return {
       id: product.id,
@@ -112,9 +114,9 @@ export default async function CollectionPage({ params, searchParams }: Collectio
       image: image?.url || '/api/placeholder/400/400',
       badge: product.compare_at_price ? 'Sale' : undefined,
       href: `/products/${product.handle}`,
-      description: product.description && product.description.length > 100 
-        ? product.description.substring(0, 100) + '...' 
-        : product.description || '',
+      description: plainDescription.length > 100 
+        ? plainDescription.substring(0, 100) + '...' 
+        : plainDescription,
     };
   });
 
@@ -137,7 +139,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
           
           {collection.description && (
             <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
-              {collection.description}
+              {stripHTML(collection.description)}
             </p>
           )}
         </div>
@@ -203,12 +205,14 @@ export async function generateMetadata({ params }: CollectionPageProps) {
     };
   }
 
+  const cleanDescription = stripHTML(collection.description || `Browse our ${collection.title} collection`);
+  
   return {
     title: `${collection.title} | My Kind Kandles & Boutique`,
-    description: collection.description || `Browse our ${collection.title} collection`,
+    description: cleanDescription,
     openGraph: {
       title: collection.title,
-      description: collection.description || `Browse our ${collection.title} collection`,
+      description: cleanDescription,
       images: collection.image_url ? [{
         url: collection.image_url,
         alt: collection.title,

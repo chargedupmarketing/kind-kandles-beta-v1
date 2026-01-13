@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/localStore';
 import type { Product } from '@/lib/types';
 import InventoryAlert from './InventoryAlert';
+import { cleanHTML } from '@/lib/htmlUtils';
 
 interface Review {
   id: string;
@@ -485,7 +486,7 @@ export default function ProductPage({ product }: ProductPageProps) {
                     [&_.detail-row-name]:text-sm [&_.detail-row-name]:text-gray-700 [&_.detail-row-name]:dark:text-gray-300
                     [&_.headline]:text-base [&_.headline]:font-semibold [&_.headline]:text-gray-900 [&_.headline]:dark:text-white [&_.headline]:mt-4 [&_.headline]:mb-2
                     [&_br]:hidden"
-                  dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                  dangerouslySetInnerHTML={{ __html: cleanHTML(product.description) }}
                 />
               </div>
 

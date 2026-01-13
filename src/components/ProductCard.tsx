@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { memo, useMemo, useCallback } from 'react';
 import LazyImage from './LazyImage';
 import InventoryAlert from './InventoryAlert';
+import { stripHTML } from '@/lib/htmlUtils';
 
 interface ProductCardProps {
   id: string;
@@ -138,7 +139,7 @@ const ProductCard = memo(({
           {/* Description */}
           {description && (
             <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-              {description}
+              {stripHTML(description)}
             </p>
           )}
           

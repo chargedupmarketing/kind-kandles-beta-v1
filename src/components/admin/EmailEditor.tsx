@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Lightbulb
 } from 'lucide-react';
+import { cleanHTML } from '@/lib/htmlUtils';
 
 interface EmailTemplate {
   id?: string;
@@ -472,7 +473,7 @@ export default function EmailEditor({ template, isCreating, onSave, onClose }: E
                     <div 
                       className="p-4"
                       dangerouslySetInnerHTML={{ 
-                        __html: formData.html_content || '<p style="color: #999; text-align: center; padding: 40px;">No content yet</p>' 
+                        __html: cleanHTML(formData.html_content || '<p style="color: #999; text-align: center; padding: 40px;">No content yet</p>')
                       }}
                     />
                   </div>
