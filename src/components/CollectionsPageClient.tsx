@@ -13,7 +13,7 @@ export default function CollectionsPageClient({ collections, featuredProducts }:
   return (
     <>
       {/* Main Content */}
-      <div className="min-h-screen dark:bg-slate-900"
+      <div className="min-h-screen dark:bg-slate-900">
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">
