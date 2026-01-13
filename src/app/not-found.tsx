@@ -122,7 +122,7 @@ export default function NotFound() {
               Looking for something specific?
             </p>
             <Link
-              href="/collections"
+              href="/collections/all"
               className="inline-flex items-center space-x-2 text-pink-600 hover:text-pink-700 dark:text-pink-400 dark:hover:text-pink-300 font-medium"
             >
               <Search className="h-4 w-4" />

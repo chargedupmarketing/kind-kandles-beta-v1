@@ -218,7 +218,7 @@ export default function MissionPage() {
             you're joining a community committed to kindness, quality, and positive impact.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/collections" className="btn-primary">
+            <a href="/collections/all" className="btn-primary">
               Shop Our Products
             </a>
             <a href="/about/contact" className="btn-secondary">

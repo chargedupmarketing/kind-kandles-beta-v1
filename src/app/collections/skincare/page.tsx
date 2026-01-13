@@ -175,8 +175,8 @@ export default function SkincarePage() {
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Check back soon for our handmade skincare collection!
               </p>
-              <Link href="/collections" className="btn-primary">
-                Browse All Collections
+              <Link href="/collections/all" className="btn-primary">
+                Browse All Products
               </Link>
             </div>
           )}

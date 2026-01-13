@@ -45,11 +45,11 @@ export default function AllProductsPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <Link 
-            href="/collections" 
+            href="/" 
             className="inline-flex items-center text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 mb-8 transition-colors"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Collections
+            Back to Home
           </Link>
           
           <div className="text-center mb-12">
@@ -117,8 +117,8 @@ export default function AllProductsPage() {
               <p className="text-gray-500 dark:text-gray-400 mb-6">
                 Check back soon for our handmade products!
               </p>
-              <Link href="/collections" className="btn-primary">
-                Browse Collections
+              <Link href="/" className="btn-primary">
+                Back to Home
               </Link>
             </div>
           )}

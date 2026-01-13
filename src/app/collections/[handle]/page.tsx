@@ -126,8 +126,8 @@ export default async function CollectionPage({ params, searchParams }: Collectio
       <section className="gradient-bg py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <nav className="mb-6">
-            <Link href="/collections" className="text-gray-600 hover:text-gray-900">
-              Collections
+            <Link href="/collections/all" className="text-gray-600 hover:text-gray-900">
+              All Products
             </Link>
             <span className="mx-2 text-gray-400">/</span>
             <span className="text-gray-900 font-medium">{collection.title}</span>
@@ -183,8 +183,8 @@ export default async function CollectionPage({ params, searchParams }: Collectio
           ) : (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">No products found in this collection.</p>
-              <Link href="/collections" className="btn-primary mt-4 inline-block">
-                Browse All Collections
+              <Link href="/collections/all" className="btn-primary mt-4 inline-block">
+                Browse All Products
               </Link>
             </div>
           )}

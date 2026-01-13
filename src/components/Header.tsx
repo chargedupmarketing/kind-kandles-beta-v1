@@ -27,7 +27,7 @@ const Header = () => {
     { name: 'Home', href: '/' },
     {
       name: 'Products',
-      href: '/collections',
+      href: '/collections/all',
       dropdown: [
         {
           name: 'Collections',
@@ -68,7 +68,7 @@ const Header = () => {
         { name: 'Room Sprays', href: '/collections/room-sprays' },
         { name: 'Clothing & Accessories', href: '/collections/clothing-accessories' },
         { name: 'My Kind Customs', href: '/customs' },
-        { name: 'Shop All Products', href: '/collections' },
+        { name: 'Shop All Products', href: '/collections/all' },
       ]
     },
     { name: 'Blog', href: '/blog' },

@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       tracking_url: 'https://www.ups.com/track',
       review_url: 'https://kindkandlesboutique.com/write-your-story',
       product_name: 'Calm Down Girl Candle',
-      shop_url: 'https://kindkandlesboutique.com/collections',
+      shop_url: 'https://kindkandlesboutique.com/collections/all',
       cart_url: 'https://kindkandlesboutique.com/checkout',
       cart_items: `
         <div style="padding: 10px; border-bottom: 1px solid #eee;">

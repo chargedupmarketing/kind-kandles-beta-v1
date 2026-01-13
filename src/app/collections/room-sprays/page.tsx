@@ -7,8 +7,8 @@ export default function RoomSpraysPage() {
     <DynamicCollectionPage
       title="Room Sprays"
       description="Transform your space instantly with our premium room sprays, crafted with natural essential oils for a refreshing ambiance."
-      backLink="/collections"
-      backLabel="Back to Collections"
+      backLink="/collections/all"
+      backLabel="Back to All Products"
       productType="ROOM SPRAY"
     />
   );

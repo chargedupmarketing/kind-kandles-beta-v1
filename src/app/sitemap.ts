@@ -6,7 +6,6 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://kindkandlesboutique
 // Static pages with their priorities and change frequencies
 const staticPages = [
   { path: '', priority: 1.0, changeFrequency: 'daily' as const },
-  { path: '/collections', priority: 0.9, changeFrequency: 'daily' as const },
   { path: '/collections/all', priority: 0.9, changeFrequency: 'daily' as const },
   { path: '/collections/candles', priority: 0.9, changeFrequency: 'daily' as const },
   { path: '/collections/candles/all', priority: 0.8, changeFrequency: 'daily' as const },

@@ -101,7 +101,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   // Generate breadcrumb schema
   const breadcrumbItems = [
     { name: 'Home', path: '' },
-    { name: 'Collections', path: '/collections' },
+    { name: 'All Products', path: '/collections/all' },
   ];
   
   if (product.product_type) {

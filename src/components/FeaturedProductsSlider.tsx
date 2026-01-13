@@ -212,7 +212,7 @@ export default function FeaturedProductsSlider() {
               Check back soon for our handmade {currentCategory.name.toLowerCase()}!
             </p>
             <Link
-              href="/collections"
+              href="/collections/all"
               className="inline-flex items-center gap-2 text-pink-600 hover:text-pink-700 font-medium"
             >
               Browse All Collections

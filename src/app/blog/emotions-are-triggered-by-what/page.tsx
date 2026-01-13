@@ -80,7 +80,7 @@ export default function EmotionsTriggeredPage() {
                   <span>Share</span>
                 </button>
               </div>
-              <Link href="/collections" className="btn-primary">
+              <Link href="/collections/candles" className="btn-primary">
                 Shop Our Candles
               </Link>
             </div>

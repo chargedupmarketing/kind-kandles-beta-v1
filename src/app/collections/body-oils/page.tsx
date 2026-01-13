@@ -7,8 +7,8 @@ export default function BodyOilsPage() {
     <DynamicCollectionPage
       title="Body Oils"
       description="Nourishing oils crafted with natural ingredients to moisturize, condition, and promote healthy hair and skin."
-      backLink="/collections"
-      backLabel="Back to Collections"
+      backLink="/collections/all"
+      backLabel="Back to All Products"
       productType="Body Oil"
     />
   );

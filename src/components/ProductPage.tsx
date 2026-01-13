@@ -112,9 +112,9 @@ export default function ProductPage({ product }: ProductPageProps) {
       {/* Breadcrumb */}
       <section className="py-4 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
-          <Link href="/collections" className="inline-flex items-center text-amber-700 hover:text-amber-800 transition-colors">
+          <Link href="/collections/all" className="inline-flex items-center text-amber-700 hover:text-amber-800 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Collections
+            Back to All Products
           </Link>
         </div>
       </section>

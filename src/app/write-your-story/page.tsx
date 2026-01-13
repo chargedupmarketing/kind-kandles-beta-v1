@@ -599,7 +599,7 @@ export default function WriteYourStoryPage() {
             <a href="#story-form" className="btn-primary">
               Share Your Story Now
             </a>
-            <a href="/collections" className="btn-secondary">
+            <a href="/collections/all" className="btn-secondary">
               Shop Our Products
             </a>
           </div>
