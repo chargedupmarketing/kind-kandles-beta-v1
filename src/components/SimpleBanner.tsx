@@ -24,7 +24,7 @@ interface SimpleBannerProps {
 }
 
 const DEFAULT_SETTINGS: TopBarBannerSettings = {
-  enabled: true,
+  enabled: false, // DISABLED BY DEFAULT - prevents flash on load
   title: 'HOLIDAY SALE',
   emoji_left: '🎄',
   emoji_right: '🎁',

@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import ProductCard from '@/components/ProductCard';
 import TrustBadges from '@/components/TrustBadges';
-import LimitedTimeOffer from '@/components/LimitedTimeOffer';
-import { useBanner } from '@/contexts/BannerContext';
 
 interface CollectionsPageClientProps {
   collections: any[];
@@ -12,30 +10,10 @@ interface CollectionsPageClientProps {
 }
 
 export default function CollectionsPageClient({ collections, featuredProducts }: CollectionsPageClientProps) {
-  const { isBannerVisible } = useBanner();
-  
-  // Pre-Black Friday sale end time (November 26th, 2024 at 11:59 PM)
-  const preBlackFridayEndTime = new Date('2024-11-26T23:59:59');
-
   return (
     <>
-      {/* Flash Sale Banner - Positioned above everything */}
-      {isBannerVisible && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <LimitedTimeOffer
-            title="🔥 PRE-BLACK FRIDAY SALE 🔥"
-            description="Save 25% on everything + FREE shipping on orders $50+"
-            discount={25}
-            endTime={preBlackFridayEndTime}
-            minOrderAmount={50}
-            variant="banner"
-            isDismissible={true}
-          />
-        </div>
-      )}
-
-      {/* Main Content with dynamic top padding based on banner visibility */}
-      <div className={`min-h-screen dark:bg-slate-900 transition-all duration-300 ${isBannerVisible ? 'pt-11' : 'pt-0'}`}>
+      {/* Main Content */}
+      <div className="min-h-screen dark:bg-slate-900"
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-16 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto text-center">

@@ -31,7 +31,7 @@ interface PromotionsSettings {
 }
 
 const DEFAULT_COUNTDOWN: CountdownPromo = {
-  enabled: true,
+  enabled: false, // DISABLED BY DEFAULT - prevents flash on load
   title: '🔥 HOLIDAY SALE ENDS SOON! 🔥',
   subtitle: 'Holiday Special - Save 25% on everything + FREE shipping over $50!',
   end_date: '2025-12-31',
@@ -40,7 +40,7 @@ const DEFAULT_COUNTDOWN: CountdownPromo = {
 };
 
 const DEFAULT_URGENCY: FlashSaleUrgency = {
-  enabled: true,
+  enabled: false, // DISABLED BY DEFAULT - prevents flash on load
   text: 'Flash sale ends in 24 hours - Don\'t miss out!',
   show_icon: true
 };
