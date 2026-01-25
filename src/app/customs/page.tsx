@@ -1,4 +1,4 @@
-import { Palette, Gift, Users, Clock } from 'lucide-react';
+import { Palette, Gift, Users, Clock, Construction, Sparkles } from 'lucide-react';
 
 export default function CustomsPage() {
   const customServices = [
@@ -62,6 +62,73 @@ export default function CustomsPage() {
 
   return (
     <div className="min-h-screen dark:bg-slate-900 relative">
+      {/* Under Development Overlay */}
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 text-center transform animate-fade-in">
+          {/* Icon */}
+          <div className="mb-6 flex justify-center">
+            <div className="relative">
+              <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center animate-pulse">
+                <Construction className="h-10 w-10 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center animate-bounce">
+                <Sparkles className="h-4 w-4 text-amber-800" />
+              </div>
+            </div>
+          </div>
+
+          {/* Title */}
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            🚧 Coming Soon! 🚧
+          </h2>
+
+          {/* Message */}
+          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+            Our <span className="font-semibold text-teal-600 dark:text-teal-400">My Kind Customs</span> page 
+            is currently under development. We're working hard to bring you an amazing custom ordering experience!
+          </p>
+
+          {/* Features Coming */}
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">What's coming:</p>
+            <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+              <li className="flex items-center justify-center gap-2">
+                <span className="text-teal-500">✓</span> Custom candle builder
+              </li>
+              <li className="flex items-center justify-center gap-2">
+                <span className="text-teal-500">✓</span> Gift set designer
+              </li>
+              <li className="flex items-center justify-center gap-2">
+                <span className="text-teal-500">✓</span> Event booking system
+              </li>
+              <li className="flex items-center justify-center gap-2">
+                <span className="text-teal-500">✓</span> Subscription management
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            In the meantime, reach out to us directly for custom orders!
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a 
+              href="/about/contact" 
+              className="px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors"
+            >
+              Contact Us
+            </a>
+            <a 
+              href="/" 
+              className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Back to Home
+            </a>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-teal-100 to-cyan-100 dark:from-gray-800 dark:to-gray-700 py-20 px-4 sm:px-6 lg:px-8">
