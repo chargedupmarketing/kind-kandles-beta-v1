@@ -82,8 +82,22 @@ function AccessDenied() {
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [eventEditorId, setEventEditorId] = useState<string | undefined>(undefined);
   const { logout, isMaintenanceMode, user, isSuperAdmin, hasPermission } = useAdmin();
   const isMobile = useIsMobile();
+
+  // Read URL parameters for event editor
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+      if (id) {
+        setEventEditorId(id);
+      } else {
+        setEventEditorId(undefined);
+      }
+    }
+  }, [activeSection]);
 
   // Close sidebar on escape key
   useEffect(() => {
@@ -338,7 +352,7 @@ export default function AdminDashboard() {
       case 'events':
         return <EventManagement />;
       case 'event-editor':
-        return <EventEditor onSave={() => setActiveSection('events')} onCancel={() => setActiveSection('events')} />;
+        return <EventEditor eventId={eventEditorId} onSave={() => setActiveSection('events')} onCancel={() => setActiveSection('events')} />;
       case 'event-bookings':
         return <EventBookings />;
       default:

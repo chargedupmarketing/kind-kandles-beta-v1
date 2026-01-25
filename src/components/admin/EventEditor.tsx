@@ -137,14 +137,30 @@ export default function EventEditor({ eventId, onSave, onCancel }: EventEditorPr
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to save event');
+        console.error('API Error Response:', error);
+        
+        // Show detailed error message
+        let errorMessage = error.error || 'Failed to save event';
+        if (error.details) {
+          errorMessage += `\n\nDetails: ${JSON.stringify(error.details, null, 2)}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      alert(eventId ? 'Event updated successfully' : 'Event created successfully');
+      const result = await response.json();
+      console.log('Event saved successfully:', result);
+      
+      alert(eventId ? 'Event updated successfully!' : 'Event created successfully!');
       if (onSave) onSave();
     } catch (error: any) {
       console.error('Error saving event:', error);
-      alert(error.message || 'Failed to save event');
+      
+      // Check if it's a database table error
+      if (error.message && error.message.includes('PGRST205')) {
+        alert('Database Error: Event tables not found!\n\nPlease run the database migrations first:\n1. Go to Supabase SQL Editor\n2. Run: supabase/migrations/20260118_events_system.sql\n3. Run: supabase/migrations/20260125_update_events_enums.sql\n\nSee DATABASE_MIGRATION_INSTRUCTIONS.md for details.');
+      } else {
+        alert(`Error: ${error.message || 'Failed to save event'}\n\nCheck the browser console for more details.`);
+      }
     } finally {
       setSaving(false);
     }
