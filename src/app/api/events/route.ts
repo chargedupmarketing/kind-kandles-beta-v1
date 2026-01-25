@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 // GET - Fetch all active events with optional filters
 export async function GET(request: NextRequest) {
@@ -9,8 +9,6 @@ export async function GET(request: NextRequest) {
     const locationType = searchParams.get('location_type');
     const featured = searchParams.get('featured');
     const category = searchParams.get('category');
-
-    const supabase = createClient();
 
     // Build query
     let query = supabase

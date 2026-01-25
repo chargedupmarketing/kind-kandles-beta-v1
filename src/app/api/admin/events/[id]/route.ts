@@ -4,10 +4,10 @@ import { createServerClient } from '@/lib/supabase';
 // GET - Fetch single event details - Admin only
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const serverClient = createServerClient();
 
     // Fetch event with categories
@@ -47,10 +47,10 @@ export async function GET(
 // PATCH - Update event - Admin only
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       title,
@@ -178,10 +178,10 @@ export async function PATCH(
 // DELETE - Soft delete event (set is_active = false) - Admin only
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const serverClient = createServerClient();
 
     // Soft delete by setting is_active to false

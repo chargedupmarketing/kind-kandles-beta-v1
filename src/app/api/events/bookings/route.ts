@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
       occurrence = occData;
 
       // Check if occurrence is available
-      if (occurrence.status !== 'available') {
+      if (occData.status !== 'available') {
         return NextResponse.json(
           { error: 'This occurrence is no longer available' },
           { status: 400 }
@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Check capacity
-      const maxCapacity = occurrence.max_participants || event.max_participants;
-      if (occurrence.current_bookings + num_participants > maxCapacity) {
+      const maxCapacity = occData.max_participants || event.max_participants;
+      if (occData.current_bookings + num_participants > maxCapacity) {
         return NextResponse.json(
           { error: 'Not enough spots available for this occurrence' },
           { status: 400 }

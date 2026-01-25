@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase';
 
 // GET - Fetch available occurrences for calendar view
 export async function GET(request: NextRequest) {
@@ -8,8 +8,6 @@ export async function GET(request: NextRequest) {
     const eventId = searchParams.get('event_id');
     const startDate = searchParams.get('start_date');
     const endDate = searchParams.get('end_date');
-
-    const supabase = createClient();
 
     // Build query
     let query = supabase

@@ -27,9 +27,10 @@ async function getEvent(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const event = await getEvent(params.slug);
+  const { slug } = await params;
+  const event = await getEvent(slug);
 
   if (!event) {
     return {
@@ -67,9 +68,10 @@ function formatLocationType(type: string): string {
 export default async function EventDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const event: Event | null = await getEvent(params.slug);
+  const { slug } = await params;
+  const event: Event | null = await getEvent(slug);
 
   if (!event) {
     notFound();

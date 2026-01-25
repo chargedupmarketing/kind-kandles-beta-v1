@@ -4,10 +4,10 @@ import { createServerClient } from '@/lib/supabase';
 // PATCH - Update occurrence - Admin only
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       start_datetime,
@@ -81,10 +81,10 @@ export async function PATCH(
 // DELETE - Remove occurrence - Admin only
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const serverClient = createServerClient();
 
     // Check if there are any bookings for this occurrence

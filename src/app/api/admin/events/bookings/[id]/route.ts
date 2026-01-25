@@ -7,10 +7,10 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // PATCH - Update booking status, add notes, confirm/cancel - Admin only
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       status,
@@ -272,10 +272,10 @@ export async function PATCH(
 // DELETE - Remove booking - Admin only
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const serverClient = createServerClient();
 
     // Fetch booking to get occurrence info
