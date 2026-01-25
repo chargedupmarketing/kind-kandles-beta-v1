@@ -86,17 +86,41 @@ export default function AdminDashboard() {
   const { logout, isMaintenanceMode, user, isSuperAdmin, hasPermission } = useAdmin();
   const isMobile = useIsMobile();
 
-  // Read URL parameters for event editor
+  // Read URL parameters on mount and when URL changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-      if (id) {
-        setEventEditorId(id);
-      } else {
-        setEventEditorId(undefined);
+      
+      // Read section parameter
+      const section = params.get('section');
+      if (section && section !== activeSection) {
+        setActiveSection(section as AdminSection);
       }
+      
+      // Read id parameter for event editor
+      const id = params.get('id');
+      setEventEditorId(id || undefined);
     }
+  }, []);
+
+  // Listen for URL changes (for navigation within admin panel)
+  useEffect(() => {
+    const handleUrlChange = () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        
+        const section = params.get('section');
+        if (section && section !== activeSection) {
+          setActiveSection(section as AdminSection);
+        }
+        
+        const id = params.get('id');
+        setEventEditorId(id || undefined);
+      }
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    return () => window.removeEventListener('popstate', handleUrlChange);
   }, [activeSection]);
 
   // Close sidebar on escape key

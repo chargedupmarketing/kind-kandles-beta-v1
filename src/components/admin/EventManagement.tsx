@@ -180,7 +180,13 @@ export default function EventManagement() {
           </p>
         </div>
         <button
-          onClick={() => window.location.href = '/restricted/admin?section=event-editor'}
+          onClick={() => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('section', 'event-editor');
+            url.searchParams.delete('id');
+            window.history.pushState({}, '', url);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }}
           className="btn-primary flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
@@ -259,7 +265,13 @@ export default function EventManagement() {
               : 'Create your first event to get started'}
           </p>
           <button
-            onClick={() => window.location.href = '/restricted/admin?section=event-editor'}
+            onClick={() => {
+              const url = new URL(window.location.href);
+              url.searchParams.set('section', 'event-editor');
+              url.searchParams.delete('id');
+              window.history.pushState({}, '', url);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }}
             className="btn-primary inline-flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -349,7 +361,13 @@ export default function EventManagement() {
                 {/* Actions */}
                 <div className="flex gap-2">
                   <button
-                    onClick={() => window.location.href = `/restricted/admin?section=event-editor&id=${event.id}`}
+                    onClick={() => {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set('section', 'event-editor');
+                      url.searchParams.set('id', event.id);
+                      window.history.pushState({}, '', url);
+                      window.dispatchEvent(new PopStateEvent('popstate'));
+                    }}
                     className="flex-1 px-3 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                   >
                     <Edit className="h-4 w-4" />
