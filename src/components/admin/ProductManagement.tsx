@@ -91,6 +91,7 @@ const PRODUCT_TYPE_PRESETS = [
   { value: 'candle', label: '🕯️ Candle', tags: ['candle', 'handmade'] },
   { value: 'body-butter', label: '✨ Body Butter', tags: ['skincare', 'body-butter', 'handmade'] },
   { value: 'body-oil', label: '🌿 Body Oil', tags: ['skincare', 'body-oil', 'natural'] },
+  { value: 'hair-oil', label: '💆 Hair Oil', tags: ['haircare', 'hair-oil', 'natural'] },
   { value: 'room-spray', label: '🌸 Room Spray', tags: ['room-spray', 'fragrance'] },
   { value: 'bar-soap', label: '🧼 Bar Soap', tags: ['skincare', 'soap', 'handmade'] },
   { value: 'lotion', label: '🧴 Lotion', tags: ['skincare', 'lotion', 'handmade'] },
@@ -2134,6 +2135,7 @@ export default function ProductManagement() {
                 <option value="type:ROOM SPRAY">Set Type: ROOM SPRAY</option>
                 <option value="type:BODY BUTTER">Set Type: BODY BUTTER</option>
                 <option value="type:BODY OIL">Set Type: BODY OIL</option>
+                <option value="type:HAIR OIL">Set Type: HAIR OIL</option>
                 <option value="type:BAR SOAP">Set Type: BAR SOAP</option>
                 <option value="type:LOTION">Set Type: LOTION</option>
                 <option value="type:FOAMING BODY SCRUB">Set Type: FOAMING BODY SCRUB</option>
