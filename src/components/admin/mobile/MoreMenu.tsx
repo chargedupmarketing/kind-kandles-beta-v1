@@ -93,7 +93,6 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
         { id: 'featured', label: 'Featured', icon: Star, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
         { id: 'email-templates', label: 'Emails', icon: Mail, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
         { id: 'blog', label: 'Blog', icon: FileText, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-        { id: 'menu', label: 'Nav', icon: Menu, color: 'text-gray-600', bgColor: 'bg-gray-100' },
         { id: 'files', label: 'Files', icon: HardDrive, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
       ],
     },

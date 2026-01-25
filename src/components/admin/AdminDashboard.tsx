@@ -36,7 +36,6 @@ import {
   Calendar
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
-import MenuManagement from './MenuManagement';
 import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
@@ -64,7 +63,7 @@ import EventEditor from './EventEditor';
 import EventBookings from './EventBookings';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings';
+type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -296,11 +295,6 @@ export default function AdminDashboard() {
       defaultOpen: false,
       items: [
         {
-          id: 'menu' as AdminSection,
-          label: 'Navigation Menu',
-          icon: Menu,
-        },
-        {
           id: 'files' as AdminSection,
           label: 'File Storage',
           icon: HardDrive,
@@ -355,8 +349,6 @@ export default function AdminDashboard() {
         return <EmailManagement />;
       case 'blog':
         return <BlogManagement />;
-      case 'menu':
-        return <MenuManagement />;
       case 'files':
         return <FileManagement />;
       case 'contacts':
