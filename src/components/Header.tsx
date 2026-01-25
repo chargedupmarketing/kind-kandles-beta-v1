@@ -64,7 +64,13 @@ const Header = () => {
             { name: 'Natural Handmade Bar Soap', href: '/collections/skincare/natural-handmade-bar-soap' },
           ]
         },
-        { name: 'Body Oils', href: '/collections/body-oils' },
+        {
+          name: 'Body Oils',
+          href: '/collections/body-oils',
+          submenu: [
+            { name: 'Hair Oil', href: '/collections/hair-oils' },
+          ]
+        },
         { name: 'Room Sprays', href: '/collections/room-sprays' },
         { name: 'Clothing & Accessories', href: '/collections/clothing-accessories' },
         { name: 'My Kind Customs', href: '/customs' },

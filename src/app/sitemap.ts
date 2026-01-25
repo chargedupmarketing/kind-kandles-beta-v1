@@ -23,6 +23,7 @@ const staticPages = [
   { path: '/collections/skincare/body-spray-mist', priority: 0.7, changeFrequency: 'weekly' as const },
   { path: '/collections/skincare/handmade-lotion', priority: 0.7, changeFrequency: 'weekly' as const },
   { path: '/collections/body-oils', priority: 0.8, changeFrequency: 'weekly' as const },
+  { path: '/collections/hair-oils', priority: 0.7, changeFrequency: 'weekly' as const },
   { path: '/collections/room-sprays', priority: 0.8, changeFrequency: 'weekly' as const },
   { path: '/collections/clothing-accessories', priority: 0.7, changeFrequency: 'weekly' as const },
   { path: '/collections/calm-down-girl', priority: 0.7, changeFrequency: 'weekly' as const },
