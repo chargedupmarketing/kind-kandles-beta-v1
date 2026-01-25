@@ -19,6 +19,19 @@ async function verifyToken(token: string): Promise<any> {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Handle CORS preflight requests for API routes
+  if (request.method === 'OPTIONS' && pathname.startsWith('/api/')) {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET,DELETE,PATCH,POST,PUT,OPTIONS',
+        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
+      },
+    });
+  }
+
   // Handle admin route protection
   if (pathname.startsWith('/restricted/admin')) {
     const adminToken = request.cookies.get('admin-token')?.value;
@@ -65,6 +78,14 @@ export async function middleware(request: NextRequest) {
   response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
+  // Add CORS headers to API responses
+  if (pathname.startsWith('/api/')) {
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT,OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+  }
+  
   // CSP for admin pages
   if (pathname.startsWith('/restricted')) {
     response.headers.set(
@@ -78,7 +99,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/:path*',
     '/restricted/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icons|manifest.json|sw.js).*)',
   ],
 };
