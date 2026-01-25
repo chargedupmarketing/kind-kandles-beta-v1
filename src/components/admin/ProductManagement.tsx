@@ -1261,37 +1261,76 @@ export default function ProductManagement() {
                     />
                   </div>
 
-                  {/* Collection & Status */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Collection
-                      </label>
-                      <select
-                        value={formData.collection_id}
-                        onChange={(e) => setFormData({ ...formData, collection_id: e.target.value })}
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
-                      >
-                        <option value="">Select collection</option>
-                        {collections.map((c) => (
-                          <option key={c.id} value={c.id}>{c.title}</option>
-                        ))}
-                      </select>
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      Status
+                    </label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                      className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
+                    >
+                      <option value="draft">🔒 Draft (Hidden)</option>
+                      <option value="active">✅ Active (Visible)</option>
+                      <option value="archived">📦 Archived</option>
+                    </select>
+                  </div>
+
+                  {/* Collections */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                      <Tag className="inline h-4 w-4 mr-1" />
+                      Collections
+                    </label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {formData.tags.filter(tag => tag.toLowerCase().includes('collection')).map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="hover:bg-purple-200 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                        Status
-                      </label>
-                      <select
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                        className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
-                      >
-                        <option value="draft">🔒 Draft (Hidden)</option>
-                        <option value="active">✅ Active (Visible)</option>
-                        <option value="archived">📦 Archived</option>
-                      </select>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Add collection tag (e.g., Calm Down Girl Collection)"
+                          className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const value = (e.target as HTMLInputElement).value.trim();
+                              if (value) {
+                                addTag(value);
+                                (e.target as HTMLInputElement).value = '';
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addTag('Calm Down Girl Collection')}
+                          className="px-3 py-1 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full transition-colors"
+                        >
+                          + Calm Down Girl Collection
+                        </button>
+                      </div>
                     </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Add collection tags to group products together (e.g., "Calm Down Girl Collection")
+                    </p>
                   </div>
 
                   {/* Candle-specific: Scent Profile */}
@@ -1350,10 +1389,10 @@ export default function ProductManagement() {
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                       <Tag className="inline h-4 w-4 mr-1" />
-                      Tags
+                      Product Tags
                     </label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {formData.tags.map((tag) => (
+                      {formData.tags.filter(tag => !tag.toLowerCase().includes('collection')).map((tag) => (
                         <span
                           key={tag}
                           className="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm"
@@ -1372,7 +1411,7 @@ export default function ProductManagement() {
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="Add a tag and press Enter"
+                        placeholder="Add a product tag and press Enter"
                         className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500 dark:bg-gray-800 dark:border-gray-700"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -1384,7 +1423,7 @@ export default function ProductManagement() {
                       />
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
-                      Suggested: handmade, natural, vegan, soy-wax, limited-edition
+                      Product attributes: handmade, natural, vegan, soy-wax, limited-edition (not for collections)
                     </p>
                   </div>
 
