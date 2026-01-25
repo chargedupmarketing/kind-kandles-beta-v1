@@ -195,3 +195,114 @@ export interface DiscountCode {
   created_at: string;
 }
 
+// =====================================================
+// EVENT SYSTEM TYPES
+// =====================================================
+
+export type EventType = 'workshop' | 'class' | 'community' | 'private' | 'other';
+export type LocationType = 'mobile' | 'fixed' | 'both';
+export type PricingModel = 'per_person' | 'flat_rate' | 'custom_quote' | 'tiered';
+export type OccurrenceStatus = 'available' | 'full' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+export type PaymentStatus = 'unpaid' | 'deposit_paid' | 'fully_paid' | 'refunded';
+
+export interface PriceTier {
+  min: number;
+  max: number;
+  price: number;
+}
+
+export interface EventCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  icon: string | null;
+  color: string | null;
+  position: number;
+  created_at: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  short_description: string | null;
+  event_type: EventType;
+  location_type: LocationType;
+  fixed_location_address: string | null;
+  duration_minutes: number;
+  min_participants: number;
+  max_participants: number;
+  pricing_model: PricingModel;
+  base_price: number | null;
+  price_tiers: PriceTier[] | null;
+  deposit_required: boolean;
+  deposit_amount: number | null;
+  image_url: string | null;
+  gallery_images: string[] | null;
+  includes: string[] | null;
+  requirements: string[] | null;
+  is_active: boolean;
+  featured: boolean;
+  created_at: string;
+  updated_at: string;
+  categories?: EventCategory[];
+  next_occurrence?: EventOccurrence;
+  upcoming_occurrences?: EventOccurrence[];
+}
+
+export interface EventOccurrence {
+  id: string;
+  event_id: string;
+  start_datetime: string;
+  end_datetime: string;
+  location_type: LocationType | null;
+  location_address: string | null;
+  max_participants: number | null;
+  current_bookings: number;
+  status: OccurrenceStatus;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  event?: Event;
+}
+
+export interface EventBooking {
+  id: string;
+  event_id: string;
+  occurrence_id: string | null;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  num_participants: number;
+  location_preference: LocationType | null;
+  requested_address: string | null;
+  requested_date: string | null;
+  requested_time: string | null;
+  special_requests: string | null;
+  total_price: number | null;
+  status: BookingStatus;
+  payment_status: PaymentStatus;
+  confirmation_sent_at: string | null;
+  admin_notes: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  submitted_at: string;
+  created_at: string;
+  updated_at: string;
+  event?: Event;
+  occurrence?: EventOccurrence;
+}export interface EventBookingFormData {
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  num_participants: number;
+  location_preference?: LocationType;
+  requested_address?: string;
+  requested_date?: string;
+  requested_time?: string;
+  special_requests?: string;
+  occurrence_id?: string;
+}

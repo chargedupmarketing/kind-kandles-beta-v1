@@ -32,6 +32,7 @@ const staticPages = [
   { path: '/about/refund-policy', priority: 0.5, changeFrequency: 'yearly' as const },
   { path: '/faq', priority: 0.7, changeFrequency: 'monthly' as const },
   { path: '/customs', priority: 0.8, changeFrequency: 'monthly' as const },
+  { path: '/events', priority: 0.9, changeFrequency: 'weekly' as const },
   { path: '/write-your-story', priority: 0.6, changeFrequency: 'monthly' as const },
   { path: '/blog', priority: 0.8, changeFrequency: 'weekly' as const },
   { path: '/blog/candles-color-psychology', priority: 0.6, changeFrequency: 'yearly' as const },
@@ -63,6 +64,30 @@ async function getProductPages(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
+async function getEventPages(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const { data: events, error } = await supabase
+      .from('events')
+      .select('slug, updated_at')
+      .eq('is_active', true);
+
+    if (error || !events) {
+      console.error('Error fetching events for sitemap:', error);
+      return [];
+    }
+
+    return events.map((event) => ({
+      url: `${baseUrl}/events/${event.slug}`,
+      lastModified: event.updated_at ? new Date(event.updated_at) : new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    }));
+  } catch (error) {
+    console.error('Error generating event sitemap:', error);
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Generate static page entries
   const staticEntries: MetadataRoute.Sitemap = staticPages.map((page) => ({
@@ -75,6 +100,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Get dynamic product pages
   const productEntries = await getProductPages();
 
-  return [...staticEntries, ...productEntries];
+  // Get dynamic event pages
+  const eventEntries = await getEventPages();
+
+  return [...staticEntries, ...productEntries, ...eventEntries];
 }
 
