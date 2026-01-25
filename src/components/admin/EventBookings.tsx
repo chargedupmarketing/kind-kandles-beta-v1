@@ -63,7 +63,7 @@ export default function EventBookings() {
       }
 
       // Status filter
-      if (filterStatus !== 'all' && booking.booking_status !== filterStatus) {
+      if (filterStatus !== 'all' && booking.status !== filterStatus) {
         return false;
       }
 
@@ -81,7 +81,7 @@ export default function EventBookings() {
       const response = await fetch(`/api/admin/events/bookings/${bookingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_status: status }),
+        body: JSON.stringify({ status }),
       });
 
       if (!response.ok) throw new Error('Failed to update booking');
@@ -150,9 +150,9 @@ export default function EventBookings() {
       booking.customer_name,
       booking.customer_email,
       booking.customer_phone || '',
-      booking.number_of_participants,
-      booking.total_price,
-      booking.booking_status,
+      booking.num_participants,
+      booking.total_price || 0,
+      booking.status,
       booking.payment_status,
       booking.special_requests || ''
     ]);
@@ -195,11 +195,11 @@ export default function EventBookings() {
   const stats = useMemo(() => {
     return {
       total: bookings.length,
-      pending: bookings.filter(b => b.booking_status === 'pending').length,
-      confirmed: bookings.filter(b => b.booking_status === 'confirmed').length,
+      pending: bookings.filter(b => b.status === 'pending').length,
+      confirmed: bookings.filter(b => b.status === 'confirmed').length,
       revenue: bookings
         .filter(b => b.payment_status === 'paid' || b.payment_status === 'deposit_paid')
-        .reduce((sum, b) => sum + b.total_price, 0),
+        .reduce((sum, b) => sum + (b.total_price || 0), 0),
     };
   }, [bookings]);
 
@@ -312,7 +312,7 @@ export default function EventBookings() {
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 {/* Left: Booking Info */}
                 <div className="flex-1 space-y-3">
-                  <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         {booking.event_title || 'Event'}
@@ -322,8 +322,8 @@ export default function EventBookings() {
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(booking.booking_status)}`}>
-                        {booking.booking_status}
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(booking.status)}`}>
+                        {booking.status}
                       </span>
                       <span className={`px-2 py-1 text-xs font-medium rounded ${getPaymentColor(booking.payment_status)}`}>
                         {booking.payment_status}
@@ -350,11 +350,11 @@ export default function EventBookings() {
                     )}
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <Users className="h-4 w-4" />
-                      <span>{booking.number_of_participants} participants</span>
+                      <span>{booking.num_participants} participants</span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
                       <DollarSign className="h-4 w-4" />
-                      <span className="font-semibold">${booking.total_price.toFixed(2)}</span>
+                      <span className="font-semibold">${(booking.total_price || 0).toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -370,7 +370,7 @@ export default function EventBookings() {
                 {/* Right: Actions */}
                 <div className="flex lg:flex-col gap-2">
                   <select
-                    value={booking.booking_status}
+                    value={booking.status}
                     onChange={(e) => handleUpdateStatus(booking.id, e.target.value as BookingStatus)}
                     className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >

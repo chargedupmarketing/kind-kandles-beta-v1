@@ -203,8 +203,8 @@ export type EventType = 'workshop' | 'class' | 'community' | 'private' | 'other'
 export type LocationType = 'mobile' | 'fixed' | 'both';
 export type PricingModel = 'per_person' | 'flat_rate' | 'custom_quote' | 'tiered';
 export type OccurrenceStatus = 'available' | 'full' | 'cancelled';
-export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
-export type PaymentStatus = 'unpaid' | 'deposit_paid' | 'fully_paid' | 'refunded';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+export type PaymentStatus = 'pending' | 'deposit_paid' | 'paid' | 'refunded' | 'failed';
 
 export interface PriceTier {
   min: number;
