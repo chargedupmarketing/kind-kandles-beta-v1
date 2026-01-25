@@ -65,7 +65,7 @@ const Header = () => {
           ]
         },
         { name: 'Body Oils', href: '/collections/body-oils' },
-        { name: 'Hair Oil', href: '/collections/hair-oils' },
+        { name: 'Hair Oils', href: '/collections/hair-oils' },
         { name: 'Room Sprays', href: '/collections/room-sprays' },
         { name: 'Clothing & Accessories', href: '/collections/clothing-accessories' },
         { name: 'My Kind Customs', href: '/customs' },
