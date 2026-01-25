@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Clock, Users, MapPin, CheckCircle, AlertCircle, Construction, Sparkles } from 'lucide-react';
+import { Clock, Users, MapPin, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import EventBookingForm from '@/components/EventBookingForm';
 import type { Event } from '@/lib/types';
 
@@ -78,55 +78,7 @@ export default async function EventDetailPage({
   }
 
   return (
-    <div className="min-h-screen dark:bg-slate-900 relative">
-      {/* Under Development Overlay */}
-      <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full p-8 text-center transform animate-fade-in">
-          {/* Icon */}
-          <div className="mb-6 flex justify-center">
-            <div className="relative">
-              <div className="w-20 h-20 bg-gradient-to-br from-teal-400 to-cyan-500 rounded-full flex items-center justify-center animate-pulse">
-                <Construction className="h-10 w-10 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center animate-bounce">
-                <Sparkles className="h-4 w-4 text-amber-800" />
-              </div>
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            🚧 Coming Soon! 🚧
-          </h2>
-
-          {/* Message */}
-          <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-            Our <span className="font-semibold text-teal-600 dark:text-teal-400">Events & Workshops</span> booking system 
-            is currently under final development. We're working hard to bring you an amazing experience!
-          </p>
-
-          {/* Contact Info */}
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-            In the meantime, reach out to us directly to book an event!
-          </p>
-
-          {/* Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a 
-              href="/about/contact" 
-              className="px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors"
-            >
-              Contact Us
-            </a>
-            <a 
-              href="/events" 
-              className="px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Back to Events
-            </a>
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen dark:bg-slate-900">
       {/* Breadcrumb */}
       <div className="bg-gray-50 dark:bg-gray-800 py-4 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

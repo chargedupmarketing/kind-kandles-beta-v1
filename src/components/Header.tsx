@@ -72,6 +72,7 @@ const Header = () => {
       ]
     },
     { name: 'Blog', href: '/blog' },
+    { name: 'Events', href: '/events' },
     { name: 'Write Your Story', href: '/write-your-story' },
     {
       name: 'About Us',

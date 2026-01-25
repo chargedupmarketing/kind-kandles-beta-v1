@@ -1,4 +1,4 @@
-import { Palette, Gift, Users, Clock, Construction, Sparkles } from 'lucide-react';
+import { Palette, Gift, Users, Clock } from 'lucide-react';
 
 export default function CustomsPage() {
   const customServices = [

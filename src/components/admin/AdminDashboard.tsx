@@ -32,7 +32,8 @@ import {
   HardDrive,
   Sparkles,
   Trash2,
-  Code
+  Code,
+  Calendar
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import MenuManagement from './MenuManagement';
@@ -58,9 +59,12 @@ import AIAssistant from './AIAssistant';
 import EmailManagement from './EmailManagement';
 import ShippingManagement from './ShippingManagement';
 import FileManagement from './FileManagement';
+import EventManagement from './EventManagement';
+import EventEditor from './EventEditor';
+import EventBookings from './EventBookings';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews';
+type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'menu' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -202,6 +206,24 @@ export default function AdminDashboard() {
       ]
     },
     {
+      id: 'events',
+      label: 'Events',
+      icon: Calendar,
+      defaultOpen: false,
+      items: [
+        {
+          id: 'events' as AdminSection,
+          label: 'All Events',
+          icon: Calendar,
+        },
+        {
+          id: 'event-bookings' as AdminSection,
+          label: 'Bookings',
+          icon: ClipboardList,
+        },
+      ]
+    },
+    {
       id: 'system',
       label: 'System',
       icon: Wrench,
@@ -313,6 +335,12 @@ export default function AdminDashboard() {
         return <AdminSettings />;
       case 'ai-assistant':
         return <AIAssistant />;
+      case 'events':
+        return <EventManagement />;
+      case 'event-editor':
+        return <EventEditor onSave={() => setActiveSection('events')} onCancel={() => setActiveSection('events')} />;
+      case 'event-bookings':
+        return <EventBookings />;
       default:
         return <AnalyticsDashboard />;
     }
