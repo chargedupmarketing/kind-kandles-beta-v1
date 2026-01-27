@@ -9,7 +9,7 @@ export default function CalmDownGirlPage() {
       description='Our signature "Calm Down Girl" collection featuring soothing eucalyptus and spearmint across candles, skincare, and accessories. Perfect for relaxation and stress relief.'
       backLink="/collections/all"
       backLabel="Back to All Products"
-      tag="calm-down-girl"
+      tag="Calm Down Girl Collection"
     />
   );
 }

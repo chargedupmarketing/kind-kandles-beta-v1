@@ -16,6 +16,7 @@
     "cleanup-default-titles": "tsx scripts/cleanup-default-title-variants.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@headlessui/react": "^2.2.9",
     "@supabase/supabase-js": "^2.86.0",
     "@types/bcryptjs": "^2.4.6",

@@ -33,7 +33,8 @@ import {
   Sparkles,
   Trash2,
   Code,
-  Calendar
+  Calendar,
+  Brain
 } from 'lucide-react';
 import AdminSidebar from './AdminSidebar';
 import ContactSubmissions from './ContactSubmissions';
@@ -61,9 +62,10 @@ import FileManagement from './FileManagement';
 import EventManagement from './EventManagement';
 import EventEditor from './EventEditor';
 import EventBookings from './EventBookings';
+import ProductImageAnalyzer from './ProductImageAnalyzer';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings';
+type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'image-analyzer';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -295,6 +297,13 @@ export default function AdminDashboard() {
       defaultOpen: false,
       items: [
         {
+          id: 'image-analyzer' as AdminSection,
+          label: 'AI Image Analyzer',
+          icon: Brain,
+          badge: 'AI',
+          badgeColor: 'bg-blue-500'
+        },
+        {
           id: 'files' as AdminSection,
           label: 'File Storage',
           icon: HardDrive,
@@ -351,6 +360,8 @@ export default function AdminDashboard() {
         return <BlogManagement />;
       case 'files':
         return <FileManagement />;
+      case 'image-analyzer':
+        return <ProductImageAnalyzer />;
       case 'contacts':
         return <ContactSubmissions />;
       case 'survey':
