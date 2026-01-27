@@ -112,14 +112,47 @@ export default function ProductImageAnalyzer() {
     setApiKeyMissing(false);
 
     try {
-      const formData = new FormData();
-      images.forEach(image => {
-        formData.append('images', image);
-      });
+      // Step 1: Upload images to get URLs (one at a time to avoid payload size issues)
+      const uploadedImages: { file: File; url: string }[] = [];
+      
+      for (const image of images) {
+        try {
+          const formData = new FormData();
+          formData.append('file', image);
 
+          const uploadResponse = await fetch('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+          });
+
+          const uploadData = await uploadResponse.json();
+
+          if (!uploadResponse.ok) {
+            console.error(`Failed to upload ${image.name}:`, uploadData.error);
+            continue; // Skip this image
+          }
+
+          uploadedImages.push({
+            file: image,
+            url: uploadData.url,
+          });
+        } catch (uploadError) {
+          console.error(`Error uploading ${image.name}:`, uploadError);
+          continue; // Skip this image
+        }
+      }
+
+      if (uploadedImages.length === 0) {
+        throw new Error('Failed to upload any images. Please try again.');
+      }
+
+      // Step 2: Send image URLs to AI analyzer
       const response = await fetch('/api/admin/ai/analyze-product-image', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrls: uploadedImages.map(img => img.url),
+        }),
       });
 
       const data = await response.json();

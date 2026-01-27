@@ -34,38 +34,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
-    const files = formData.getAll('images') as File[];
+    const body = await request.json();
+    const { imageUrls } = body;
 
-    if (!files || files.length === 0) {
+    if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
       return NextResponse.json(
-        { error: 'No images provided' },
+        { error: 'No image URLs provided' },
         { status: 400 }
       );
     }
 
-    if (files.length > 10) {
+    if (imageUrls.length > 10) {
       return NextResponse.json(
         { error: 'Maximum 10 images per batch' },
         { status: 400 }
       );
-    }
-
-    // Validate all files
-    for (const file of files) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        return NextResponse.json(
-          { error: `Invalid file type: ${file.name}. Allowed: JPEG, PNG, WebP` },
-          { status: 400 }
-        );
-      }
-
-      if (file.size > MAX_FILE_SIZE) {
-        return NextResponse.json(
-          { error: `File too large: ${file.name}. Maximum size is 10MB` },
-          { status: 400 }
-        );
-      }
     }
 
     // Fetch all products from database
@@ -109,9 +92,9 @@ export async function POST(request: NextRequest) {
     const analyses: ImageAnalysis[] = [];
     const batchSize = 3;
 
-    for (let i = 0; i < files.length; i += batchSize) {
-      const batch = files.slice(i, i + batchSize);
-      const batchPromises = batch.map(file => analyzeImage(file, anthropic, products as Product[]));
+    for (let i = 0; i < imageUrls.length; i += batchSize) {
+      const batch = imageUrls.slice(i, i + batchSize);
+      const batchPromises = batch.map((url: string) => analyzeImage(url, anthropic, products as Product[]));
       const batchResults = await Promise.all(batchPromises);
       analyses.push(...batchResults);
     }
@@ -140,23 +123,31 @@ export async function POST(request: NextRequest) {
 }
 
 async function analyzeImage(
-  file: File,
+  imageUrl: string,
   anthropic: Anthropic,
   products: Product[]
 ): Promise<ImageAnalysis> {
   try {
-    // Convert image to base64
-    const arrayBuffer = await file.arrayBuffer();
+    // Fetch image from URL
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch image from URL: ${imageResponse.statusText}`);
+    }
+
+    const arrayBuffer = await imageResponse.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
     
-    // Determine media type
+    // Determine media type from content-type header or URL extension
+    const contentType = imageResponse.headers.get('content-type') || '';
     let mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' = 'image/jpeg';
-    if (file.type === 'image/png') mediaType = 'image/png';
-    else if (file.type === 'image/webp') mediaType = 'image/webp';
-    else if (file.type === 'image/gif') mediaType = 'image/gif';
-
-    // Create a temporary URL for the image (for frontend display)
-    const imageUrl = `data:${file.type};base64,${base64}`;
+    
+    if (contentType.includes('png') || imageUrl.toLowerCase().endsWith('.png')) {
+      mediaType = 'image/png';
+    } else if (contentType.includes('webp') || imageUrl.toLowerCase().endsWith('.webp')) {
+      mediaType = 'image/webp';
+    } else if (contentType.includes('gif') || imageUrl.toLowerCase().endsWith('.gif')) {
+      mediaType = 'image/gif';
+    }
 
     // Call Claude Vision API
     const message = await anthropic.messages.create({
