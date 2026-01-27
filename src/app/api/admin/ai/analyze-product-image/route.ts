@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { createClient } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 import { matchProducts, ExtractedInfo, Product } from '@/lib/imageMatching';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch all products from database
-    const supabase = createClient();
+    const supabase = createServerClient();
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select(`

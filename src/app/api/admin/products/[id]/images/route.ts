@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase';
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function POST(
       );
     }
 
-    const supabase = createClient();
+    const supabase = createServerClient();
 
     // Check if image URL already exists for this product
     const { data: existingImages } = await supabase
@@ -114,7 +114,7 @@ export async function DELETE(
       );
     }
 
-    const supabase = createClient();
+    const supabase = createServerClient();
 
     // Delete the image
     const { error: deleteError } = await supabase
