@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/admin/upload.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/admin/ai/analyze-product-image.ts": {
+      "maxDuration": 300,
+      "memory": 3008
+    }
+  }
+}

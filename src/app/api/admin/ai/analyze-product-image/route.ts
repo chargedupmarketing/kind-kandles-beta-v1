@@ -3,6 +3,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@/lib/supabase';
 import { matchProducts, ExtractedInfo, Product } from '@/lib/imageMatching';
 
+// Configure route for longer processing time
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes for AI processing
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 

@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Configure route to accept larger payloads
+export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 seconds timeout
+
 // Cloudinary configuration (free tier: 25GB storage, 25GB bandwidth/month)
 // Sign up at https://cloudinary.com/ and get your credentials
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
