@@ -93,7 +93,6 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
         { id: 'featured', label: 'Featured', icon: Star, color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
         { id: 'email-templates', label: 'Emails', icon: Mail, color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
         { id: 'blog', label: 'Blog', icon: FileText, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-        { id: 'files', label: 'Files', icon: HardDrive, color: 'text-emerald-600', bgColor: 'bg-emerald-50' },
       ],
     },
     {
@@ -141,9 +140,20 @@ export default function MoreMenu({ activeSection, onSectionChange, renderContent
     },
   ];
 
+  // Developer tool sections to hide from mobile
+  const developerToolSections: AdminSection[] = [
+    'files',
+    'cleanup-names',
+    'cleanup-default-titles',
+    'image-analyzer',
+    'users'
+  ];
+
   const filteredCategories = menuCategories.map(category => ({
     ...category,
     items: category.items.filter(item => {
+      // Hide all developer tools from mobile
+      if (developerToolSections.includes(item.id)) return false;
       if (item.requiresSuperAdmin && !isSuperAdmin) return false;
       if (item.requiresPermission && !hasPermission(item.requiresPermission)) return false;
       return true;
