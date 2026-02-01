@@ -326,57 +326,54 @@ export default function ProductImageAnalyzer() {
     setShowCreateModal(true);
   };
 
-  const createProductAndAssign = async () => {
+  const createProductInquiry = async () => {
     const currentAnalysis = analyses[currentImageIndex];
     if (!currentAnalysis) return;
 
     setIsCreatingProduct(true);
     try {
-      const response = await fetch('/api/admin/products/create-with-image', {
+      const response = await fetch('/api/admin/product-inquiries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: createFormData.title,
-          productType: createFormData.productType,
-          price: createFormData.price,
-          description: createFormData.description,
+          aiProductName: currentAnalysis.extractedInfo.productName,
+          aiScentName: currentAnalysis.extractedInfo.scentName,
+          aiProductType: currentAnalysis.extractedInfo.productType,
+          aiColors: currentAnalysis.extractedInfo.visualFeatures.colors,
+          aiContainerType: currentAnalysis.extractedInfo.visualFeatures.containerType,
+          aiSize: currentAnalysis.extractedInfo.visualFeatures.size,
           imageUrl: currentAnalysis.imageUrl,
           imageAltText: createFormData.title,
+          suggestedTitle: createFormData.title,
+          suggestedPrice: parseFloat(createFormData.price),
+          suggestedDescription: createFormData.description,
+          suggestedProductType: createFormData.productType,
+          suggestedTags: [createFormData.productType.toLowerCase()],
+          priority: 'normal',
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create product');
+        throw new Error(data.error || 'Failed to create product inquiry');
       }
-
-      // Add to recently created products
-      const newProduct: RecentlyCreatedProduct = {
-        id: data.product.id,
-        title: data.product.title,
-        handle: data.product.handle,
-        createdAt: Date.now(),
-        imageCount: 1,
-      };
-
-      setRecentlyCreatedProducts(prev => [newProduct, ...prev]);
 
       // Update analysis status
       setAnalyses(prev =>
         prev.map(a =>
           a.imageId === currentAnalysis.imageId
-            ? { ...a, assigned: true, selectedProductId: data.product.id }
+            ? { ...a, assigned: true, selectedProductId: 'inquiry-' + data.inquiry.id }
             : a
         )
       );
 
       setShowCreateModal(false);
-      showToast('success', `Product "${data.product.title}" created with image`);
+      showToast('success', `Product inquiry created for "${createFormData.title}"`);
       advanceToNextImage();
     } catch (error) {
-      console.error('Error creating product:', error);
-      showToast('error', error instanceof Error ? error.message : 'Failed to create product');
+      console.error('Error creating product inquiry:', error);
+      showToast('error', error instanceof Error ? error.message : 'Failed to create inquiry');
     } finally {
       setIsCreatingProduct(false);
     }
@@ -483,7 +480,7 @@ export default function ProductImageAnalyzer() {
             <div className="flex items-center justify-between p-6 border-b dark:border-gray-700 bg-gradient-to-r from-blue-500 to-purple-500">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <Plus className="h-5 w-5" />
-                Create New Product
+                Create Product Inquiry
               </h3>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -595,19 +592,19 @@ export default function ProductImageAnalyzer() {
                 Cancel
               </button>
               <button
-                onClick={createProductAndAssign}
+                onClick={createProductInquiry}
                 disabled={isCreatingProduct || !createFormData.title || !createFormData.price}
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isCreatingProduct ? (
                   <>
                     <Loader className="h-4 w-4 animate-spin" />
-                    Creating...
+                    Creating Inquiry...
                   </>
                 ) : (
                   <>
                     <Check className="h-4 w-4" />
-                    Create & Assign Image
+                    Send to Product Inquiry Jobs
                   </>
                 )}
               </button>
@@ -882,7 +879,7 @@ export default function ProductImageAnalyzer() {
                           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
                         >
                           <Plus className="h-5 w-5" />
-                          Create New Product
+                          Create Product Inquiry
                           {currentAnalysis.extractedInfo.productName && (
                             <span className="text-xs opacity-75">
                               ({currentAnalysis.extractedInfo.productName})
@@ -1002,7 +999,7 @@ export default function ProductImageAnalyzer() {
                         </div>
                       )}
 
-                      {/* Create New Product Option */}
+                      {/* Create Product Inquiry Option */}
                       {(currentAnalysis.matches.length === 0 || 
                         (currentAnalysis.matches.length > 0 && currentAnalysis.matches[0].confidence < 50)) && (
                         <div className="border border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-4">
@@ -1011,7 +1008,7 @@ export default function ProductImageAnalyzer() {
                             className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                           >
                             <Plus className="h-5 w-5" />
-                            Create New Product
+                            Create Product Inquiry
                             {currentAnalysis.matches.length > 0 && (
                               <span className="text-xs opacity-75">(Low confidence matches)</span>
                             )}

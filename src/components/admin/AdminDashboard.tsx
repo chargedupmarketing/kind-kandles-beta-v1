@@ -41,6 +41,7 @@ import ContactSubmissions from './ContactSubmissions';
 import StoryManagement from './StoryManagement';
 import SurveyManagement from './SurveyManagement';
 import ProductManagement from './ProductManagement';
+import ProductInquiryJobs from './ProductInquiryJobs';
 import ProductNameCleanup from './ProductNameCleanup';
 import DefaultTitleCleanup from './DefaultTitleCleanup';
 import OrderManagement from './OrderManagement';
@@ -65,7 +66,7 @@ import EventBookings from './EventBookings';
 import ProductImageAnalyzer from './ProductImageAnalyzer';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'image-analyzer';
+type AdminSection = 'dashboard' | 'products' | 'product-inquiries' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'image-analyzer';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -175,6 +176,13 @@ export default function AdminDashboard() {
           id: 'products' as AdminSection,
           label: 'Products',
           icon: Package,
+        },
+        {
+          id: 'product-inquiries' as AdminSection,
+          label: 'New Product Inquiry Jobs',
+          icon: ClipboardList,
+          badge: 'NEW',
+          badgeColor: 'bg-blue-500'
         },
         {
           id: 'customers' as AdminSection,
@@ -334,6 +342,8 @@ export default function AdminDashboard() {
         return <AnalyticsDashboard />;
       case 'products':
         return <ProductManagement />;
+      case 'product-inquiries':
+        return <ProductInquiryJobs />;
       case 'cleanup-names':
         return <ProductNameCleanup />;
       case 'cleanup-default-titles':
