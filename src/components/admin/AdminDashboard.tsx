@@ -64,6 +64,7 @@ import EventManagement from './EventManagement';
 import EventEditor from './EventEditor';
 import EventBookings from './EventBookings';
 import EventFormsManagement from './EventFormsManagement';
+import EventFormEditor from './EventFormEditor';
 import ProductImageAnalyzer from './ProductImageAnalyzer';
 import MobileAppShell from './mobile/MobileAppShell';
 
@@ -401,8 +402,7 @@ export default function AdminDashboard() {
       case 'event-forms':
         return <EventFormsManagement />;
       case 'event-form-editor':
-        // TODO: Implement form editor
-        return <EventFormsManagement />;
+        return <EventFormEditor formId={eventEditorId} onSave={() => setActiveSection('event-forms')} onCancel={() => setActiveSection('event-forms')} />;
       default:
         return <AnalyticsDashboard />;
     }
