@@ -70,8 +70,8 @@ CREATE POLICY "Admin users have full access to product inquiries"
   USING (
     EXISTS (
       SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-      AND admin_users.role IN ('super_admin', 'admin')
+      WHERE admin_users.id = auth.uid()
+      AND admin_users.is_active = true
     )
   );
 
