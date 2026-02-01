@@ -172,6 +172,7 @@ export default function ProductImageAnalyzer() {
         throw new Error(data.error || 'Failed to analyze images');
       }
 
+      console.log('Analysis results:', data.analyses);
       setAnalyses(data.analyses || []);
       setCurrentImageIndex(0);
     } catch (error) {
@@ -429,14 +430,38 @@ export default function ProductImageAnalyzer() {
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     Uploaded Image
                   </h3>
-                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
-                    <Image
-                      src={currentAnalysis.imageUrl}
-                      alt="Analyzed product"
-                      width={400}
-                      height={400}
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4 relative">
+                    {currentAnalysis.imageUrl ? (
+                      <img
+                        src={currentAnalysis.imageUrl}
+                        alt="Analyzed product"
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                        onError={(e) => {
+                          console.error('Failed to load image:', currentAnalysis.imageUrl);
+                          const target = e.currentTarget;
+                          target.style.display = 'none';
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `
+                              <div class="flex items-center justify-center h-full">
+                                <div class="text-center p-4">
+                                  <p class="text-red-600 dark:text-red-400 mb-2">Failed to load image</p>
+                                  <p class="text-xs text-gray-500 dark:text-gray-400 break-all">${currentAnalysis.imageUrl}</p>
+                                </div>
+                              </div>
+                            `;
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center text-gray-500 dark:text-gray-400">
+                          <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                          <p>No image URL</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
