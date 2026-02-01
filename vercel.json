@@ -1,10 +1,10 @@
 {
   "functions": {
-    "api/admin/upload.ts": {
+    "src/app/api/admin/upload/route.ts": {
       "maxDuration": 60,
       "memory": 1024
     },
-    "api/admin/ai/analyze-product-image.ts": {
+    "src/app/api/admin/ai/analyze-product-image/route.ts": {
       "maxDuration": 300,
       "memory": 3008
     }
