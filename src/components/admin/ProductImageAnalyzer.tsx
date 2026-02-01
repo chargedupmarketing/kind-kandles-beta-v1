@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   Brain,
@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
+  ChevronDown,
+  ChevronUp,
+  Package,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -51,6 +54,33 @@ interface ImageAnalysis {
   assigned?: boolean;
 }
 
+interface RecentlyCreatedProduct {
+  id: string;
+  title: string;
+  handle: string;
+  createdAt: number;
+  imageCount: number;
+}
+
+interface CreateProductFormData {
+  title: string;
+  productType: string;
+  price: string;
+  description: string;
+}
+
+// Product type presets with default prices
+const PRODUCT_TYPE_PRESETS = [
+  { value: 'Candle', label: 'Candle', defaultPrice: 25 },
+  { value: 'Body Butter', label: 'Body Butter', defaultPrice: 18 },
+  { value: 'Body Oil', label: 'Body Oil', defaultPrice: 15 },
+  { value: 'Hair Oil', label: 'Hair Oil', defaultPrice: 16 },
+  { value: 'Room Spray', label: 'Room Spray', defaultPrice: 12 },
+  { value: 'Bar Soap', label: 'Bar Soap', defaultPrice: 8 },
+  { value: 'Lotion', label: 'Lotion', defaultPrice: 14 },
+  { value: 'Body Scrub', label: 'Body Scrub', defaultPrice: 16 },
+];
+
 export default function ProductImageAnalyzer() {
   const [images, setImages] = useState<File[]>([]);
   const [analyses, setAnalyses] = useState<ImageAnalysis[]>([]);
@@ -58,7 +88,48 @@ export default function ProductImageAnalyzer() {
   const [dragActive, setDragActive] = useState(false);
   const [apiKeyMissing, setApiKeyMissing] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [recentlyCreatedProducts, setRecentlyCreatedProducts] = useState<RecentlyCreatedProduct[]>([]);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createFormData, setCreateFormData] = useState<CreateProductFormData>({
+    title: '',
+    productType: 'Candle',
+    price: '25',
+    description: '',
+  });
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showRecentlyCreated, setShowRecentlyCreated] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Session persistence for recently created products
+  useEffect(() => {
+    const saved = sessionStorage.getItem('recentlyCreatedProducts');
+    if (saved) {
+      try {
+        setRecentlyCreatedProducts(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to parse recently created products:', e);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (recentlyCreatedProducts.length > 0) {
+      sessionStorage.setItem('recentlyCreatedProducts', JSON.stringify(recentlyCreatedProducts));
+    } else {
+      sessionStorage.removeItem('recentlyCreatedProducts');
+    }
+  }, [recentlyCreatedProducts]);
+
+  // Toast auto-dismiss
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -183,7 +254,19 @@ export default function ProductImageAnalyzer() {
     }
   };
 
-  const assignImageToProduct = async (analysis: ImageAnalysis, productId: string) => {
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToastMessage({ type, message });
+  };
+
+  const advanceToNextImage = () => {
+    if (currentImageIndex < analyses.length - 1) {
+      setCurrentImageIndex(currentImageIndex + 1);
+    } else {
+      showToast('success', 'All images processed!');
+    }
+  };
+
+  const assignImageToProduct = async (analysis: ImageAnalysis, productId: string, productTitle?: string) => {
     try {
       const response = await fetch(`/api/admin/products/${productId}/images`, {
         method: 'POST',
@@ -209,10 +292,93 @@ export default function ProductImageAnalyzer() {
         )
       );
 
-      alert('Image successfully added to product!');
+      // Update image count for recently created products
+      setRecentlyCreatedProducts(prev =>
+        prev.map(p =>
+          p.id === productId
+            ? { ...p, imageCount: p.imageCount + 1 }
+            : p
+        )
+      );
+
+      showToast('success', `Image assigned to ${productTitle || 'product'}`);
+      advanceToNextImage();
     } catch (error) {
       console.error('Error assigning image:', error);
-      alert(error instanceof Error ? error.message : 'Failed to assign image');
+      showToast('error', error instanceof Error ? error.message : 'Failed to assign image');
+    }
+  };
+
+  const openCreateModal = () => {
+    const currentAnalysis = analyses[currentImageIndex];
+    if (currentAnalysis) {
+      const extractedInfo = currentAnalysis.extractedInfo;
+      const detectedType = extractedInfo.productType || 'Candle';
+      const preset = PRODUCT_TYPE_PRESETS.find(p => p.value === detectedType) || PRODUCT_TYPE_PRESETS[0];
+      
+      setCreateFormData({
+        title: extractedInfo.productName || '',
+        productType: preset.value,
+        price: preset.defaultPrice.toString(),
+        description: extractedInfo.scentName ? `Scent: ${extractedInfo.scentName}` : '',
+      });
+    }
+    setShowCreateModal(true);
+  };
+
+  const createProductAndAssign = async () => {
+    const currentAnalysis = analyses[currentImageIndex];
+    if (!currentAnalysis) return;
+
+    setIsCreatingProduct(true);
+    try {
+      const response = await fetch('/api/admin/products/create-with-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: createFormData.title,
+          productType: createFormData.productType,
+          price: createFormData.price,
+          description: createFormData.description,
+          imageUrl: currentAnalysis.imageUrl,
+          imageAltText: createFormData.title,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create product');
+      }
+
+      // Add to recently created products
+      const newProduct: RecentlyCreatedProduct = {
+        id: data.product.id,
+        title: data.product.title,
+        handle: data.product.handle,
+        createdAt: Date.now(),
+        imageCount: 1,
+      };
+
+      setRecentlyCreatedProducts(prev => [newProduct, ...prev]);
+
+      // Update analysis status
+      setAnalyses(prev =>
+        prev.map(a =>
+          a.imageId === currentAnalysis.imageId
+            ? { ...a, assigned: true, selectedProductId: data.product.id }
+            : a
+        )
+      );
+
+      setShowCreateModal(false);
+      showToast('success', `Product "${data.product.title}" created with image`);
+      advanceToNextImage();
+    } catch (error) {
+      console.error('Error creating product:', error);
+      showToast('error', error instanceof Error ? error.message : 'Failed to create product');
+    } finally {
+      setIsCreatingProduct(false);
     }
   };
 
@@ -222,7 +388,7 @@ export default function ProductImageAnalyzer() {
     );
 
     if (highConfidence.length === 0) {
-      alert('No high confidence matches to confirm');
+      showToast('error', 'No high confidence matches to confirm');
       return;
     }
 
@@ -231,14 +397,18 @@ export default function ProductImageAnalyzer() {
     }
 
     for (const analysis of highConfidence) {
-      await assignImageToProduct(analysis, analysis.matches[0].productId);
+      await assignImageToProduct(analysis, analysis.matches[0].productId, analysis.matches[0].productTitle);
     }
+    
+    showToast('success', `Assigned ${highConfidence.length} images to products`);
   };
 
   const clearResults = () => {
     setImages([]);
     setAnalyses([]);
     setCurrentImageIndex(0);
+    setRecentlyCreatedProducts([]);
+    sessionStorage.removeItem('recentlyCreatedProducts');
   };
 
   const currentAnalysis = analyses[currentImageIndex];
@@ -258,6 +428,34 @@ export default function ProductImageAnalyzer() {
         </div>
       </div>
 
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-4 right-4 z-50 rounded-lg shadow-lg p-4 flex items-center gap-3 ${
+          toastMessage.type === 'success' 
+            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' 
+            : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+        }`}>
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+          ) : (
+            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+          )}
+          <p className={`text-sm font-medium ${
+            toastMessage.type === 'success' 
+              ? 'text-green-900 dark:text-green-200' 
+              : 'text-red-900 dark:text-red-200'
+          }`}>
+            {toastMessage.message}
+          </p>
+          <button
+            onClick={() => setToastMessage(null)}
+            className="ml-2"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* API Key Missing Warning */}
       {apiKeyMissing && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
@@ -273,6 +471,146 @@ export default function ProductImageAnalyzer() {
               <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-2">
                 Get your API key at <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-yellow-900">console.anthropic.com</a>
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Product Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-gray-700 bg-gradient-to-r from-blue-500 to-purple-500">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Create New Product
+              </h3>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-2 hover:bg-white/20 rounded-lg text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {/* AI Extracted Info Reference */}
+              {analyses[currentImageIndex]?.extractedInfo && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200 mb-2 flex items-center gap-2">
+                    <Brain className="h-4 w-4" />
+                    AI Detected Information
+                  </h4>
+                  <div className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
+                    {analyses[currentImageIndex].extractedInfo.productName && (
+                      <p>Name: {analyses[currentImageIndex].extractedInfo.productName}</p>
+                    )}
+                    {analyses[currentImageIndex].extractedInfo.scentName && (
+                      <p>Scent: {analyses[currentImageIndex].extractedInfo.scentName}</p>
+                    )}
+                    {analyses[currentImageIndex].extractedInfo.productType && (
+                      <p>Type: {analyses[currentImageIndex].extractedInfo.productType}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Product Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  value={createFormData.title}
+                  onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  placeholder="e.g., Lavender Dreams 8oz Candle"
+                />
+              </div>
+
+              {/* Product Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Product Type *
+                </label>
+                <select
+                  value={createFormData.productType}
+                  onChange={(e) => {
+                    const preset = PRODUCT_TYPE_PRESETS.find(p => p.value === e.target.value);
+                    setCreateFormData({
+                      ...createFormData,
+                      productType: e.target.value,
+                      price: preset ? preset.defaultPrice.toString() : createFormData.price,
+                    });
+                  }}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                >
+                  {PRODUCT_TYPE_PRESETS.map(preset => (
+                    <option key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Price */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Price *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={createFormData.price}
+                    onChange={(e) => setCreateFormData({ ...createFormData, price: e.target.value })}
+                    className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                    placeholder="25.00"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={createFormData.description}
+                  onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700"
+                  placeholder="Add product description..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 p-6 border-t dark:border-gray-700">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createProductAndAssign}
+                disabled={isCreatingProduct || !createFormData.title || !createFormData.price}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isCreatingProduct ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Create & Assign Image
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -381,11 +719,16 @@ export default function ProductImageAnalyzer() {
         <div className="space-y-4">
           {/* Bulk Actions */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4 flex-wrap">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Image {currentImageIndex + 1} of {analyses.length}
+                  Image {currentImageIndex + 1} of {analyses.length} ({analyses.filter(a => a.assigned).length} processed)
                 </span>
+                {recentlyCreatedProducts.length > 0 && (
+                  <span className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full font-medium">
+                    Recently Created: {recentlyCreatedProducts.length}
+                  </span>
+                )}
                 <div className="flex gap-2">
                   <button
                     onClick={() => setCurrentImageIndex(Math.max(0, currentImageIndex - 1))}
@@ -403,7 +746,7 @@ export default function ProductImageAnalyzer() {
                   </button>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={confirmAllHighConfidence}
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
@@ -524,7 +867,7 @@ export default function ProductImageAnalyzer() {
                         This image has been added to the product gallery
                       </p>
                     </div>
-                  ) : currentAnalysis.matches.length === 0 ? (
+                  ) : currentAnalysis.matches.length === 0 && recentlyCreatedProducts.length === 0 ? (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
                       <HelpCircle className="h-12 w-12 text-yellow-600 dark:text-yellow-400 mx-auto mb-3" />
                       <h4 className="font-semibold text-yellow-900 dark:text-yellow-200 mb-2 text-center">
@@ -533,20 +876,25 @@ export default function ProductImageAnalyzer() {
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 text-center mb-4">
                         The AI couldn't find a matching product in your catalog
                       </p>
-                      <div className="flex gap-2 justify-center">
-                        <button className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium">
-                          <Plus className="h-4 w-4 mr-2 inline" />
+                      <div className="flex justify-center">
+                        <button 
+                          onClick={openCreateModal}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+                        >
+                          <Plus className="h-5 w-5" />
                           Create New Product
-                        </button>
-                        <button className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm font-medium">
-                          <Search className="h-4 w-4 mr-2 inline" />
-                          Search Products
+                          {currentAnalysis.extractedInfo.productName && (
+                            <span className="text-xs opacity-75">
+                              ({currentAnalysis.extractedInfo.productName})
+                            </span>
+                          )}
                         </button>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {currentAnalysis.matches.map((match, index) => (
+                      {/* Existing Product Matches */}
+                      {currentAnalysis.matches.slice(0, 3).map((match, index) => (
                         <div
                           key={match.productId}
                           className={`border rounded-lg p-4 ${
@@ -590,7 +938,7 @@ export default function ProductImageAnalyzer() {
                           </ul>
 
                           <button
-                            onClick={() => assignImageToProduct(currentAnalysis, match.productId)}
+                            onClick={() => assignImageToProduct(currentAnalysis, match.productId, match.productTitle)}
                             className={`w-full py-2 rounded-lg font-medium text-sm transition-colors ${
                               index === 0 && currentAnalysis.autoAssignRecommended
                                 ? 'bg-green-600 text-white hover:bg-green-700'
@@ -604,6 +952,68 @@ export default function ProductImageAnalyzer() {
                           </button>
                         </div>
                       ))}
+
+                      {/* Recently Created Products Section */}
+                      {recentlyCreatedProducts.length > 0 && (
+                        <div className="border border-purple-300 dark:border-purple-700 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-purple-900 dark:text-purple-200 flex items-center gap-2">
+                              <Package className="h-4 w-4" />
+                              Recently Created ({recentlyCreatedProducts.length})
+                            </h4>
+                            <button
+                              onClick={() => setShowRecentlyCreated(!showRecentlyCreated)}
+                              className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300"
+                            >
+                              {showRecentlyCreated ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+
+                          {showRecentlyCreated && (
+                            <div className="space-y-2">
+                              {recentlyCreatedProducts.map((product) => (
+                                <div
+                                  key={product.id}
+                                  className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-purple-200 dark:border-purple-800"
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <h5 className="font-medium text-gray-900 dark:text-white text-sm">
+                                      {product.title}
+                                    </h5>
+                                    <span className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-1 rounded">
+                                      {product.imageCount} {product.imageCount === 1 ? 'image' : 'images'}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => assignImageToProduct(currentAnalysis, product.id, product.title)}
+                                    className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Add to This Product
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Create New Product Option */}
+                      {currentAnalysis.matches.length === 0 && (
+                        <div className="border border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-4">
+                          <button
+                            onClick={openCreateModal}
+                            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                          >
+                            <Plus className="h-5 w-5" />
+                            Create New Product
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
