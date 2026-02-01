@@ -21,6 +21,15 @@ export async function POST(request: NextRequest) {
 
     // Create the table using raw SQL
     const migrationSQL = `
+-- Create or replace the update_updated_at_column function if it doesn't exist
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create product_inquiries table for AI-detected products awaiting review
 CREATE TABLE IF NOT EXISTS product_inquiries (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
