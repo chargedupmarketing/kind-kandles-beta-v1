@@ -63,10 +63,11 @@ import FileManagement from './FileManagement';
 import EventManagement from './EventManagement';
 import EventEditor from './EventEditor';
 import EventBookings from './EventBookings';
+import EventFormsManagement from './EventFormsManagement';
 import ProductImageAnalyzer from './ProductImageAnalyzer';
 import MobileAppShell from './mobile/MobileAppShell';
 
-type AdminSection = 'dashboard' | 'products' | 'product-inquiries' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'image-analyzer';
+type AdminSection = 'dashboard' | 'products' | 'product-inquiries' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'event-forms' | 'event-form-editor' | 'image-analyzer';
 
 // Access Denied component for unauthorized sections
 function AccessDenied() {
@@ -268,6 +269,11 @@ export default function AdminDashboard() {
           label: 'Bookings',
           icon: ClipboardList,
         },
+        {
+          id: 'event-forms' as AdminSection,
+          label: 'Forms',
+          icon: FileText,
+        },
       ]
     },
     {
@@ -392,6 +398,11 @@ export default function AdminDashboard() {
         return <EventEditor eventId={eventEditorId} onSave={() => setActiveSection('events')} onCancel={() => setActiveSection('events')} />;
       case 'event-bookings':
         return <EventBookings />;
+      case 'event-forms':
+        return <EventFormsManagement />;
+      case 'event-form-editor':
+        // TODO: Implement form editor
+        return <EventFormsManagement />;
       default:
         return <AnalyticsDashboard />;
     }

@@ -20,6 +20,7 @@
     "@headlessui/react": "^2.2.9",
     "@supabase/supabase-js": "^2.86.0",
     "@types/bcryptjs": "^2.4.6",
+    "@types/react-signature-canvas": "^1.0.7",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "jose": "^6.1.1",
@@ -27,6 +28,7 @@
     "next": "^16.0.7",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "react-signature-canvas": "^1.1.0-alpha.2",
     "resend": "^6.5.2",
     "square": "^43.2.1"
   },

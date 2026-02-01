@@ -11,7 +11,7 @@ import MoreMenu from './MoreMenu';
 import { Shield, AlertTriangle, LogOut, Bell, User } from 'lucide-react';
 
 export type MobileTab = 'home' | 'orders' | 'products' | 'more';
-export type AdminSection = 'dashboard' | 'products' | 'product-inquiries' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'image-analyzer';
+export type AdminSection = 'dashboard' | 'products' | 'product-inquiries' | 'cleanup-names' | 'cleanup-default-titles' | 'orders' | 'fulfillment' | 'shipping' | 'shipping-guide' | 'customers' | 'discounts' | 'promotions' | 'featured' | 'blog' | 'email-templates' | 'files' | 'contacts' | 'stories' | 'survey' | 'settings' | 'users' | 'admin-settings' | 'ai-assistant' | 'reviews' | 'events' | 'event-editor' | 'event-bookings' | 'event-forms' | 'event-form-editor' | 'image-analyzer';
 
 interface MobileAppShellProps {
   children?: ReactNode;
