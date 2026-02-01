@@ -1003,7 +1003,8 @@ export default function ProductImageAnalyzer() {
                       )}
 
                       {/* Create New Product Option */}
-                      {currentAnalysis.matches.length === 0 && (
+                      {(currentAnalysis.matches.length === 0 || 
+                        (currentAnalysis.matches.length > 0 && currentAnalysis.matches[0].confidence < 50)) && (
                         <div className="border border-dashed border-blue-300 dark:border-blue-700 rounded-lg p-4">
                           <button
                             onClick={openCreateModal}
@@ -1011,6 +1012,9 @@ export default function ProductImageAnalyzer() {
                           >
                             <Plus className="h-5 w-5" />
                             Create New Product
+                            {currentAnalysis.matches.length > 0 && (
+                              <span className="text-xs opacity-75">(Low confidence matches)</span>
+                            )}
                           </button>
                         </div>
                       )}
