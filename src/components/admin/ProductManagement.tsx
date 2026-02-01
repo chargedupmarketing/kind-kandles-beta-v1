@@ -219,6 +219,8 @@ export default function ProductManagement() {
   const [stockUpdates, setStockUpdates] = useState<{ [variantId: string]: number }>({});
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all');
   const [isSavingStock, setIsSavingStock] = useState(false);
+  const [isOrganizingImages, setIsOrganizingImages] = useState(false);
+  const [organizeImagesProgress, setOrganizeImagesProgress] = useState('');
   
   // Variant management state
   const [editingVariants, setEditingVariants] = useState<any[]>([]);
@@ -985,6 +987,58 @@ export default function ProductManagement() {
     return changedVariants;
   };
 
+  // AI Image Organization Function
+  const organizeProductImages = async () => {
+    if (!confirm('This will use AI to analyze and reorganize product images so that images with whiter backgrounds appear first. This may take several minutes. Continue?')) {
+      return;
+    }
+
+    setIsOrganizingImages(true);
+    setOrganizeImagesProgress('Starting AI image organization...');
+
+    try {
+      // Get all products with images
+      const productsWithImages = products.filter(p => p.images && p.images.length > 1);
+      
+      if (productsWithImages.length === 0) {
+        alert('No products with multiple images found.');
+        setIsOrganizingImages(false);
+        setOrganizeImagesProgress('');
+        return;
+      }
+
+      setOrganizeImagesProgress(`Analyzing ${productsWithImages.length} products...`);
+
+      const productIds = productsWithImages.map(p => p.id);
+
+      const response = await fetch('/api/admin/products/organize-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to organize images');
+      }
+
+      setOrganizeImagesProgress('Complete! Refreshing products...');
+      
+      // Refresh products to show new image order
+      await fetchProducts();
+
+      alert(`✅ ${data.message}\n\nTotal images reorganized: ${data.totalImagesReorganized}`);
+      
+    } catch (error) {
+      console.error('Error organizing images:', error);
+      alert(error instanceof Error ? error.message : 'Failed to organize images');
+    } finally {
+      setIsOrganizingImages(false);
+      setOrganizeImagesProgress('');
+    }
+  };
+
   const saveStockUpdates = async () => {
     const changedVariants = getChangedStockVariants();
     if (changedVariants.length === 0) {
@@ -1093,6 +1147,23 @@ export default function ProductManagement() {
             Auto-Organize
           </button>
           <button
+            onClick={organizeProductImages}
+            disabled={isOrganizingImages}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isOrganizingImages ? (
+              <>
+                <RefreshCw className="h-5 w-5 animate-spin" />
+                Organizing...
+              </>
+            ) : (
+              <>
+                <ImagePlus className="h-5 w-5" />
+                Organize Images
+              </>
+            )}
+          </button>
+          <button
             onClick={handleCreate}
             className="flex items-center gap-2 bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700 transition-colors shadow-lg text-sm"
           >
@@ -1103,7 +1174,7 @@ export default function ProductManagement() {
       </div>
 
       {/* Mobile Action Buttons */}
-      <div className="sm:hidden grid grid-cols-3 gap-2">
+      <div className="sm:hidden grid grid-cols-2 gap-2">
         <button
           onClick={openStockModal}
           className="flex flex-col items-center justify-center gap-1 bg-teal-600 text-white px-3 py-3 rounded-xl hover:bg-teal-700 transition-colors shadow-lg"
@@ -1116,7 +1187,24 @@ export default function ProductManagement() {
           className="flex flex-col items-center justify-center gap-1 bg-purple-600 text-white px-3 py-3 rounded-xl hover:bg-purple-700 transition-colors shadow-lg"
         >
           <Wand2 className="h-5 w-5" />
-          <span className="text-xs font-medium">Organize</span>
+          <span className="text-xs font-medium">Auto-Organize</span>
+        </button>
+        <button
+          onClick={organizeProductImages}
+          disabled={isOrganizingImages}
+          className="flex flex-col items-center justify-center gap-1 bg-blue-600 text-white px-3 py-3 rounded-xl hover:bg-blue-700 transition-colors shadow-lg disabled:opacity-50"
+        >
+          {isOrganizingImages ? (
+            <>
+              <RefreshCw className="h-5 w-5 animate-spin" />
+              <span className="text-xs font-medium">Organizing...</span>
+            </>
+          ) : (
+            <>
+              <ImagePlus className="h-5 w-5" />
+              <span className="text-xs font-medium">Organize Images</span>
+            </>
+          )}
         </button>
         <button
           onClick={handleCreate}
@@ -1126,6 +1214,23 @@ export default function ProductManagement() {
           <span className="text-xs font-medium">Add Product</span>
         </button>
       </div>
+
+      {/* AI Image Organization Progress */}
+      {isOrganizingImages && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                AI Image Organization in Progress
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                {organizeImagesProgress || 'Analyzing product images...'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
