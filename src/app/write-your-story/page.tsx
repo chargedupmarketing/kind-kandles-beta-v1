@@ -365,9 +365,19 @@ export default function WriteYourStoryPage() {
                     type="text"
                     id="lastName"
                     name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    disabled={isSubmitting}
+                    className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
+                      errors.lastName 
+                        ? 'border-red-500 dark:border-red-500' 
+                        : 'border-gray-300 dark:border-slate-600'
+                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                   />
+                  {errors.lastName && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.lastName}</p>
+                  )}
                 </div>
               </div>
 
@@ -379,9 +389,19 @@ export default function WriteYourStoryPage() {
                   type="email"
                   id="email"
                   name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  disabled={isSubmitting}
+                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
+                    errors.email 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-slate-600'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
+                )}
               </div>
 
               <div>
@@ -391,8 +411,15 @@ export default function WriteYourStoryPage() {
                 <select
                   id="storyType"
                   name="storyType"
+                  value={formData.storyType}
+                  onChange={handleInputChange}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  disabled={isSubmitting}
+                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
+                    errors.storyType 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-slate-600'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Select a story type</option>
                   <option value="love-story">Love Story</option>
@@ -400,6 +427,9 @@ export default function WriteYourStoryPage() {
                   <option value="community">Community Connection</option>
                   <option value="other">Other</option>
                 </select>
+                {errors.storyType && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.storyType}</p>
+                )}
               </div>
 
               <div>
@@ -410,8 +440,11 @@ export default function WriteYourStoryPage() {
                   type="text"
                   id="products"
                   name="products"
+                  value={formData.products}
+                  onChange={handleInputChange}
+                  disabled={isSubmitting}
                   placeholder="e.g., Calm Down Girl Candle, Luxury Body Butter"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
               </div>
 
@@ -423,24 +456,44 @@ export default function WriteYourStoryPage() {
                   type="text"
                   id="storyTitle"
                   name="storyTitle"
+                  value={formData.storyTitle}
+                  onChange={handleInputChange}
                   required
+                  disabled={isSubmitting}
                   placeholder="Give your story a catchy title"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
+                    errors.storyTitle 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-slate-600'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
+                {errors.storyTitle && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.storyTitle}</p>
+                )}
               </div>
 
               <div>
                 <label htmlFor="story" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
-                  Your Story * <span className="text-gray-500 dark:text-slate-400">(minimum 100 words)</span>
+                  Your Story * <span className="text-gray-500 dark:text-slate-400">(minimum 100 characters)</span>
                 </label>
                 <textarea
                   id="story"
                   name="story"
+                  value={formData.story}
+                  onChange={handleInputChange}
                   rows={8}
                   required
+                  disabled={isSubmitting}
                   placeholder="Tell us your story... How did our products impact your life? What made your experience special? Be as detailed as you'd like!"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md bg-white dark:bg-slate-700 text-gray-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent ${
+                    errors.story 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-slate-600'
+                  } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 ></textarea>
+                {errors.story && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.story}</p>
+                )}
               </div>
 
               <div>
@@ -448,6 +501,9 @@ export default function WriteYourStoryPage() {
                   <input
                     type="checkbox"
                     name="canFeature"
+                    checked={formData.canFeature}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
                     className="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <span className="text-sm text-gray-700 dark:text-slate-300">
@@ -462,6 +518,9 @@ export default function WriteYourStoryPage() {
                   <input
                     type="checkbox"
                     name="newsletter"
+                    checked={formData.newsletter}
+                    onChange={handleInputChange}
+                    disabled={isSubmitting}
                     className="mt-1 h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300 rounded"
                   />
                   <span className="text-sm text-gray-700 dark:text-slate-300">
