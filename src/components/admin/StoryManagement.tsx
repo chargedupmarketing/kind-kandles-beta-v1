@@ -34,6 +34,22 @@ interface StorySubmission {
   adminNotes?: string;
 }
 
+function apiStoryToSubmission(s: { id: string; title: string; author: string; email: string; content: string; submittedAt: string; status: string; isStarred: boolean; category: string; publishedAt?: string; adminNotes?: string }): StorySubmission {
+  return {
+    id: s.id,
+    title: s.title,
+    author: s.author,
+    email: s.email,
+    content: s.content,
+    submittedAt: new Date(s.submittedAt),
+    status: s.status as StorySubmission['status'],
+    isStarred: s.isStarred === true,
+    category: (s.category || 'other') as StorySubmission['category'],
+    publishedAt: s.publishedAt ? new Date(s.publishedAt) : undefined,
+    adminNotes: s.adminNotes,
+  };
+}
+
 export default function StoryManagement() {
   const [stories, setStories] = useState<StorySubmission[]>([]);
   const [selectedStory, setSelectedStory] = useState<StorySubmission | null>(null);
@@ -41,49 +57,34 @@ export default function StoryManagement() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedStory, setEditedStory] = useState<StorySubmission | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load stories from localStorage on component mount
-  useEffect(() => {
-    // Clear any old sample data and start fresh
-    const savedStories = localStorage.getItem('storySubmissions');
-    if (savedStories) {
-      try {
-        const parsed = JSON.parse(savedStories);
-        // Check if this is sample data (has specific sample IDs)
-        const isSampleData = parsed.some((story: any) => 
-          ['1', '2', '3', '4', '5'].includes(story.id) && 
-          ['jennifer.m@email.com', 'rchen.writer@gmail.com', 'sarahmike.wedding@email.com'].includes(story.email)
-        );
-        
-        if (isSampleData) {
-          // Clear sample data
-          localStorage.removeItem('storySubmissions');
-          setStories([]);
-        } else {
-          // Convert date strings back to Date objects
-          const withDates = parsed.map((story: any) => ({
-            ...story,
-            submittedAt: new Date(story.submittedAt),
-            publishedAt: story.publishedAt ? new Date(story.publishedAt) : undefined
-          }));
-          setStories(withDates);
-        }
-      } catch (e) {
-        // If parsing fails, start fresh
-        localStorage.removeItem('storySubmissions');
-        setStories([]);
-      }
-    } else {
+  // Load stories from API
+  const loadStories = async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const params = new URLSearchParams();
+      if (filter !== 'all') params.set('filter', filter);
+      if (searchTerm) params.set('search', searchTerm);
+      const res = await fetch(`/api/admin/stories?${params}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load stories');
+      const list = Array.isArray(data.stories) ? data.stories : [];
+      setStories(list.map(apiStoryToSubmission));
+    } catch (e) {
+      console.error('Error loading stories:', e);
+      setLoadError(e instanceof Error ? e.message : 'Failed to load stories');
       setStories([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
-  // Save stories to localStorage whenever they change
   useEffect(() => {
-    if (stories.length > 0) {
-      localStorage.setItem('storySubmissions', JSON.stringify(stories));
-    }
-  }, [stories]);
+    loadStories();
+  }, []);
 
   const filteredStories = stories.filter(story => {
     // Apply filter
@@ -105,29 +106,58 @@ export default function StoryManagement() {
     return true;
   }).sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 
-  const handleUpdateStatus = (id: string, status: StorySubmission['status']) => {
-    setStories(prev => prev.map(story => {
-      if (story.id === id) {
-        const updated = { ...story, status };
-        if (status === 'published' && !story.publishedAt) {
-          updated.publishedAt = new Date();
-        }
-        return updated;
+  const handleUpdateStatus = async (id: string, status: StorySubmission['status']) => {
+    try {
+      const res = await fetch(`/api/admin/stories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+      if (data.story) {
+        setStories(prev => prev.map(s => s.id === id ? apiStoryToSubmission(data.story) : s));
+        if (selectedStory?.id === id) setSelectedStory(apiStoryToSubmission(data.story));
       }
-      return story;
-    }));
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'Failed to update status');
+    }
   };
 
-  const handleToggleStar = (id: string) => {
-    setStories(prev => prev.map(story => 
-      story.id === id ? { ...story, isStarred: !story.isStarred } : story
-    ));
+  const handleToggleStar = async (id: string) => {
+    const story = stories.find(s => s.id === id);
+    if (!story) return;
+    const next = !story.isStarred;
+    try {
+      const res = await fetch(`/api/admin/stories/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isStarred: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update');
+      setStories(prev => prev.map(s => s.id === id ? { ...s, isStarred: next } : s));
+      if (selectedStory?.id === id) setSelectedStory(prev => prev ? { ...prev, isStarred: next } : null);
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'Failed to update');
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to permanently delete this story?')) {
-      setStories(prev => prev.filter(story => story.id !== id));
-      setSelectedStory(null);
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to permanently delete this story?')) return;
+    try {
+      const res = await fetch(`/api/admin/stories/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete');
+      }
+      setStories(prev => prev.filter(s => s.id !== id));
+      if (selectedStory?.id === id) setSelectedStory(null);
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'Failed to delete');
     }
   };
 
@@ -136,14 +166,33 @@ export default function StoryManagement() {
     setIsEditing(true);
   };
 
-  const handleSaveEdit = () => {
-    if (editedStory) {
-      setStories(prev => prev.map(story => 
-        story.id === editedStory.id ? editedStory : story
-      ));
-      setSelectedStory(editedStory);
+  const handleSaveEdit = async () => {
+    if (!editedStory) return;
+    try {
+      const res = await fetch(`/api/admin/stories/${editedStory.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editedStory.title,
+          author: editedStory.author,
+          email: editedStory.email,
+          content: editedStory.content,
+          category: editedStory.category,
+          adminNotes: editedStory.adminNotes,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save');
+      if (data.story) {
+        const updated = apiStoryToSubmission(data.story);
+        setStories(prev => prev.map(s => s.id === editedStory.id ? updated : s));
+        setSelectedStory(updated);
+      }
       setIsEditing(false);
       setEditedStory(null);
+    } catch (e) {
+      console.error(e);
+      alert(e instanceof Error ? e.message : 'Failed to save');
     }
   };
 
@@ -287,7 +336,23 @@ export default function StoryManagement() {
 
           {/* Stories List */}
           <div className="max-h-96 overflow-y-auto">
-            {filteredStories.length === 0 ? (
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400">Loading stories...</p>
+              </div>
+            ) : loadError ? (
+              <div className="p-8 text-center">
+                <p className="text-red-600 dark:text-red-400 mb-4">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={() => loadStories()}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : filteredStories.length === 0 ? (
               <div className="p-8 text-center">
                 <BookOpen className="h-12 w-12 text-slate-400 mx-auto mb-4" />
                 <p className="text-slate-500 dark:text-slate-400">No stories found</p>

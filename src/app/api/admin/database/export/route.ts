@@ -74,8 +74,16 @@ export async function GET(request: NextRequest) {
       case 'stories': {
         const { data: stories } = await supabase
           .from('customer_stories')
-          .select('id, name, email, story, product_purchased, status, created_at');
-        data = (stories || []) as Record<string, unknown>[];
+          .select('id, author, email, content, products, status, created_at');
+        data = ((stories || []) as Record<string, unknown>[]).map((row) => ({
+          id: row.id,
+          name: row.author,
+          email: row.email,
+          story: row.content,
+          product_purchased: row.products,
+          status: row.status,
+          created_at: row.created_at,
+        }));
         filename = 'customer_stories';
         break;
       }

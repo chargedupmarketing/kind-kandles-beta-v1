@@ -35,30 +35,31 @@ export default function WriteYourStoryPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Load approved stories from localStorage
+  // Load approved/published stories from API
   useEffect(() => {
-    const loadApprovedStories = () => {
+    const loadApprovedStories = async () => {
       try {
-        const savedStories = localStorage.getItem('storySubmissions');
-        if (savedStories) {
-          const allStories = JSON.parse(savedStories);
-          // Convert date strings back to Date objects and filter for approved/published stories
-          const stories = allStories
-            .map((story: any) => ({
-              ...story,
-              submittedAt: new Date(story.submittedAt),
-              publishedAt: story.publishedAt ? new Date(story.publishedAt) : undefined
+        const res = await fetch('/api/stories');
+        const data = await res.json();
+        if (data.stories && Array.isArray(data.stories)) {
+          const stories = data.stories
+            .map((s: { id: string; title: string; author: string; content: string; category: string; isStarred: boolean; submittedAt: string; publishedAt: string }) => ({
+              id: s.id,
+              title: s.title,
+              author: s.author,
+              email: '',
+              content: s.content,
+              submittedAt: new Date(s.submittedAt),
+              status: 'published' as const,
+              isStarred: s.isStarred,
+              category: (s.category || 'other') as StorySubmission['category'],
+              publishedAt: new Date(s.publishedAt || s.submittedAt),
             }))
-            .filter((story: StorySubmission) => 
-              story.status === 'approved' || story.status === 'published'
-            )
             .sort((a: StorySubmission, b: StorySubmission) => {
-              // Sort by published date if available, otherwise by submitted date
               const dateA = a.publishedAt || a.submittedAt;
               const dateB = b.publishedAt || b.submittedAt;
               return dateB.getTime() - dateA.getTime();
             });
-          
           setApprovedStories(stories);
         }
       } catch (error) {
@@ -69,16 +70,6 @@ export default function WriteYourStoryPage() {
     };
 
     loadApprovedStories();
-
-    // Listen for storage changes (when admin approves new stories)
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'storySubmissions') {
-        loadApprovedStories();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const getCategoryLabel = (category: StorySubmission['category']) => {
@@ -172,34 +163,29 @@ export default function WriteYourStoryPage() {
     setIsSubmitting(true);
 
     try {
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const res = await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          storyType: formData.storyType,
+          products: formData.products,
+          storyTitle: formData.storyTitle,
+          story: formData.story,
+          canFeature: formData.canFeature,
+          newsletter: formData.newsletter,
+        }),
+      });
 
-      // Create story submission object
-      const storySubmission: StorySubmission = {
-        id: Date.now().toString(),
-        title: formData.storyTitle,
-        author: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        content: formData.story,
-        submittedAt: new Date(),
-        status: 'pending',
-        isStarred: false,
-        category: mapStoryTypeToCategory(formData.storyType),
-        adminNotes: formData.products ? `Featured products: ${formData.products}` : undefined
-      };
+      const data = await res.json();
 
-      // Get existing story submissions from localStorage
-      const existingStories = localStorage.getItem('storySubmissions');
-      const stories = existingStories ? JSON.parse(existingStories) : [];
-      
-      // Add new story to the beginning of the array
-      stories.unshift(storySubmission);
-      
-      // Save back to localStorage
-      localStorage.setItem('storySubmissions', JSON.stringify(stories));
+      if (!res.ok) {
+        alert(data.error || 'There was an error submitting your story. Please try again.');
+        return;
+      }
 
-      // Reset form and show success
       setFormData({
         firstName: '',
         lastName: '',
@@ -212,12 +198,7 @@ export default function WriteYourStoryPage() {
         newsletter: false
       });
       setIsSubmitted(true);
-
-      // Hide success message after 5 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 5000);
-
+      setTimeout(() => setIsSubmitted(false), 5000);
     } catch (error) {
       console.error('Error submitting story:', error);
       alert('There was an error submitting your story. Please try again.');
