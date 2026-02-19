@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Calendar, MapPin, Users, Clock, Sparkles } from 'lucide-react';
 import type { Event } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Events & Workshops | Kind Kandles & Boutique',
   description:
