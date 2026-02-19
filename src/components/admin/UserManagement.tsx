@@ -115,7 +115,9 @@ export default function UserManagement() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/admin/users');
+      const response = await fetch('/api/admin/users', {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -130,7 +132,9 @@ export default function UserManagement() {
 
   const fetchSubLevels = async () => {
     try {
-      const response = await fetch('/api/admin/sub-levels');
+      const response = await fetch('/api/admin/sub-levels', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setSubLevels(data.subLevels || []);
@@ -167,6 +171,7 @@ export default function UserManagement() {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           email: newUser.email,
           password: newUser.password,
@@ -207,7 +212,8 @@ export default function UserManagement() {
 
     try {
       const response = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
 
       const data = await response.json();
@@ -233,6 +239,7 @@ export default function UserManagement() {
       const response = await fetch(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ is_active: !currentStatus })
       });
 
@@ -298,6 +305,7 @@ export default function UserManagement() {
       const response = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(updatePayload)
       });
 
@@ -335,6 +343,7 @@ export default function UserManagement() {
       const response = await fetch('/api/admin/sub-levels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(subLevelFormData)
       });
       
@@ -361,6 +370,7 @@ export default function UserManagement() {
       const response = await fetch(`/api/admin/sub-levels/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(subLevelFormData)
       });
       
@@ -387,7 +397,8 @@ export default function UserManagement() {
     
     try {
       const response = await fetch(`/api/admin/sub-levels/${id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
       });
       
       if (response.ok) {

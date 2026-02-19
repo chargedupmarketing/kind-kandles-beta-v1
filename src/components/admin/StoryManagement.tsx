@@ -68,7 +68,8 @@ export default function StoryManagement() {
       const params = new URLSearchParams();
       if (filter !== 'all') params.set('filter', filter);
       if (searchTerm) params.set('search', searchTerm);
-      const res = await fetch(`/api/admin/stories?${params}`);
+      params.set('_t', String(Date.now())); // cache bust
+      const res = await fetch(`/api/admin/stories?${params}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to load stories');
       const list = Array.isArray(data.stories) ? data.stories : [];

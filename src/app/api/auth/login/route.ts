@@ -7,7 +7,8 @@ import { Resend } from 'resend';
 import crypto from 'crypto';
 
 // Rate limiting storage (in production, use Redis or database)
-const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
+const loginAttempts = new Map<string, { count: number; lastAttempt: number; lockedUntil?: number }>();
+const accountAttempts = new Map<string, { count: number; lastAttempt: number; lockedUntil?: number }>();
 
 // Configuration from environment variables
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
@@ -18,6 +19,8 @@ const RATE_LIMIT_WINDOW_MS = parseInt(process.env.RATE_LIMIT_WINDOW_MS || '90000
 const SESSION_TIMEOUT_MS = parseInt(process.env.SESSION_TIMEOUT_MS || '3600000'); // 1 hour
 const OTP_EXPIRY_MINUTES = 10;
 const TRUSTED_DEVICE_DAYS = 30; // Remember device for 30 days
+const ACCOUNT_LOCKOUT_THRESHOLD = 10; // Lock account after 10 failed attempts
+const ACCOUNT_LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minute lockout
 
 // Only initialize Resend if API key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -87,31 +90,102 @@ async function checkDatabaseCredentials(email: string, password: string): Promis
   }
 }
 
-// Rate limiting check
-function checkRateLimit(clientId: string): boolean {
+// Rate limiting check with progressive delays
+function checkRateLimit(clientId: string): { allowed: boolean; retryAfter?: number; delay?: number } {
   const now = Date.now();
   const attempts = loginAttempts.get(clientId);
   
   if (!attempts) {
     loginAttempts.set(clientId, { count: 1, lastAttempt: now });
-    return true;
+    return { allowed: true };
+  }
+  
+  // Check if currently locked out
+  if (attempts.lockedUntil && now < attempts.lockedUntil) {
+    return { 
+      allowed: false, 
+      retryAfter: Math.ceil((attempts.lockedUntil - now) / 1000) 
+    };
   }
   
   // Reset if window has passed
   if (now - attempts.lastAttempt > RATE_LIMIT_WINDOW_MS) {
     loginAttempts.set(clientId, { count: 1, lastAttempt: now });
-    return true;
+    return { allowed: true };
   }
   
   // Check if exceeded max attempts
   if (attempts.count >= RATE_LIMIT_MAX_ATTEMPTS) {
-    return false;
+    // Lock out for remaining window time
+    const lockoutEnd = attempts.lastAttempt + RATE_LIMIT_WINDOW_MS;
+    attempts.lockedUntil = lockoutEnd;
+    return { 
+      allowed: false, 
+      retryAfter: Math.ceil((lockoutEnd - now) / 1000) 
+    };
   }
   
   // Increment attempts
   attempts.count++;
   attempts.lastAttempt = now;
-  return true;
+  
+  // Calculate progressive delay (exponential backoff)
+  // 0, 1s, 2s, 4s, 8s for attempts 1-5
+  const delay = attempts.count > 1 ? Math.pow(2, attempts.count - 2) * 1000 : 0;
+  
+  return { allowed: true, delay };
+}
+
+// Account-based rate limiting (tracks by username/email)
+function checkAccountRateLimit(account: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const attempts = accountAttempts.get(account.toLowerCase());
+  
+  if (!attempts) {
+    return { allowed: true };
+  }
+  
+  // Check if currently locked out
+  if (attempts.lockedUntil && now < attempts.lockedUntil) {
+    return { 
+      allowed: false, 
+      retryAfter: Math.ceil((attempts.lockedUntil - now) / 1000) 
+    };
+  }
+  
+  // Reset if window has passed
+  if (now - attempts.lastAttempt > RATE_LIMIT_WINDOW_MS) {
+    accountAttempts.delete(account.toLowerCase());
+    return { allowed: true };
+  }
+  
+  return { allowed: true };
+}
+
+// Record failed attempt for account
+function recordAccountFailure(account: string): void {
+  const now = Date.now();
+  const key = account.toLowerCase();
+  const attempts = accountAttempts.get(key);
+  
+  if (!attempts) {
+    accountAttempts.set(key, { count: 1, lastAttempt: now });
+    return;
+  }
+  
+  attempts.count++;
+  attempts.lastAttempt = now;
+  
+  // Lock account if threshold exceeded
+  if (attempts.count >= ACCOUNT_LOCKOUT_THRESHOLD) {
+    attempts.lockedUntil = now + ACCOUNT_LOCKOUT_DURATION_MS;
+    console.warn(`Account ${key} locked due to too many failed attempts`);
+  }
+}
+
+// Clear account attempts on successful login
+function clearAccountAttempts(account: string): void {
+  accountAttempts.delete(account.toLowerCase());
 }
 
 // Create JWT token (for fallback non-2FA login)
@@ -207,12 +281,13 @@ export async function POST(request: NextRequest) {
                     request.headers.get('x-real-ip') || 
                     'unknown';
     
-    // Check rate limiting
-    if (!checkRateLimit(clientId)) {
+    // Check IP-based rate limiting
+    const ipRateLimit = checkRateLimit(clientId);
+    if (!ipRateLimit.allowed) {
       return NextResponse.json(
         { 
           error: 'Too many login attempts. Please try again later.',
-          retryAfter: RATE_LIMIT_WINDOW_MS / 1000 
+          retryAfter: ipRateLimit.retryAfter 
         },
         { status: 429 }
       );
@@ -226,6 +301,23 @@ export async function POST(request: NextRequest) {
         { error: 'Email and password are required' },
         { status: 400 }
       );
+    }
+    
+    // Check account-based rate limiting
+    const accountRateLimit = checkAccountRateLimit(body.username);
+    if (!accountRateLimit.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'This account has been temporarily locked due to too many failed attempts. Please try again later.',
+          retryAfter: accountRateLimit.retryAfter 
+        },
+        { status: 429 }
+      );
+    }
+    
+    // Apply progressive delay if needed
+    if (ipRateLimit.delay && ipRateLimit.delay > 0) {
+      await new Promise(resolve => setTimeout(resolve, ipRateLimit.delay));
     }
     
     // First try database authentication
@@ -371,6 +463,7 @@ export async function POST(request: NextRequest) {
       });
       
       loginAttempts.delete(clientId);
+      clearAccountAttempts(dbUser.email);
       return response;
     }
     
@@ -401,11 +494,15 @@ export async function POST(request: NextRequest) {
       });
       
       loginAttempts.delete(clientId);
+      clearAccountAttempts(body.username);
       return response;
     }
     
-    // Authentication failed
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Prevent timing attacks
+    // Authentication failed - record failure for account
+    recordAccountFailure(body.username);
+    
+    // Prevent timing attacks with consistent delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     return NextResponse.json(
       { error: 'Invalid credentials' },

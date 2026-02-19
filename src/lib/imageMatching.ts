@@ -252,29 +252,3 @@ export function matchProducts(
     .slice(0, 3);
 }
 
-/**
- * Determine if auto-assignment is recommended based on confidence
- */
-export function shouldAutoAssign(confidence: number): boolean {
-  return confidence > 90;
-}
-
-/**
- * Extract keywords from a string for matching
- */
-export function extractKeywords(text: string): string[] {
-  const normalized = normalizeString(text);
-  const words = normalized.split(' ');
-  
-  // Filter out common words and keep meaningful keywords
-  const stopWords = new Set([
-    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-    'of', 'with', 'by', 'from', 'as', 'is', 'was', 'are', 'were', 'been',
-    'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those'
-  ]);
-  
-  return words
-    .filter(word => word.length > 2 && !stopWords.has(word))
-    .filter((word, index, self) => self.indexOf(word) === index); // Remove duplicates
-}

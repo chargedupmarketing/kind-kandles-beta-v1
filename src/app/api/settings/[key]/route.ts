@@ -33,6 +33,12 @@ const defaultSettings: Record<string, any> = {
     allow_guest_checkout: true,
     require_phone: false
   },
+  security_settings: {
+    two_factor_required: false,
+    session_timeout_hours: 1,
+    max_login_attempts: 5,
+    lockout_duration_minutes: 30
+  },
   promotions: {
     top_bar_banner: {
       enabled: true,
@@ -176,7 +182,7 @@ const defaultSettings: Record<string, any> = {
 };
 
 // Public settings that don't require authentication
-const publicSettings = ['promotions', 'featured_products'];
+const publicSettings = ['promotions', 'featured_products', 'tax_settings'];
 
 export async function GET(
   request: NextRequest,

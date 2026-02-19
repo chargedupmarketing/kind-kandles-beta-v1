@@ -1,8 +1,6 @@
 // Local store utilities for product data
 // This file provides helper functions for working with product data
 
-import type { DisplayProduct } from './types';
-
 export interface LocalProduct {
   id: string;
   title: string;
@@ -50,26 +48,8 @@ export function formatPrice(amount: number | string, currencyCode: string = 'USD
   }).format(amount);
 }
 
-// Get products by collection (returns empty array - products come from database)
-export function getProductsByCollection(collection: string): LocalProduct[] {
-  // Products are now fetched from the database
-  // This function returns empty array as a fallback
-  return [];
-}
-
-// Calculate discount percentage
-export function calculateDiscount(price: number, compareAtPrice: number): number {
-  if (!compareAtPrice || compareAtPrice <= price) return 0;
-  return Math.round(((compareAtPrice - price) / compareAtPrice) * 100);
-}
-
-// Check if product is on sale
-export function isOnSale(price: number, compareAtPrice?: number): boolean {
-  return !!compareAtPrice && compareAtPrice > price;
-}
-
 // Strip HTML tags from string (for excerpts/previews)
-export function stripHtml(html: string): string {
+function stripHtml(html: string): string {
   if (!html) return '';
   // Remove HTML tags
   let text = html.replace(/<[^>]*>/g, ' ');
@@ -86,7 +66,7 @@ export function stripHtml(html: string): string {
 }
 
 // Truncate text to a specific length
-export function truncateText(text: string, maxLength: number = 150): string {
+function truncateText(text: string, maxLength: number = 150): string {
   if (!text || text.length <= maxLength) return text;
   return text.substring(0, maxLength).trim() + '...';
 }

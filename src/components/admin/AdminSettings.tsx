@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { useAdmin } from '@/contexts/AdminContext';
+import { useReauth } from '@/hooks/useReauth';
+import ReauthModal from './ReauthModal';
 import { 
   AlertTriangle, 
   Shield, 
@@ -25,8 +27,17 @@ import {
   BookOpen,
   Star,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  UserCog,
+  Loader2,
+  Skull,
+  Key,
+  X,
+  AlertOctagon
 } from 'lucide-react';
+
+// Lazy load UserManagement for code splitting
+const UserManagement = lazy(() => import('./UserManagement'));
 
 interface DatabaseStats {
   products: number;
@@ -52,7 +63,16 @@ export default function AdminSettings() {
     isSuperAdmin 
   } = useAdmin();
   
-  const [activeTab, setActiveTab] = useState<'maintenance' | 'database'>('maintenance');
+  const { 
+    isReauthenticated, 
+    showReauthModal, 
+    requireReauth, 
+    handleReauthSuccess, 
+    handleReauthCancel,
+    userEmail 
+  } = useReauth();
+  
+  const [activeTab, setActiveTab] = useState<'maintenance' | 'database' | 'users'>('maintenance');
   const [newAccessCode, setNewAccessCode] = useState(maintenanceAccessCode);
   const [showAccessCode, setShowAccessCode] = useState(false);
   const [localMessage, setLocalMessage] = useState(maintenanceMessage);
@@ -73,6 +93,14 @@ export default function AdminSettings() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  
+  // Self-destruct state
+  const [showSelfDestruct, setShowSelfDestruct] = useState(false);
+  const [selfDestructStep, setSelfDestructStep] = useState(0);
+  const [specialKey, setSpecialKey] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isSelfDestructing, setIsSelfDestructing] = useState(false);
 
   // Sync local state with context when context updates
   useEffect(() => {
@@ -170,7 +198,9 @@ export default function AdminSettings() {
   const exportData = async (dataType: string) => {
     setIsExporting(true);
     try {
-      const response = await fetch(`/api/admin/database/export?type=${dataType}`);
+      const response = await fetch(`/api/admin/database/export?type=${dataType}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -207,6 +237,7 @@ export default function AdminSettings() {
       const response = await fetch(`/api/admin/database/wipe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ type: dataType })
       });
 
@@ -225,6 +256,119 @@ export default function AdminSettings() {
       setTimeout(() => setErrorMessage(''), 3000);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Self-destruct handlers
+  const resetSelfDestruct = () => {
+    setShowSelfDestruct(false);
+    setSelfDestructStep(0);
+    setSpecialKey('');
+    setVerificationToken('');
+    setConfirmationText('');
+    setIsSelfDestructing(false);
+  };
+
+  const handleSelfDestructStep = async () => {
+    setIsSelfDestructing(true);
+    setErrorMessage('');
+
+    try {
+      if (selfDestructStep === 0) {
+        // Step 1: Verify special key
+        const response = await fetch('/api/admin/database/self-destruct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ action: 'verify-key', specialKey })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setVerificationToken(data.verificationToken);
+          setSelfDestructStep(1);
+          setConfirmationText('');
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Invalid special key');
+        }
+      } else if (selfDestructStep === 1) {
+        // Step 2: First confirmation
+        const response = await fetch('/api/admin/database/self-destruct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            action: 'confirm-step-1', 
+            verificationToken,
+            confirmationText 
+          })
+        });
+
+        if (response.ok) {
+          setSelfDestructStep(2);
+          setConfirmationText('');
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Confirmation failed');
+        }
+      } else if (selfDestructStep === 2) {
+        // Step 3: Second confirmation
+        const response = await fetch('/api/admin/database/self-destruct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            action: 'confirm-step-2', 
+            verificationToken,
+            confirmationText 
+          })
+        });
+
+        if (response.ok) {
+          setSelfDestructStep(3);
+          setConfirmationText('');
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Confirmation failed');
+        }
+      } else if (selfDestructStep === 3) {
+        // Step 4: Execute self-destruct
+        const response = await fetch('/api/admin/database/self-destruct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            action: 'execute', 
+            verificationToken 
+          })
+        });
+
+        if (response.ok) {
+          // Download the backup file
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `FINAL_BACKUP_BEFORE_WIPE_${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+
+          setSuccessMessage('Database wiped. Backup downloaded.');
+          resetSelfDestruct();
+          fetchDatabaseStats();
+        } else {
+          const error = await response.json();
+          setErrorMessage(error.error || 'Self-destruct failed');
+        }
+      }
+    } catch (error) {
+      console.error('Self-destruct error:', error);
+      setErrorMessage('Operation failed. Please try again.');
+    } finally {
+      setIsSelfDestructing(false);
     }
   };
 
@@ -279,8 +423,50 @@ export default function AdminSettings() {
     },
   ];
 
+  // Check reauth on component mount
+  useEffect(() => {
+    requireReauth();
+  }, [requireReauth]);
+
+  // Show reauth modal if not authenticated
+  if (!isReauthenticated) {
+    return (
+      <>
+        {showReauthModal && (
+          <ReauthModal
+            onSuccess={handleReauthSuccess}
+            onCancel={handleReauthCancel}
+            userEmail={userEmail}
+          />
+        )}
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <Shield className="h-16 w-16 text-amber-400 mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Security Verification Required</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            This section contains sensitive settings and tools.
+          </p>
+          <button
+            onClick={() => requireReauth()}
+            className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            Verify Identity
+          </button>
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Reauth Modal */}
+      {showReauthModal && (
+        <ReauthModal
+          onSuccess={handleReauthSuccess}
+          onCancel={handleReauthCancel}
+          userEmail={userEmail}
+        />
+      )}
+
       {/* Success/Error Messages */}
       {successMessage && (
         <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-green-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">
@@ -315,17 +501,30 @@ export default function AdminSettings() {
           Maintenance
         </button>
         {isSuperAdmin && (
-          <button
-            onClick={() => setActiveTab('database')}
-            className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap text-sm sm:text-base ${
-              activeTab === 'database'
-                ? 'text-teal-600 border-teal-600'
-                : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
-            }`}
-          >
-            <Database className="h-4 w-4" />
-            Database
-          </button>
+          <>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap text-sm sm:text-base ${
+                activeTab === 'users'
+                  ? 'text-teal-600 border-teal-600'
+                  : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
+              }`}
+            >
+              <UserCog className="h-4 w-4" />
+              Users & Teams
+            </button>
+            <button
+              onClick={() => setActiveTab('database')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-3 font-medium transition-colors border-b-2 -mb-px whitespace-nowrap text-sm sm:text-base ${
+                activeTab === 'database'
+                  ? 'text-teal-600 border-teal-600'
+                  : 'text-gray-600 border-transparent hover:text-gray-900 dark:text-gray-400'
+              }`}
+            >
+              <Database className="h-4 w-4" />
+              Database
+            </button>
+          </>
         )}
       </div>
 
@@ -493,6 +692,17 @@ export default function AdminSettings() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Users & Teams Tab - Super Admin Only */}
+      {activeTab === 'users' && isSuperAdmin && (
+        <Suspense fallback={
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+          </div>
+        }>
+          <UserManagement />
+        </Suspense>
       )}
 
       {/* Database Management Tab - Super Admin Only */}
@@ -685,6 +895,228 @@ export default function AdminSettings() {
               </button>
             </div>
           </div>
+
+          {/* Self-Destruct Section */}
+          <div className="bg-gradient-to-r from-red-900 to-red-800 rounded-lg shadow-lg border-2 border-red-600 p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="p-2 sm:p-3 rounded-lg bg-red-950 flex-shrink-0">
+                  <Skull className="h-5 w-5 sm:h-6 sm:w-6 text-red-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
+                    <AlertOctagon className="h-4 w-4" />
+                    Self-Destruct
+                  </h3>
+                  <p className="text-xs sm:text-sm text-red-200">
+                    Complete database backup and permanent wipe. Requires special key.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSelfDestruct(true)}
+                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-bold border border-red-400"
+              >
+                <Key className="h-5 w-5" />
+                Initiate Self-Destruct
+              </button>
+            </div>
+          </div>
+
+          {/* Self-Destruct Modal */}
+          {showSelfDestruct && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+              <div className="bg-slate-900 rounded-xl shadow-2xl border-2 border-red-600 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="p-4 sm:p-6 border-b border-red-800 bg-gradient-to-r from-red-900 to-red-800">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Skull className="h-8 w-8 text-red-400" />
+                      <div>
+                        <h2 className="text-xl font-bold text-white">Self-Destruct Sequence</h2>
+                        <p className="text-sm text-red-300">Step {selfDestructStep + 1} of 4</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={resetSelfDestruct}
+                      className="p-2 hover:bg-red-800 rounded-lg transition-colors"
+                    >
+                      <X className="h-5 w-5 text-red-300" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="h-2 bg-red-950">
+                  <div 
+                    className="h-full bg-red-500 transition-all duration-500"
+                    style={{ width: `${((selfDestructStep + 1) / 4) * 100}%` }}
+                  />
+                </div>
+
+                {/* Content */}
+                <div className="p-4 sm:p-6 space-y-4">
+                  {/* Step 0: Enter Special Key */}
+                  {selfDestructStep === 0 && (
+                    <>
+                      <div className="bg-red-950/50 border border-red-800 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-6 w-6 text-red-400 flex-shrink-0" />
+                          <div>
+                            <p className="text-red-200 font-medium">Enter Special Key</p>
+                            <p className="text-sm text-red-300 mt-1">
+                              This key was provided during system setup. If you don't have it, you cannot proceed.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Special Destruct Key
+                        </label>
+                        <input
+                          type="password"
+                          value={specialKey}
+                          onChange={(e) => setSpecialKey(e.target.value)}
+                          placeholder="Enter your special key"
+                          className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Step 1: First Confirmation */}
+                  {selfDestructStep === 1 && (
+                    <>
+                      <div className="bg-red-950/50 border border-red-800 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <AlertOctagon className="h-6 w-6 text-red-400 flex-shrink-0" />
+                          <div>
+                            <p className="text-red-200 font-bold">FIRST CONFIRMATION</p>
+                            <p className="text-sm text-red-300 mt-1">
+                              You are about to <strong>permanently delete ALL data</strong> from the database. 
+                              This includes products, orders, customers, and all other records.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Type exactly: <code className="bg-red-900 px-2 py-1 rounded text-red-300">I UNDERSTAND THIS WILL DELETE ALL DATA</code>
+                        </label>
+                        <input
+                          type="text"
+                          value={confirmationText}
+                          onChange={(e) => setConfirmationText(e.target.value)}
+                          placeholder="Type the confirmation text"
+                          className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Step 2: Second Confirmation */}
+                  {selfDestructStep === 2 && (
+                    <>
+                      <div className="bg-red-950/50 border border-red-800 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <Skull className="h-6 w-6 text-red-400 flex-shrink-0" />
+                          <div>
+                            <p className="text-red-200 font-bold">FINAL WARNING</p>
+                            <p className="text-sm text-red-300 mt-1">
+                              This is your <strong>LAST CHANCE</strong> to cancel. After this step, you will proceed to execute the self-destruct.
+                              A backup will be downloaded automatically before deletion.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-4">
+                        <p className="text-yellow-200 text-sm">
+                          <strong>What will happen:</strong>
+                        </p>
+                        <ul className="text-yellow-300 text-sm mt-2 space-y-1 list-disc list-inside">
+                          <li>A complete backup will be downloaded to your device</li>
+                          <li>All products, orders, and customer data will be deleted</li>
+                          <li>All reviews, stories, and surveys will be deleted</li>
+                          <li>This action CANNOT be undone</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Type exactly: <code className="bg-red-900 px-2 py-1 rounded text-red-300">DELETE EVERYTHING PERMANENTLY</code>
+                        </label>
+                        <input
+                          type="text"
+                          value={confirmationText}
+                          onChange={(e) => setConfirmationText(e.target.value)}
+                          placeholder="Type the confirmation text"
+                          className="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Step 3: Execute */}
+                  {selfDestructStep === 3 && (
+                    <>
+                      <div className="bg-red-600 border border-red-400 rounded-lg p-6 text-center">
+                        <Skull className="h-16 w-16 text-white mx-auto mb-4" />
+                        <p className="text-white font-bold text-xl">READY TO EXECUTE</p>
+                        <p className="text-red-100 mt-2">
+                          Click the button below to download your backup and wipe all data.
+                        </p>
+                      </div>
+                      <div className="bg-slate-800 border border-slate-600 rounded-lg p-4">
+                        <p className="text-slate-300 text-sm text-center">
+                          Your backup file will download automatically. Make sure to save it in a secure location.
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Error Message */}
+                  {errorMessage && (
+                    <div className="bg-red-900/50 border border-red-700 rounded-lg p-3 flex items-center gap-2">
+                      <XCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                      <p className="text-red-300 text-sm">{errorMessage}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 sm:p-6 border-t border-slate-700 bg-slate-800/50 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={resetSelfDestruct}
+                    className="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSelfDestructStep}
+                    disabled={isSelfDestructing || (selfDestructStep === 0 && !specialKey) || (selfDestructStep > 0 && selfDestructStep < 3 && !confirmationText)}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-500 disabled:bg-red-900 disabled:opacity-50 text-white rounded-lg transition-colors font-bold"
+                  >
+                    {isSelfDestructing ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Processing...
+                      </>
+                    ) : selfDestructStep === 3 ? (
+                      <>
+                        <Skull className="h-5 w-5" />
+                        EXECUTE SELF-DESTRUCT
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-5 w-5 rotate-[-90deg]" />
+                        Continue
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { 
   Plus, 
@@ -29,7 +29,6 @@ import {
   Wand2,
   RefreshCw,
   CheckCircle2,
-  Filter,
   Boxes,
   Minus,
   ArrowUpDown
@@ -49,6 +48,27 @@ interface ProductVariant {
   option1_value: string | null;
   option2_name: string | null;
   option2_value: string | null;
+  option3_name?: string | null;
+  option3_value?: string | null;
+  available_for_sale: boolean;
+}
+
+// Variant form state allows string values for numeric inputs
+interface VariantFormData {
+  id?: string;
+  title: string;
+  sku: string;
+  price: number | string;
+  compare_at_price: number | string | null;
+  inventory_quantity: number | string;
+  weight: number | string | null;
+  weight_unit: string;
+  option1_name: string | null;
+  option1_value: string | null;
+  option2_name: string | null;
+  option2_value: string | null;
+  option3_name?: string | null;
+  option3_value?: string | null;
   available_for_sale: boolean;
 }
 
@@ -101,13 +121,13 @@ const PRODUCT_TYPE_PRESETS = [
 
 // Scent profiles for candles
 const SCENT_PROFILES = [
-  { value: 'fresh', label: '🌊 Fresh', color: 'bg-blue-100 text-blue-700' },
-  { value: 'floral', label: '🌸 Floral', color: 'bg-pink-100 text-pink-700' },
-  { value: 'woodsy', label: '🌲 Woodsy', color: 'bg-green-100 text-green-700' },
-  { value: 'sweet', label: '🍯 Sweet', color: 'bg-amber-100 text-amber-700' },
-  { value: 'citrus', label: '🍋 Citrus', color: 'bg-yellow-100 text-yellow-700' },
-  { value: 'herbal', label: '🌿 Herbal', color: 'bg-emerald-100 text-emerald-700' },
-  { value: 'earthy', label: '🍂 Earthy', color: 'bg-orange-100 text-orange-700' },
+  { value: 'fresh', label: '🌊 Fresh', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' },
+  { value: 'floral', label: '🌸 Floral', color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300' },
+  { value: 'woodsy', label: '🌲 Woodsy', color: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' },
+  { value: 'sweet', label: '🍯 Sweet', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
+  { value: 'citrus', label: '🍋 Citrus', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' },
+  { value: 'herbal', label: '🌿 Herbal', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' },
+  { value: 'earthy', label: '🍂 Earthy', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' },
 ];
 
 // Burn time options for candles
@@ -186,6 +206,14 @@ const SCENT_KEYWORDS: { [key: string]: string } = {
   'clove': 'earthy',
 };
 
+// Preset sizes for quick variant creation
+const PRESET_SIZES = [
+  { size: '4oz', label: '4oz', defaultPrice: 12.00 },
+  { size: '8oz', label: '8oz', defaultPrice: 18.00 },
+  { size: '16oz', label: '16oz', defaultPrice: 28.00 },
+  { size: '2oz', label: '2oz (Sample)', defaultPrice: 8.00 },
+];
+
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -223,9 +251,12 @@ export default function ProductManagement() {
   const [organizeImagesProgress, setOrganizeImagesProgress] = useState('');
   
   // Variant management state
-  const [editingVariants, setEditingVariants] = useState<any[]>([]);
+  const [editingVariants, setEditingVariants] = useState<VariantFormData[]>([]);
   const [showVariantModal, setShowVariantModal] = useState(false);
   const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null);
+  
+  // Pending variants for new product creation
+  const [pendingVariants, setPendingVariants] = useState<ProductVariant[]>([]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -309,6 +340,7 @@ export default function ProductManagement() {
       images: [],
       image_url: '',
     });
+    setPendingVariants([]); // Reset pending variants for new product
     setActiveTab('basic');
     setIsCreating(true);
     setIsEditing(false);
@@ -477,7 +509,24 @@ export default function ProductManagement() {
       if (formData.scent_profile) allTags.push(formData.scent_profile);
       if (formData.burn_time) allTags.push(formData.burn_time);
 
-      const productData = {
+      // Prepare variants array for new products
+      const variantsToCreate = isCreating && pendingVariants.length > 0 
+        ? pendingVariants.map(v => ({
+            title: v.title,
+            sku: v.sku || null,
+            price: v.price,
+            compare_at_price: v.compare_at_price,
+            inventory_quantity: v.inventory_quantity || 0,
+            weight: v.weight,
+            weight_unit: v.weight_unit || 'oz',
+            option1_name: v.option1_name,
+            option1_value: v.option1_value,
+            option2_name: v.option2_name,
+            option2_value: v.option2_value,
+          }))
+        : undefined;
+
+      const productData: Record<string, unknown> = {
         title: formData.title,
         handle: generateHandle(formData.title),
         description: formData.description || null,
@@ -491,19 +540,18 @@ export default function ProductManagement() {
         product_type: formData.product_type || null,
         weight: formData.weight ? parseFloat(formData.weight) : null,
         weight_unit: formData.weight_unit,
-        // Variant data
-        variant: {
-          title: formData.variant_title || 'Default Title',
-          sku: formData.sku || null,
-          price: parseFloat(formData.price),
-          compare_at_price: formData.compare_at_price ? parseFloat(formData.compare_at_price) : null,
-          inventory_quantity: parseInt(formData.inventory_quantity) || 0,
-          weight: formData.weight ? parseFloat(formData.weight) : null,
-          weight_unit: formData.weight_unit,
-        },
         // Images
         images: formData.images,
       };
+
+      // If creating with pending variants, use variants array
+      // Otherwise, use the single variant data for default variant
+      if (variantsToCreate && variantsToCreate.length > 0) {
+        productData.variants = variantsToCreate;
+      } else if (isCreating) {
+        // Create default variant from form data
+        productData.inventory_quantity = parseInt(formData.inventory_quantity) || 0;
+      }
 
       const url = isCreating 
         ? '/api/products'
@@ -527,6 +575,7 @@ export default function ProductManagement() {
         setIsEditing(false);
         setIsCreating(false);
         setSelectedProduct(null);
+        setPendingVariants([]); // Clear pending variants after successful creation
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to save product');
@@ -595,69 +644,86 @@ export default function ProductManagement() {
     setIsEditing(false);
     setIsCreating(false);
     setSelectedProduct(null);
-  };
-
-  const handleUpdateVariantInventory = async (variantId: string, newQuantity: number) => {
-    try {
-      const response = await fetch(`/api/admin/products/variants/${variantId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          inventory_quantity: newQuantity
-        })
-      });
-
-      if (response.ok) {
-        // Refresh the product data
-        await fetchProducts();
-        // Update the selected product if it's currently open
-        if (selectedProduct) {
-          const updatedProduct = products.find(p => p.id === selectedProduct.id);
-          if (updatedProduct) {
-            setSelectedProduct(updatedProduct);
-          }
-        }
-        alert('Inventory updated successfully!');
-      } else {
-        alert('Failed to update inventory');
-      }
-    } catch (error) {
-      console.error('Error updating variant inventory:', error);
-      alert('Failed to update inventory');
-    }
+    setPendingVariants([]); // Clear pending variants on cancel
   };
 
   // Variant management functions
-  const openVariantEditor = (variant?: any, index?: number) => {
+  const openVariantEditor = (variant?: ProductVariant, index?: number, presetSize?: string) => {
     if (variant && index !== undefined) {
+      // Editing existing variant
       setEditingVariantIndex(index);
       setEditingVariants([{ ...variant }]);
     } else {
+      // Creating new variant
       setEditingVariantIndex(null);
+      const basePrice = selectedProduct?.price || parseFloat(formData.price) || 0;
+      const preset = presetSize ? PRESET_SIZES.find(p => p.size === presetSize) : null;
+      
       setEditingVariants([{
-        title: '',
+        title: preset ? preset.size : '',
         sku: '',
-        price: selectedProduct?.price || formData.price || '',
-        compare_at_price: '',
+        price: preset ? preset.defaultPrice : basePrice,
+        compare_at_price: null,
         inventory_quantity: 0,
-        weight: '',
+        weight: null,
         weight_unit: 'oz',
         option1_name: 'Size',
-        option1_value: '',
-        option2_name: '',
-        option2_value: '',
-        option3_name: '',
-        option3_value: '',
+        option1_value: preset ? preset.size : '',
+        option2_name: null,
+        option2_value: null,
         available_for_sale: true
       }]);
     }
     setShowVariantModal(true);
   };
 
+  // Add preset size variant quickly
+  const addPresetSizeVariant = (preset: typeof PRESET_SIZES[0]) => {
+    const newVariant: ProductVariant = {
+      title: preset.size,
+      sku: '',
+      price: preset.defaultPrice,
+      compare_at_price: null,
+      inventory_quantity: 0,
+      weight: null,
+      weight_unit: 'oz',
+      option1_name: 'Size',
+      option1_value: preset.size,
+      option2_name: null,
+      option2_value: null,
+      available_for_sale: true
+    };
+
+    if (isCreating) {
+      // Check if size already exists
+      const exists = pendingVariants.some(v => v.option1_value === preset.size);
+      if (exists) {
+        alert(`A ${preset.size} variant already exists`);
+        return;
+      }
+      setPendingVariants([...pendingVariants, newVariant]);
+      setSuccessMessage(`Added ${preset.size} variant`);
+      setTimeout(() => setSuccessMessage(''), 2000);
+    } else if (selectedProduct) {
+      // For existing products, open modal with preset
+      openVariantEditor(undefined, undefined, preset.size);
+    }
+  };
+
+  // Delete pending variant (for new products)
+  const deletePendingVariant = (index: number) => {
+    setPendingVariants(pendingVariants.filter((_, i) => i !== index));
+  };
+
+  // Edit pending variant (for new products)
+  const editPendingVariant = (index: number) => {
+    setEditingVariantIndex(index);
+    setEditingVariants([{ ...pendingVariants[index] }]);
+    setShowVariantModal(true);
+  };
+
   const saveVariant = async () => {
-    if (!selectedProduct || editingVariants.length === 0) return;
+    if (editingVariants.length === 0) return;
     
     const variant = editingVariants[0];
     
@@ -666,6 +732,35 @@ export default function ProductManagement() {
       alert('Title and price are required');
       return;
     }
+
+    // If creating a new product, save to pendingVariants
+    if (isCreating) {
+      const processedVariant: ProductVariant = {
+        ...variant,
+        price: typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price,
+        compare_at_price: variant.compare_at_price ? (typeof variant.compare_at_price === 'string' ? parseFloat(variant.compare_at_price) : variant.compare_at_price) : null,
+        inventory_quantity: typeof variant.inventory_quantity === 'string' ? parseInt(variant.inventory_quantity) || 0 : variant.inventory_quantity || 0,
+        weight: variant.weight ? (typeof variant.weight === 'string' ? parseFloat(variant.weight) : variant.weight) : null,
+      };
+
+      if (editingVariantIndex !== null) {
+        // Update existing pending variant
+        const updated = [...pendingVariants];
+        updated[editingVariantIndex] = processedVariant;
+        setPendingVariants(updated);
+        setSuccessMessage('Variant updated!');
+      } else {
+        // Add new pending variant
+        setPendingVariants([...pendingVariants, processedVariant]);
+        setSuccessMessage('Variant added!');
+      }
+      setShowVariantModal(false);
+      setTimeout(() => setSuccessMessage(''), 2000);
+      return;
+    }
+
+    // For existing products, save to database
+    if (!selectedProduct) return;
 
     try {
       if (editingVariantIndex !== null) {
@@ -678,10 +773,10 @@ export default function ProductManagement() {
           },
           body: JSON.stringify({
             ...variant,
-            price: parseFloat(variant.price),
-            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
-            inventory_quantity: parseInt(variant.inventory_quantity) || 0,
-            weight: variant.weight ? parseFloat(variant.weight) : null,
+            price: typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price,
+            compare_at_price: variant.compare_at_price ? (typeof variant.compare_at_price === 'string' ? parseFloat(variant.compare_at_price) : variant.compare_at_price) : null,
+            inventory_quantity: typeof variant.inventory_quantity === 'string' ? parseInt(variant.inventory_quantity) || 0 : variant.inventory_quantity || 0,
+            weight: variant.weight ? (typeof variant.weight === 'string' ? parseFloat(variant.weight) : variant.weight) : null,
           })
         });
 
@@ -699,10 +794,10 @@ export default function ProductManagement() {
           body: JSON.stringify({
             product_id: selectedProduct.id,
             ...variant,
-            price: parseFloat(variant.price),
-            compare_at_price: variant.compare_at_price ? parseFloat(variant.compare_at_price) : null,
-            inventory_quantity: parseInt(variant.inventory_quantity) || 0,
-            weight: variant.weight ? parseFloat(variant.weight) : null,
+            price: typeof variant.price === 'string' ? parseFloat(variant.price) : variant.price,
+            compare_at_price: variant.compare_at_price ? (typeof variant.compare_at_price === 'string' ? parseFloat(variant.compare_at_price) : variant.compare_at_price) : null,
+            inventory_quantity: typeof variant.inventory_quantity === 'string' ? parseInt(variant.inventory_quantity) || 0 : variant.inventory_quantity || 0,
+            weight: variant.weight ? (typeof variant.weight === 'string' ? parseFloat(variant.weight) : variant.weight) : null,
           })
         });
 
@@ -1392,7 +1487,7 @@ export default function ProductManagement() {
                       {formData.tags.filter(tag => tag.toLowerCase().includes('collection')).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm font-medium"
                         >
                           {tag}
                           <button
@@ -1427,7 +1522,7 @@ export default function ProductManagement() {
                         <button
                           type="button"
                           onClick={() => addTag('Calm Down Girl Collection')}
-                          className="px-3 py-1 text-sm bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-full transition-colors"
+                          className="px-3 py-1 text-sm bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-full transition-colors"
                         >
                           + Calm Down Girl Collection
                         </button>
@@ -1500,7 +1595,7 @@ export default function ProductManagement() {
                       {formData.tags.filter(tag => !tag.toLowerCase().includes('collection')).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full text-sm"
                         >
                           {tag}
                           <button
@@ -1660,43 +1755,65 @@ export default function ProductManagement() {
                     />
                   </div>
 
-                  {/* All Variants Display */}
-                  {selectedProduct && (
-                    <div className="mt-6 border-t pt-6 dark:border-gray-700">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                            <Layers className="h-5 w-5" />
-                            Product Variants & Inventory
-                          </h3>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Manage different sizes, scents, or options for this product
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          {selectedProduct.variants && selectedProduct.variants.length > 0 && (
-                            <span className="text-sm text-gray-500">
-                              Total QOH: {selectedProduct.variants.reduce((sum: number, v: any) => sum + (v.inventory_quantity || 0), 0)}
-                            </span>
-                          )}
-                          <button
-                            onClick={() => openVariantEditor()}
-                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add Variant
-                          </button>
-                        </div>
+                  {/* Variants Section - For Both Creating and Editing */}
+                  <div className="mt-6 border-t pt-6 dark:border-gray-700">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                          <Layers className="h-5 w-5" />
+                          Product Variants & Sizes
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {isCreating 
+                            ? 'Add different sizes or options for this product (optional - a default variant will be created if none added)'
+                            : 'Manage different sizes, scents, or options for this product'
+                          }
+                        </p>
                       </div>
-                      {selectedProduct.variants && selectedProduct.variants.length > 0 ? (
-                        <div className="space-y-3">
-                          {selectedProduct.variants.map((variant: any, index: number) => {
-                            const variantStock = variant.inventory_quantity || 0;
-                            const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
-                            
-                            return (
+                      {!isCreating && selectedProduct?.variants && selectedProduct.variants.length > 0 && (
+                        <span className="text-sm text-gray-500">
+                          Total QOH: {selectedProduct.variants.reduce((sum: number, v: ProductVariant) => sum + (v.inventory_quantity || 0), 0)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Quick Add Preset Sizes */}
+                    <div className="mb-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <p className="text-sm font-medium text-purple-700 dark:text-purple-300 mb-3">
+                        Quick Add Common Sizes:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {PRESET_SIZES.map((preset) => (
+                          <button
+                            key={preset.size}
+                            onClick={() => addPresetSizeVariant(preset)}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-purple-300 dark:border-purple-600 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors text-sm font-medium"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {preset.label} (${preset.defaultPrice.toFixed(2)})
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => openVariantEditor()}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Custom Variant
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Pending Variants for New Products */}
+                    {isCreating && (
+                      <>
+                        {pendingVariants.length > 0 ? (
+                          <div className="space-y-3">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Variants to be created ({pendingVariants.length}):
+                            </p>
+                            {pendingVariants.map((variant, index) => (
                               <div 
-                                key={variant.id} 
+                                key={index} 
                                 className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
                               >
                                 <div className="flex items-start justify-between gap-4">
@@ -1714,99 +1831,163 @@ export default function ProductManagement() {
                                     <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                                       {variant.option1_value && (
                                         <span className="flex items-center gap-1">
-                                          <span className="font-medium">{variant.option1_name || 'Option'}:</span>
+                                          <span className="font-medium">{variant.option1_name || 'Size'}:</span>
                                           {variant.option1_value}
-                                        </span>
-                                      )}
-                                      {variant.option2_value && (
-                                        <span className="flex items-center gap-1">
-                                          <span className="font-medium">{variant.option2_name || 'Option 2'}:</span>
-                                          {variant.option2_value}
-                                        </span>
-                                      )}
-                                      {variant.option3_value && (
-                                        <span className="flex items-center gap-1">
-                                          <span className="font-medium">{variant.option3_name || 'Option 3'}:</span>
-                                          {variant.option3_value}
                                         </span>
                                       )}
                                       <span className="flex items-center gap-1">
                                         <DollarSign className="h-3 w-3" />
                                         {formatPrice(variant.price)}
                                       </span>
+                                      <span className="flex items-center gap-1">
+                                        <Boxes className="h-3 w-3" />
+                                        Qty: {variant.inventory_quantity}
+                                      </span>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <div className="text-right">
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">QOH</div>
-                                      <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
-                                        stockStatus === 'out'
-                                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                          : stockStatus === 'critical'
-                                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
-                                          : stockStatus === 'low'
-                                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                          : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                      }`}>
-                                        <Boxes className="h-3.5 w-3.5" />
-                                        {variantStock}
-                                      </span>
-                                    </div>
                                     <button
-                                      onClick={() => openVariantEditor(variant, index)}
+                                      onClick={() => editPendingVariant(index)}
                                       className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                       title="Edit variant"
                                     >
                                       <Edit2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                                     </button>
-                                    {selectedProduct.variants.length > 1 && (
-                                      <button
-                                        onClick={() => deleteVariant(variant.id)}
-                                        className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                        title="Delete variant"
-                                      >
-                                        <Trash2 className="h-4 w-4 text-red-500" />
-                                      </button>
-                                    )}
+                                    <button
+                                      onClick={() => deletePendingVariant(index)}
+                                      className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                      title="Remove variant"
+                                    >
+                                      <Trash2 className="h-4 w-4 text-red-500" />
+                                    </button>
                                   </div>
                                 </div>
-                                {variantStock <= 5 && variantStock > 0 && (
-                                  <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
-                                    <AlertCircle className="h-3 w-3" />
-                                    Low stock - consider reordering
-                                  </div>
-                                )}
-                                {variantStock === 0 && (
-                                  <div className="mt-2 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
-                                    <AlertCircle className="h-3 w-3" />
-                                    Out of stock - customers cannot purchase
-                                  </div>
-                                )}
                               </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
-                          <Layers className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                          <p className="text-gray-600 dark:text-gray-400 mb-2">No variants yet</p>
-                          <p className="text-sm text-gray-500 mb-4">Add variants for different sizes, scents, or options</p>
-                          <button
-                            onClick={() => openVariantEditor()}
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add First Variant
-                          </button>
-                        </div>
-                      )}
-                      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="text-xs text-blue-700 dark:text-blue-400">
-                          <strong>Note:</strong> Each variant tracks its own inventory. The QOH shown on the product page updates based on the selected variant.
-                        </p>
-                      </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                            <Layers className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                            <p className="text-gray-600 dark:text-gray-400 mb-1">No variants added yet</p>
+                            <p className="text-xs text-gray-500">
+                              Use the quick add buttons above, or a default variant will be created automatically
+                            </p>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Existing Variants for Editing Products */}
+                    {!isCreating && selectedProduct && (
+                      <>
+                        {selectedProduct.variants && selectedProduct.variants.length > 0 ? (
+                          <div className="space-y-3">
+                            {selectedProduct.variants.map((variant: ProductVariant, index: number) => {
+                              const variantStock = variant.inventory_quantity || 0;
+                              const stockStatus = variantStock === 0 ? 'out' : variantStock <= 5 ? 'critical' : variantStock <= 15 ? 'low' : 'good';
+                              
+                              return (
+                                <div 
+                                  key={variant.id} 
+                                  className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+                                >
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className="font-medium text-gray-900 dark:text-white">
+                                          {variant.title || `Variant ${index + 1}`}
+                                        </span>
+                                        {variant.sku && (
+                                          <span className="text-xs font-mono text-gray-500 bg-white dark:bg-gray-900 px-2 py-1 rounded">
+                                            {variant.sku}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                        {variant.option1_value && (
+                                          <span className="flex items-center gap-1">
+                                            <span className="font-medium">{variant.option1_name || 'Option'}:</span>
+                                            {variant.option1_value}
+                                          </span>
+                                        )}
+                                        {variant.option2_value && (
+                                          <span className="flex items-center gap-1">
+                                            <span className="font-medium">{variant.option2_name || 'Option 2'}:</span>
+                                            {variant.option2_value}
+                                          </span>
+                                        )}
+                                        <span className="flex items-center gap-1">
+                                          <DollarSign className="h-3 w-3" />
+                                          {formatPrice(variant.price)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <div className="text-right">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">QOH</div>
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
+                                          stockStatus === 'out'
+                                            ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                            : stockStatus === 'critical'
+                                            ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                            : stockStatus === 'low'
+                                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                            : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                        }`}>
+                                          <Boxes className="h-3.5 w-3.5" />
+                                          {variantStock}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={() => openVariantEditor(variant, index)}
+                                        className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                        title="Edit variant"
+                                      >
+                                        <Edit2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                                      </button>
+                                      {selectedProduct.variants.length > 1 && (
+                                        <button
+                                          onClick={() => deleteVariant(variant.id!)}
+                                          className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                                          title="Delete variant"
+                                        >
+                                          <Trash2 className="h-4 w-4 text-red-500" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {variantStock <= 5 && variantStock > 0 && (
+                                    <div className="mt-2 flex items-center gap-1 text-xs text-orange-600 dark:text-orange-400">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Low stock - consider reordering
+                                    </div>
+                                  )}
+                                  {variantStock === 0 && (
+                                    <div className="mt-2 flex items-center gap-1 text-xs text-red-600 dark:text-red-400">
+                                      <AlertCircle className="h-3 w-3" />
+                                      Out of stock - customers cannot purchase
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
+                            <Layers className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                            <p className="text-gray-600 dark:text-gray-400 mb-2">No variants yet</p>
+                            <p className="text-sm text-gray-500 mb-4">Add variants for different sizes, scents, or options</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-blue-700 dark:text-blue-400">
+                        <strong>Note:</strong> Each variant tracks its own inventory and price. The product page will show variant options for customers to select.
+                      </p>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Sparkles, Heart, Leaf, Clock, Shield, Truck } from 'lucide-react';
 import CountdownTimer from '@/components/CountdownTimer';
-import LimitedTimeOffer from '@/components/LimitedTimeOffer';
 import TrustBadges from '@/components/TrustBadges';
 import FragranceCarousel from '@/components/FragranceCarousel';
 import FeaturedProductsSlider from '@/components/FeaturedProductsSlider';

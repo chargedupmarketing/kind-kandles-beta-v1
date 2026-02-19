@@ -1,6 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long'
+);
+
+// Verify admin from cookie
+async function verifyAdmin(): Promise<{ userId: string; email: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin-token')?.value;
+    
+    if (!token) return null;
+    
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as string
+    };
+  } catch {
+    return null;
+  }
+}
 
 // GET /api/admin/users/[id] - Get a specific admin user
 export async function GET(
@@ -8,11 +33,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     const { id } = await params;
+    const supabase = createServerClient();
 
     const { data: user, error } = await supabase
       .from('admin_users')
-      .select('id, email, first_name, last_name, role, is_active, last_login, created_at')
+      .select('id, email, first_name, last_name, role, is_active, last_login, created_at, sub_levels')
       .eq('id', id)
       .single();
 
@@ -33,17 +68,26 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
     const { id } = await params;
     const body = await request.json();
+    const supabase = createServerClient();
 
-    // Get the requesting user's role from headers (set by middleware)
-    const requestingUserRole = request.headers.get('x-user-role');
-    const isSuperAdmin = requestingUserRole === 'super_admin';
+    // Get the requesting user's role from JWT
+    const isSuperAdmin = admin.role === 'super_admin';
 
     // Check if user exists and get their role
     const { data: existingUser, error: fetchError } = await supabase
       .from('admin_users')
-      .select('id, role')
+      .select('id, role, sub_levels')
       .eq('id', id)
       .single();
 
@@ -113,11 +157,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
 
-    // Get the requesting user's role from headers (set by middleware)
-    const requestingUserRole = request.headers.get('x-user-role');
-    const isSuperAdmin = requestingUserRole === 'super_admin';
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
+    const { id } = await params;
+    const supabase = createServerClient();
+
+    // Get the requesting user's role from JWT
+    const isSuperAdmin = admin.role === 'super_admin';
 
     // Check if user exists and get their role
     const { data: existingUser, error: fetchError } = await supabase
@@ -133,6 +186,11 @@ export async function DELETE(
     // Only super admins can delete other super admins
     if (existingUser.role === 'super_admin' && !isSuperAdmin) {
       return NextResponse.json({ error: 'Only super admins can delete other super admins' }, { status: 403 });
+    }
+
+    // Prevent self-deletion
+    if (id === admin.userId) {
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 403 });
     }
 
     const { error } = await supabase

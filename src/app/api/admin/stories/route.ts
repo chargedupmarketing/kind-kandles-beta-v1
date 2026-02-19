@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/admin/stories - List all story submissions
 export async function GET(request: NextRequest) {
   try {
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey || serviceRoleKey === 'placeholder-service-key') {
+      console.error('SUPABASE_SERVICE_ROLE_KEY is not set. Admin cannot load stories.');
+      return NextResponse.json(
+        { error: 'Server is not configured. Add SUPABASE_SERVICE_ROLE_KEY to .env.local' },
+        { status: 503 }
+      );
+    }
+
     const supabase = createServerClient();
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter');
@@ -23,10 +34,14 @@ export async function GET(request: NextRequest) {
     if (error) {
       console.error('Error fetching stories:', error);
       // Table may not exist yet (migration not run)
-      if (error.code === 'PGRST205' || error.message?.includes('does not exist')) {
+      if (error.code === 'PGRST205' || (error.message && String(error.message).includes('does not exist'))) {
         return NextResponse.json({ stories: [] });
       }
-      return NextResponse.json({ error: 'Failed to fetch stories' }, { status: 500 });
+      const message = error.message || 'Failed to fetch stories';
+      return NextResponse.json(
+        { error: message },
+        { status: 500 }
+      );
     }
 
     let stories = (rows || []).map((row: Record<string, unknown>) => dbRowToStory(row));
@@ -42,7 +57,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ stories });
+    return NextResponse.json(
+      { stories },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      }
+    );
   } catch (error) {
     console.error('Admin stories API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

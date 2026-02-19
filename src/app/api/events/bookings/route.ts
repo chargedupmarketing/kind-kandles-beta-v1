@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { Resend } from 'resend';
 import type { Event, EventOccurrence, PriceTier } from '@/lib/types';
+import { notifyAdminsNewEventBooking } from '@/lib/notifications';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -413,16 +414,7 @@ export async function POST(request: NextRequest) {
         </html>
       `;
 
-      // Send admin notification
-      await resend.emails.send({
-        from: 'Kind Kandles Events <noreply@kindkandlesboutique.com>',
-        to: ['k@kindkandlesboutique.com', 'dominic@chargedupmarketing.com'],
-        replyTo: customer_email,
-        subject: `New Event Booking: ${event.title} - ${customer_name}`,
-        html: adminEmailHtml,
-      });
-
-      // Send customer confirmation
+      // Send customer confirmation email directly (not via notification service)
       await resend.emails.send({
         from: 'Kind Kandles Events <noreply@kindkandlesboutique.com>',
         to: customer_email,
@@ -430,11 +422,22 @@ export async function POST(request: NextRequest) {
         html: customerEmailHtml,
       });
 
-      console.log('✅ Event booking notification emails sent successfully');
+      console.log('✅ Event booking customer confirmation email sent successfully');
     } catch (emailError) {
-      console.error('❌ Error sending notification emails:', emailError);
+      console.error('❌ Error sending customer confirmation email:', emailError);
       // Don't fail the request if email fails - booking is still saved
     }
+
+    // Send admin notifications via the notification service (respects preferences)
+    notifyAdminsNewEventBooking({
+      id: booking.id,
+      event_name: event.title,
+      customer_name,
+      customer_email,
+      num_participants,
+    }).catch(err => {
+      console.error('Failed to send admin notification for event booking:', err);
+    });
 
     return NextResponse.json({
       success: true,

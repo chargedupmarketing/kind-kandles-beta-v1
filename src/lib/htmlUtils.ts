@@ -51,6 +51,15 @@ export function stripHTML(html: string | null | undefined): string {
 }
 
 /**
+ * Truncates text to a specified length
+ */
+export function truncateText(text: string | null | undefined, maxLength: number = 150): string {
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength).trim() + '...';
+}
+
+/**
  * Truncates HTML content to a specified length while preserving tags
  * Useful for excerpts and previews
  */
@@ -61,5 +70,13 @@ export function truncateHTML(html: string | null | undefined, maxLength: number)
   if (plainText.length <= maxLength) return cleanHTML(html);
   
   return plainText.substring(0, maxLength) + '...';
+}
+
+/**
+ * Get clean excerpt from HTML description
+ * Strips HTML and truncates to specified length
+ */
+export function getExcerpt(html: string | null | undefined, maxLength: number = 150): string {
+  return truncateText(stripHTML(html), maxLength);
 }
 

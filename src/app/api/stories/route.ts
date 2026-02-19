@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { notifyAdminsNewStory } from '@/lib/notifications';
+
+export const dynamic = 'force-dynamic';
 
 // GET /api/stories - Public: list approved/published stories for the Write Your Story page
 export async function GET() {
@@ -69,6 +72,15 @@ export async function POST(request: NextRequest) {
       ? `Featured products: ${products.trim()}${canFeature ? ' | Can feature.' : ''}${newsletter ? ' | Newsletter opt-in.' : ''}`
       : `${canFeature ? 'Can feature.' : ''}${newsletter ? ' Newsletter opt-in.' : ''}`.trim() || undefined;
 
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey || serviceRoleKey === 'placeholder-service-key') {
+      console.error('SUPABASE_SERVICE_ROLE_KEY is not set. Story submissions will not be saved.');
+      return NextResponse.json(
+        { error: 'Server is not configured to save stories. Please contact the site administrator.' },
+        { status: 503 }
+      );
+    }
+
     const supabase = createServerClient();
     const { data: row, error } = await supabase
       .from('customer_stories')
@@ -88,11 +100,30 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error('Error saving story submission:', error);
+      const message = error.message || 'Failed to save your story. Please try again.';
+      return NextResponse.json(
+        { error: message },
+        { status: 500 }
+      );
+    }
+
+    if (!row) {
+      console.error('Story insert returned no row');
       return NextResponse.json(
         { error: 'Failed to save your story. Please try again.' },
         { status: 500 }
       );
     }
+
+    // Notify admins about the new story submission
+    notifyAdminsNewStory({
+      id: row.id,
+      title: row.title,
+      author: row.author,
+      email: row.email,
+    }).catch(err => {
+      console.error('Failed to send admin notification for new story:', err);
+    });
 
     return NextResponse.json({
       success: true,

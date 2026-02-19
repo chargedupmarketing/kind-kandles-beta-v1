@@ -412,13 +412,35 @@ export default function ProductImageAnalyzer() {
 
   return (
     <div className="space-y-6">
+      {/* Beta Warning Banner */}
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg flex-shrink-0">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-0.5 text-xs font-bold bg-amber-500 text-white rounded">BETA</span>
+              <h3 className="font-semibold text-amber-900 dark:text-amber-200 text-sm">Experimental Feature</h3>
+            </div>
+            <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+              This AI-powered image analyzer is in beta. It uses Claude AI to identify products and may incur API costs. 
+              Results should be verified before use.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Brain className="h-7 w-7 text-blue-600" />
-            AI Product Image Analyzer
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Brain className="h-7 w-7 text-blue-600" />
+              AI Product Image Analyzer
+            </h2>
+            <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded">BETA</span>
+          </div>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Upload product images to automatically identify and match them to your catalog
           </p>

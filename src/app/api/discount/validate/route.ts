@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 
 interface DiscountValidationRequest {
   code: string;
@@ -14,6 +14,12 @@ export async function POST(request: NextRequest) {
     if (!code) {
       return NextResponse.json({ valid: false, error: 'No code provided' }, { status: 400 });
     }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ valid: false, error: 'Database not configured' }, { status: 503 });
+    }
+
+    const supabase = createServerClient();
 
     // Look up discount code
     const { data: discount, error } = await supabase

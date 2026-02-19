@@ -581,7 +581,7 @@ export default function EmailEditor({ template, isCreating, onSave, onClose }: E
                   </button>
 
                   <p className="text-xs text-gray-500 text-center">
-                    Uses your OpenAI API key from AI Assistant settings
+                    Uses Anthropic Claude AI (configured in environment variables)
                   </p>
                 </div>
               </div>

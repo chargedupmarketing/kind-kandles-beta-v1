@@ -1,5 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
+
+export const dynamic = 'force-dynamic';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
+
+async function verifyAdminWithRole(): Promise<{ userId: string; email: string; role: string; isSuperAdmin: boolean } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin-token')?.value;
+    
+    if (!token) return null;
+    
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
+    
+    // Check if user is super admin
+    if (!isSupabaseConfigured()) {
+      return {
+        userId: payload.userId as string,
+        email: payload.email as string,
+        role: payload.role as string,
+        isSuperAdmin: payload.role === 'owner'
+      };
+    }
+
+    const supabase = createServerClient();
+    const { data: user } = await supabase
+      .from('admin_users')
+      .select('id, email, role, sub_level_id')
+      .eq('id', payload.userId)
+      .single();
+
+    if (!user) return null;
+
+    // Check if user has super_admin sub-level
+    let isSuperAdmin = user.role === 'owner';
+    if (user.sub_level_id) {
+      const { data: subLevel } = await supabase
+        .from('user_sub_levels')
+        .select('name')
+        .eq('id', user.sub_level_id)
+        .single();
+      
+      if (subLevel?.name === 'super_admin') {
+        isSuperAdmin = true;
+      }
+    }
+    
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as string,
+      isSuperAdmin
+    };
+  } catch {
+    return null;
+  }
+}
 
 function convertToCSV(data: Record<string, unknown>[], headers?: string[]): string {
   if (!data || data.length === 0) return '';
@@ -27,6 +87,16 @@ function convertToCSV(data: Record<string, unknown>[], headers?: string[]): stri
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication - must be super admin
+    const admin = await verifyAdminWithRole();
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    if (!admin.isSuperAdmin) {
+      return NextResponse.json({ error: 'Super admin access required' }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 

@@ -21,9 +21,12 @@ import {
   AlertCircle,
   MoreVertical,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Shield
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
+import { useReauth } from '@/hooks/useReauth';
+import ReauthModal from './ReauthModal';
 
 interface DiscountCode {
   id: string;
@@ -59,6 +62,15 @@ export default function DiscountManagement() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
   const [expandedDiscountId, setExpandedDiscountId] = useState<string | null>(null);
 
+  const { 
+    isReauthenticated, 
+    showReauthModal, 
+    requireReauth, 
+    handleReauthSuccess, 
+    handleReauthCancel,
+    userEmail 
+  } = useReauth();
+
   // Form state
   const [formData, setFormData] = useState({
     code: '',
@@ -72,8 +84,15 @@ export default function DiscountManagement() {
   });
 
   useEffect(() => {
-    fetchDiscounts();
-  }, []);
+    if (isReauthenticated) {
+      fetchDiscounts();
+    }
+  }, [isReauthenticated]);
+
+  // Check reauth on component mount
+  useEffect(() => {
+    requireReauth();
+  }, [requireReauth]);
 
   const fetchDiscounts = async () => {
     try {
@@ -274,6 +293,34 @@ export default function DiscountManagement() {
     totalUses: discounts.reduce((sum, d) => sum + d.uses, 0)
   };
 
+  // Show reauth modal if not authenticated
+  if (!isReauthenticated) {
+    return (
+      <>
+        {showReauthModal && (
+          <ReauthModal
+            onSuccess={handleReauthSuccess}
+            onCancel={handleReauthCancel}
+            userEmail={userEmail}
+          />
+        )}
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <Shield className="h-16 w-16 text-amber-400 mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Security Verification Required</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            This section contains pricing and discount controls.
+          </p>
+          <button
+            onClick={() => requireReauth()}
+            className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            Verify Identity
+          </button>
+        </div>
+      </>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -284,6 +331,15 @@ export default function DiscountManagement() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Reauth Modal */}
+      {showReauthModal && (
+        <ReauthModal
+          onSuccess={handleReauthSuccess}
+          onCancel={handleReauthCancel}
+          userEmail={userEmail}
+        />
+      )}
+
       {/* Success Message */}
       {successMessage && (
         <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-auto z-50 bg-green-500 text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg flex items-center gap-2">

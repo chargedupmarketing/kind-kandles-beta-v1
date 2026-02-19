@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
+import { notifyAdminsNewReview } from '@/lib/notifications';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -96,6 +97,32 @@ export async function POST(request: NextRequest) {
 
     // Send thank you email
     await sendThankYouEmail(reviewToken);
+
+    // Notify admins about new reviews
+    if (insertedReviews && insertedReviews.length > 0) {
+      // Get product names for the reviews
+      const productIds = insertedReviews.map((r: any) => r.product_id);
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, title')
+        .in('id', productIds);
+
+      const productMap = new Map((products || []).map((p: any) => [p.id, p.title]));
+
+      // Send notification for each review
+      for (const review of insertedReviews) {
+        const productName = productMap.get(review.product_id) || 'Unknown Product';
+        notifyAdminsNewReview({
+          id: review.id,
+          product_name: productName,
+          rating: review.rating,
+          customer_name: review.customer_name || 'Anonymous',
+          customer_email: review.customer_email,
+        }).catch(err => {
+          console.error('Failed to send admin notification for review:', err);
+        });
+      }
+    }
 
     return NextResponse.json({
       success: true,

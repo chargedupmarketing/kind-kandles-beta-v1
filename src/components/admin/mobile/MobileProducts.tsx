@@ -306,7 +306,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
       {/* Success Message */}
       {stockSuccessMessage && (
         <div className="fixed top-4 left-4 right-4 z-[60] bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in">
@@ -316,7 +316,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
       )}
 
       {/* Compact Header */}
-      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 shadow-sm">
+      <div className="sticky top-0 bg-white dark:bg-slate-800 z-10 border-b border-gray-200 dark:border-slate-700 shadow-sm">
         {/* Manage Stock Button - Full Width */}
         <div className="px-3 pt-2 pb-1">
           <button
@@ -332,11 +332,11 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           {/* View Mode & Sort */}
           <div className="flex items-center space-x-2">
             {/* View Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-0.5">
+            <div className="flex items-center bg-gray-100 dark:bg-slate-700 rounded-lg p-0.5">
               <button
                 onClick={() => handleViewModeChange('grid')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'grid' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  viewMode === 'grid' ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400'
                 }`}
               >
                 <Grid className="h-4 w-4" />
@@ -344,7 +344,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
               <button
                 onClick={() => handleViewModeChange('list')}
                 className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+                  viewMode === 'list' ? 'bg-white dark:bg-slate-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-slate-400'
                 }`}
               >
                 <List className="h-4 w-4" />
@@ -355,7 +355,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             <div className="relative">
               <button
                 onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center space-x-1 px-2 py-1.5 bg-gray-100 rounded-lg text-xs text-gray-600"
+                className="flex items-center space-x-1 px-2 py-1.5 bg-gray-100 dark:bg-slate-700 rounded-lg text-xs text-gray-600 dark:text-slate-300"
               >
                 <SortAsc className="h-3.5 w-3.5" />
                 <span>{sortOptions.find(s => s.id === sortBy)?.short}</span>
@@ -368,7 +368,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     className="fixed inset-0 z-40"
                     onClick={() => setShowSortMenu(false)}
                   />
-                  <div className="absolute left-0 top-full mt-1 w-36 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                  <div className="absolute left-0 top-full mt-1 w-36 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
                     {sortOptions.map((option) => (
                       <button
                         key={option.id}
@@ -376,7 +376,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                         className={`w-full px-3 py-2 text-left text-xs transition-colors ${
                           sortBy === option.id
                             ? 'bg-teal-600 text-white'
-                            : 'text-gray-700 hover:bg-gray-50'
+                            : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-700'
                         }`}
                       >
                         {option.label}
@@ -392,7 +392,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           <button
             onClick={() => setShowSearch(!showSearch)}
             className={`p-1.5 rounded-lg transition-colors ${
-              showSearch ? 'bg-teal-600 text-white' : 'bg-gray-100 text-gray-600'
+              showSearch ? 'bg-teal-600 text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
             }`}
           >
             <Search className="h-4 w-4" />
@@ -403,14 +403,14 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
         {showSearch && (
           <div className="px-3 pb-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 autoFocus
-                className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
+                className="w-full pl-8 pr-3 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm"
               />
             </div>
           </div>
@@ -422,21 +422,21 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
         {loading && products.length === 0 ? (
           <div className={`p-3 ${viewMode === 'grid' ? 'grid grid-cols-3 gap-2' : 'space-y-2'}`}>
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="bg-white rounded-lg overflow-hidden animate-pulse shadow-sm">
+              <div key={i} className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden animate-pulse shadow-sm">
                 {viewMode === 'grid' ? (
                   <>
-                    <div className="aspect-square bg-gray-200" />
+                    <div className="aspect-square bg-gray-200 dark:bg-slate-700" />
                     <div className="p-2">
-                      <div className="h-3 w-full bg-gray-200 rounded mb-1" />
-                      <div className="h-3 w-10 bg-gray-200 rounded" />
+                      <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+                      <div className="h-3 w-10 bg-gray-200 dark:bg-slate-700 rounded" />
                     </div>
                   </>
                 ) : (
                   <div className="flex items-center p-2">
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg" />
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-slate-700 rounded-lg" />
                     <div className="ml-2 flex-1">
-                      <div className="h-3 w-full bg-gray-200 rounded mb-1" />
-                      <div className="h-3 w-16 bg-gray-200 rounded" />
+                      <div className="h-3 w-full bg-gray-200 dark:bg-slate-700 rounded mb-1" />
+                      <div className="h-3 w-16 bg-gray-200 dark:bg-slate-700 rounded" />
                     </div>
                   </div>
                 )}
@@ -445,9 +445,9 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           </div>
         ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <Package className="h-12 w-12 text-gray-300 mb-3" />
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">No products found</h3>
-            <p className="text-xs text-gray-500 text-center">
+            <Package className="h-12 w-12 text-gray-300 dark:text-slate-600 mb-3" />
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No products found</h3>
+            <p className="text-xs text-gray-500 dark:text-slate-400 text-center">
               {searchQuery ? 'Try different search' : 'Add products to get started'}
             </p>
           </div>
@@ -455,7 +455,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
           <div className="p-3">
             {refreshing && (
               <div className="flex items-center justify-center py-1 mb-2">
-                <RefreshCw className="h-4 w-4 text-teal-600 animate-spin" />
+                <RefreshCw className="h-4 w-4 text-teal-600 dark:text-teal-400 animate-spin" />
               </div>
             )}
 
@@ -470,10 +470,10 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     <button
                       key={product.id}
                       onClick={() => handleQuickEdit(product)}
-                      className="bg-white rounded-lg overflow-hidden text-left active:scale-[0.98] transition-transform shadow-sm border border-gray-100"
+                      className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden text-left active:scale-[0.98] transition-transform shadow-sm border border-gray-100 dark:border-slate-700"
                     >
                       {/* Image */}
-                      <div className="relative aspect-square bg-gray-100">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-slate-700">
                         <img
                           src={imageUrl}
                           alt={product.title}
@@ -487,17 +487,17 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                           {stockStatus.label}
                         </span>
                         {/* Edit Icon */}
-                        <div className="absolute top-1 right-1 p-1 bg-white/80 rounded shadow-sm">
-                          <Edit2 className="h-2.5 w-2.5 text-gray-600" />
+                        <div className="absolute top-1 right-1 p-1 bg-white/80 dark:bg-slate-800/80 rounded shadow-sm">
+                          <Edit2 className="h-2.5 w-2.5 text-gray-600 dark:text-slate-300" />
                         </div>
                       </div>
 
                       {/* Info */}
                       <div className="p-2">
-                        <h3 className="text-[10px] font-medium text-gray-900 line-clamp-2 leading-tight mb-1">
+                        <h3 className="text-[10px] font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight mb-1">
                           {product.title}
                         </h3>
-                        <span className="text-xs font-bold text-gray-900">
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">
                           {formatCurrency(product.price)}
                         </span>
                       </div>
@@ -516,10 +516,10 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     <button
                       key={product.id}
                       onClick={() => handleQuickEdit(product)}
-                      className="w-full bg-white rounded-lg p-2 flex items-center text-left active:scale-[0.99] transition-transform shadow-sm border border-gray-100"
+                      className="w-full bg-white dark:bg-slate-800 rounded-lg p-2 flex items-center text-left active:scale-[0.99] transition-transform shadow-sm border border-gray-100 dark:border-slate-700"
                     >
                       {/* Image */}
-                      <div className="relative w-12 h-12 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                      <div className="relative w-12 h-12 bg-gray-100 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
                         <img
                           src={imageUrl}
                           alt={product.title}
@@ -532,11 +532,11 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
 
                       {/* Info */}
                       <div className="ml-2.5 flex-1 min-w-0">
-                        <h3 className="text-xs font-medium text-gray-900 truncate">
+                        <h3 className="text-xs font-medium text-gray-900 dark:text-white truncate">
                           {product.title}
                         </h3>
                         <div className="flex items-center space-x-2 mt-0.5">
-                          <span className="text-xs font-bold text-gray-900">
+                          <span className="text-xs font-bold text-gray-900 dark:text-white">
                             {formatCurrency(product.price)}
                           </span>
                           <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${stockStatus.color}`}>
@@ -546,7 +546,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                       </div>
 
                       {/* Edit */}
-                      <Edit2 className="h-4 w-4 text-gray-400 ml-2" />
+                      <Edit2 className="h-4 w-4 text-gray-400 dark:text-slate-500 ml-2" />
                     </button>
                   );
                 })}
@@ -558,7 +558,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="w-full py-2.5 mt-3 text-xs text-teal-600 hover:text-teal-700 font-medium"
+                className="w-full py-2.5 mt-3 text-xs text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 font-medium"
               >
                 {loading ? 'Loading...' : 'Load more'}
               </button>
@@ -580,11 +580,11 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
       {showStockModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
           <div 
-            className="bg-white w-full max-h-[90vh] rounded-t-2xl overflow-hidden animate-slide-up shadow-2xl flex flex-col"
+            className="bg-white dark:bg-slate-800 w-full max-h-[90vh] rounded-t-2xl overflow-hidden animate-slide-up shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-emerald-500">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-teal-500 to-emerald-500">
               <div className="flex items-center gap-2">
                 <Boxes className="h-5 w-5 text-white" />
                 <h2 className="text-lg font-bold text-white">Manage Stock</h2>
@@ -598,7 +598,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 p-3 border-b border-gray-100 bg-gray-50">
+            <div className="flex items-center gap-2 p-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-900">
               {[
                 { value: 'all', label: 'All', count: allProducts.length },
                 { value: 'low', label: 'Low', count: allProducts.filter(p => (p.variants?.[0]?.inventory_quantity || 0) > 0 && (p.variants?.[0]?.inventory_quantity || 0) <= 5).length },
@@ -613,7 +613,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                   className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                     stockFilter === filter.value
                       ? 'bg-teal-600 text-white'
-                      : 'bg-white text-gray-600 border border-gray-200'
+                      : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-slate-300 border border-gray-200 dark:border-slate-600'
                   }`}
                 >
                   {filter.label} ({filter.count})
@@ -623,15 +623,15 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
 
             {/* Pending Changes Indicator */}
             {getChangedStockProducts().length > 0 && (
-              <div className="px-3 py-2 bg-teal-50 border-b border-teal-100">
-                <span className="text-xs text-teal-700 font-medium">
+              <div className="px-3 py-2 bg-teal-50 dark:bg-teal-900/30 border-b border-teal-100 dark:border-teal-800/50">
+                <span className="text-xs text-teal-700 dark:text-teal-300 font-medium">
                   {getChangedStockProducts().length} pending changes
                 </span>
               </div>
             )}
 
             {/* Product List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50 dark:bg-slate-900">
               {getStockFilteredProducts().map((product) => {
                 const originalStock = product.variants?.[0]?.inventory_quantity || 0;
                 const newStock = stockUpdates[product.id] ?? originalStock;
@@ -644,12 +644,12 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     key={product.id}
                     className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
                       hasChanged 
-                        ? 'border-teal-300 bg-teal-50' 
-                        : 'border-gray-100 bg-white'
+                        ? 'border-teal-300 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/30' 
+                        : 'border-gray-100 dark:border-slate-700 bg-white dark:bg-slate-800'
                     }`}
                   >
                     {/* Product Image */}
-                    <div className="w-10 h-10 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="w-10 h-10 bg-gray-100 dark:bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
                       <img
                         src={imageUrl}
                         alt={product.title}
@@ -662,21 +662,21 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900 truncate">
+                      <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
                         {product.title}
                       </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
                           stockStatus === 'out' 
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
                             : stockStatus === 'low'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-green-100 text-green-700'
+                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                         }`}>
                           {stockStatus === 'out' ? 'Out' : stockStatus === 'low' ? 'Low' : 'OK'}
                         </span>
                         {hasChanged && (
-                          <span className="flex items-center text-[9px] text-teal-600 font-medium">
+                          <span className="flex items-center text-[9px] text-teal-600 dark:text-teal-400 font-medium">
                             <ArrowUpDown className="h-2.5 w-2.5 mr-0.5" />
                             {originalStock}→{newStock}
                           </span>
@@ -688,10 +688,10 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => adjustStock(product.id, -1)}
-                        className="p-1.5 rounded-lg bg-gray-100 active:bg-gray-200 transition-colors"
+                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                         disabled={newStock <= 0}
                       >
-                        <Minus className="h-3.5 w-3.5 text-gray-600" />
+                        <Minus className="h-3.5 w-3.5 text-gray-600 dark:text-slate-300" />
                       </button>
                       <input
                         type="number"
@@ -700,15 +700,15 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
                         onChange={(e) => updateStockValue(product.id, parseInt(e.target.value) || 0)}
                         className={`w-12 px-1 py-1 text-center border rounded-lg text-sm font-bold ${
                           hasChanged 
-                            ? 'border-teal-400 bg-teal-50' 
-                            : 'border-gray-200 bg-gray-50'
+                            ? 'border-teal-400 dark:border-teal-600 bg-teal-50 dark:bg-teal-900/30 text-gray-900 dark:text-white' 
+                            : 'border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white'
                         }`}
                       />
                       <button
                         onClick={() => adjustStock(product.id, 1)}
-                        className="p-1.5 rounded-lg bg-gray-100 active:bg-gray-200 transition-colors"
+                        className="p-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 active:bg-gray-200 dark:active:bg-slate-600 transition-colors"
                       >
-                        <Plus className="h-3.5 w-3.5 text-gray-600" />
+                        <Plus className="h-3.5 w-3.5 text-gray-600 dark:text-slate-300" />
                       </button>
                     </div>
                   </div>
@@ -716,7 +716,7 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
               })}
 
               {getStockFilteredProducts().length === 0 && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-slate-400">
                   <Package className="h-10 w-10 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No products match this filter</p>
                 </div>
@@ -724,11 +724,11 @@ export default function MobileProducts({ onNavigate }: MobileProductsProps) {
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <div className="p-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800">
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowStockModal(false)}
-                  className="flex-1 py-3 px-4 bg-white border border-gray-200 text-gray-700 rounded-xl font-medium text-sm active:scale-[0.98] transition-transform"
+                  className="flex-1 py-3 px-4 bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-gray-700 dark:text-slate-300 rounded-xl font-medium text-sm active:scale-[0.98] transition-transform"
                 >
                   Cancel
                 </button>

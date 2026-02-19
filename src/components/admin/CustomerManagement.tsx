@@ -20,9 +20,12 @@ import {
   Clock,
   TrendingUp,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Shield
 } from 'lucide-react';
 import { formatPrice } from '@/lib/localStore';
+import { useReauth } from '@/hooks/useReauth';
+import ReauthModal from './ReauthModal';
 
 interface CustomerOrder {
   id: string;
@@ -65,9 +68,25 @@ export default function CustomerManagement() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [expandedCustomerId, setExpandedCustomerId] = useState<string | null>(null);
 
+  const { 
+    isReauthenticated, 
+    showReauthModal, 
+    requireReauth, 
+    handleReauthSuccess, 
+    handleReauthCancel,
+    userEmail 
+  } = useReauth();
+
   useEffect(() => {
-    fetchCustomers();
-  }, [sortBy, sortOrder]);
+    if (isReauthenticated) {
+      fetchCustomers();
+    }
+  }, [sortBy, sortOrder, isReauthenticated]);
+
+  // Check reauth on component mount
+  useEffect(() => {
+    requireReauth();
+  }, [requireReauth]);
 
   const fetchCustomers = async () => {
     try {
@@ -139,6 +158,34 @@ export default function CustomerManagement() {
     avgValue: customers.length > 0 ? customers.reduce((sum, c) => sum + c.total_spent, 0) / customers.length : 0
   };
 
+  // Show reauth modal if not authenticated
+  if (!isReauthenticated) {
+    return (
+      <>
+        {showReauthModal && (
+          <ReauthModal
+            onSuccess={handleReauthSuccess}
+            onCancel={handleReauthCancel}
+            userEmail={userEmail}
+          />
+        )}
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <Shield className="h-16 w-16 text-amber-400 mb-4" />
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Security Verification Required</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">
+            This section contains sensitive customer data.
+          </p>
+          <button
+            onClick={() => requireReauth()}
+            className="px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            Verify Identity
+          </button>
+        </div>
+      </>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -149,6 +196,15 @@ export default function CustomerManagement() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* Reauth Modal */}
+      {showReauthModal && (
+        <ReauthModal
+          onSuccess={handleReauthSuccess}
+          onCancel={handleReauthCancel}
+          userEmail={userEmail}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

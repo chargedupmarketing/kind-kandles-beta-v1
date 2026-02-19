@@ -33,7 +33,7 @@ export default function SquarePaymentForm({
   onSuccess,
 }: SquarePaymentFormProps) {
   const router = useRouter();
-  const { total } = useCart();
+  const { total, tax, subtotal } = useCart();
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -258,27 +258,79 @@ export default function SquarePaymentForm({
     };
   }, [card, applePay, googlePay, cashAppPay]);
 
-  // Process payment with token
-  const processPayment = async (token: string) => {
-    const response = await fetch('/api/checkout/process-payment', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sourceId: token,
-        items,
-        shippingAddress,
-        shippingCost,
-        discountCode,
-        discountAmount,
-      }),
-    });
+  // Generate idempotency key for payment
+  const generateIdempotencyKey = () => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    return `payment_${timestamp}_${random}`;
+  };
 
-    const result = await response.json();
+  // Process payment with token and retry logic
+  const processPayment = async (token: string, retryCount = 0) => {
+    const maxRetries = 2;
+    const idempotencyKey = generateIdempotencyKey();
+    
+    try {
+      const response = await fetch('/api/checkout/process-payment', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': idempotencyKey
+        },
+        body: JSON.stringify({
+          sourceId: token,
+          items,
+          shippingAddress,
+          shippingCost,
+          discountCode,
+          discountAmount,
+          idempotencyKey,
+        }),
+      });
 
-    if (result.success) {
-      await createOrder(result.paymentId);
-    } else {
-      setError(result.error || 'Payment failed');
+      const result = await response.json();
+
+      if (result.success) {
+        await createOrder(result.paymentId);
+      } else {
+        // Check if error is retryable
+        const isRetryable = result.code === 'GATEWAY_TIMEOUT' || 
+                           result.code === 'SERVICE_UNAVAILABLE' ||
+                           result.code === 'RATE_LIMITED';
+        
+        if (isRetryable && retryCount < maxRetries) {
+          console.log(`Payment failed with retryable error, attempt ${retryCount + 1}/${maxRetries}`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+          return processPayment(token, retryCount + 1);
+        }
+        
+        // Provide user-friendly error messages
+        let userMessage = result.error || 'Payment failed';
+        if (result.code === 'CARD_DECLINED') {
+          userMessage = 'Your card was declined. Please try a different payment method.';
+        } else if (result.code === 'INSUFFICIENT_FUNDS') {
+          userMessage = 'Insufficient funds. Please try a different card.';
+        } else if (result.code === 'INVALID_CARD') {
+          userMessage = 'Invalid card information. Please check your card details.';
+        } else if (result.code === 'CVV_FAILURE') {
+          userMessage = 'CVV verification failed. Please check your security code.';
+        } else if (result.code === 'EXPIRED_CARD') {
+          userMessage = 'Your card has expired. Please use a different card.';
+        }
+        
+        setError(userMessage);
+      }
+    } catch (err) {
+      console.error('Payment processing error:', err);
+      
+      // Retry on network errors
+      if (retryCount < maxRetries) {
+        console.log(`Network error, retrying... attempt ${retryCount + 1}/${maxRetries}`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (retryCount + 1)));
+        return processPayment(token, retryCount + 1);
+      }
+      
+      setError('Unable to process payment. Please check your connection and try again.');
     }
   };
 
@@ -444,6 +496,8 @@ export default function SquarePaymentForm({
           shipping_postal_code: shippingAddress.postalCode,
           shipping_country: shippingAddress.country,
           shipping_cost: shippingCost,
+          tax: tax, // Include tax in order
+          subtotal: subtotal, // Include subtotal for reference
           discount: discountAmount || 0,
           discount_code: discountCode,
           payment_id: paymentId,

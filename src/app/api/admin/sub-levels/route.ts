@@ -8,7 +8,7 @@ const JWT_SECRET = new TextEncoder().encode(
 );
 
 // Verify user has permission to manage sub-levels
-async function verifySubLevelPermission(request: NextRequest): Promise<{
+async function verifySubLevelPermission(): Promise<{
   authorized: boolean;
   userId?: string;
   role?: string;
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/sub-levels - Create a new sub-level
 export async function POST(request: NextRequest) {
   try {
-    const auth = await verifySubLevelPermission(request);
+    const auth = await verifySubLevelPermission();
     if (!auth.authorized) {
       return NextResponse.json({ error: auth.error }, { status: 403 });
     }

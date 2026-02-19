@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
 const BRAND_CONTEXT = `You are writing emails for "My Kind Kandles & Boutique", a handmade candle and skincare business.
 
@@ -25,16 +26,12 @@ export async function POST(request: NextRequest) {
   try {
     const { mode, prompt, currentContent, currentSubject, templateType } = await request.json();
 
-    // Get API key from localStorage via request or use env variable
-    const apiKey = process.env.OPENAI_API_KEY;
-    
-    // Check if user has configured their own key in the AI Assistant
-    const savedConfig = request.headers.get('x-openai-key');
-    const finalApiKey = savedConfig || apiKey;
+    // Get API key from environment
+    const apiKey = process.env.ANTHROPIC_API_KEY;
 
-    if (!finalApiKey) {
+    if (!apiKey) {
       return NextResponse.json({ 
-        error: 'OpenAI API key not configured. Please set it up in the AI Assistant settings.' 
+        error: 'Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables.' 
       }, { status: 400 });
     }
 
@@ -85,38 +82,21 @@ Return ONLY a JSON array of 5 subject lines, like: ["Subject 1", "Subject 2", ..
         return NextResponse.json({ error: 'Invalid mode' }, { status: 400 });
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${finalApiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
+    const anthropic = new Anthropic({
+      apiKey: apiKey,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      
-      if (response.status === 401) {
-        return NextResponse.json({ error: 'Invalid API key' }, { status: 401 });
-      }
-      
-      return NextResponse.json({ 
-        error: errorData.error?.message || 'Failed to generate content' 
-      }, { status: response.status });
-    }
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt }
+      ],
+    });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
+    const content = message.content[0].type === 'text' ? message.content[0].text : '';
 
     if (mode === 'subjects') {
       // Parse JSON array of subjects

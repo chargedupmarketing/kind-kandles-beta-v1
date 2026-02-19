@@ -89,7 +89,12 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const CART_STORAGE_KEY = 'mkk-shopping-cart';
 const SHIPPING_STORAGE_KEY = 'mkk-shipping-address'; // Only used to remove old data
-const TAX_RATE = 0.06; // 6% Maryland tax
+const DEFAULT_TAX_RATE = 0.06; // 6% Maryland tax (fallback)
+
+interface TaxSettings {
+  default_rate: number;
+  tax_shipping: boolean;
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -100,6 +105,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [taxSettings, setTaxSettings] = useState<TaxSettings>({ 
+    default_rate: DEFAULT_TAX_RATE, 
+    tax_shipping: false 
+  });
+
+  // Fetch tax settings from API
+  useEffect(() => {
+    const fetchTaxSettings = async () => {
+      try {
+        const response = await fetch('/api/settings/tax_settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.value) {
+            setTaxSettings({
+              default_rate: data.value.default_rate ?? DEFAULT_TAX_RATE,
+              tax_shipping: data.value.tax_shipping ?? false
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching tax settings:', error);
+      }
+    };
+    fetchTaxSettings();
+  }, []);
 
   // Load cart from localStorage on mount (but NOT shipping address for security)
   useEffect(() => {
@@ -304,9 +334,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }
   
-  // Calculate tax (on subtotal after discount)
-  const taxableAmount = subtotal - discount;
-  const tax = taxableAmount * TAX_RATE;
+  // Calculate tax (on subtotal after discount, optionally including shipping)
+  const taxableAmount = subtotal - discount + (taxSettings.tax_shipping ? shipping : 0);
+  const tax = taxableAmount * taxSettings.default_rate;
   
   // Calculate total
   const total = subtotal + shipping + tax - discount;

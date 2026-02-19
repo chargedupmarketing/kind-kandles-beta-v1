@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 
 interface SurveySubmission {
   id: string;
@@ -128,8 +129,25 @@ export async function POST(request: NextRequest) {
     // Save to file
     await writeSurveySubmissions(submissions);
 
-    // TODO: Send email with coupon code (integrate with email service)
-    // await sendCouponEmail(body.email, body.name, couponCode);
+    // Also create the discount code in the database so it works at checkout
+    if (isSupabaseConfigured()) {
+      try {
+        const supabase = createServerClient();
+        await supabase.from('discount_codes').insert({
+          code: couponCode,
+          type: 'percentage',
+          value: 10,
+          min_purchase: null,
+          max_uses: 1,
+          uses: 0,
+          starts_at: new Date().toISOString(),
+          ends_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+          active: true,
+        });
+      } catch (dbError) {
+        console.error('Error creating discount code in database:', dbError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

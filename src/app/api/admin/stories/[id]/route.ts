@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
+import { notifyCustomerStoryApproved } from '@/lib/notifications';
+
+export const dynamic = 'force-dynamic';
 
 function dbRowToStory(row: Record<string, unknown>) {
   return {
@@ -74,6 +77,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
 
+    // Get the current story to check status change
+    const { data: currentStory } = await supabase
+      .from('customer_stories')
+      .select('status, title, author, email')
+      .eq('id', id)
+      .single();
+
     const { data: row, error } = await supabase
       .from('customer_stories')
       .update(updateData)
@@ -84,6 +94,22 @@ export async function PATCH(
     if (error) {
       console.error('Error updating story:', error);
       return NextResponse.json({ error: 'Failed to update story' }, { status: 500 });
+    }
+
+    // Send notification if story was just approved/published
+    const wasNotPublished = currentStory && currentStory.status !== 'published' && currentStory.status !== 'approved';
+    const isNowPublished = body.status === 'published' || body.status === 'approved';
+    
+    if (wasNotPublished && isNowPublished && row) {
+      const storyData = row as Record<string, unknown>;
+      notifyCustomerStoryApproved({
+        id: id,
+        title: (storyData.title as string) || 'Your Story',
+        author: (storyData.author as string) || 'Author',
+        email: (storyData.email as string) || '',
+      }).catch(err => {
+        console.error('Failed to send story approved notification:', err);
+      });
     }
 
     return NextResponse.json({ story: dbRowToStory(row as Record<string, unknown>) });

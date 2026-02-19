@@ -1,36 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function verifyAdmin(request: NextRequest) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('admin-token')?.value;
-  
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key-min-32-chars-long!!');
-    const { payload } = await jwtVerify(token, secret);
-    return payload;
-  } catch {
-    return null;
-  }
-}
-
 // GET: Fetch all reviews for admin
 export async function GET(request: NextRequest) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -78,21 +57,40 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Error fetching reviews:', error);
+      // Check if table doesn't exist
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        // Return empty data if table doesn't exist yet
+        return NextResponse.json({
+          reviews: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+          stats: {
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+          },
+          message: 'Reviews table not yet created. Create the product_reviews table in Supabase to enable this feature.'
+        });
+      }
       return NextResponse.json({ error: 'Failed to fetch reviews' }, { status: 500 });
     }
 
-    // Get stats
-    const { data: pendingCount } = await supabase
+    // Get stats - use count from response metadata
+    const { count: pendingCount } = await supabase
       .from('product_reviews')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'pending');
 
-    const { data: approvedCount } = await supabase
+    const { count: approvedCount } = await supabase
       .from('product_reviews')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'approved');
 
-    const { data: rejectedCount } = await supabase
+    const { count: rejectedCount } = await supabase
       .from('product_reviews')
       .select('id', { count: 'exact', head: true })
       .eq('status', 'rejected');
@@ -106,9 +104,9 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / limit),
       },
       stats: {
-        pending: pendingCount,
-        approved: approvedCount,
-        rejected: rejectedCount,
+        pending: pendingCount || 0,
+        approved: approvedCount || 0,
+        rejected: rejectedCount || 0,
       },
     });
   } catch (error) {
@@ -119,11 +117,6 @@ export async function GET(request: NextRequest) {
 
 // PATCH: Update review status or add admin response
 export async function PATCH(request: NextRequest) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
     const { id, status, admin_response } = body;
@@ -171,11 +164,6 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE: Delete a review
 export async function DELETE(request: NextRequest) {
-  const admin = await verifyAdmin(request);
-  if (!admin) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

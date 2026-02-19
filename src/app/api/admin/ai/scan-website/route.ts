@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 import { createServerClient } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
-    const { apiKey, model } = await request.json();
-
+    // Get API key from environment
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    
     if (!apiKey) {
-      return NextResponse.json({ error: 'API key is required' }, { status: 400 });
+      return NextResponse.json({ 
+        error: 'Anthropic API key not configured. Please add ANTHROPIC_API_KEY to your environment variables.' 
+      }, { status: 500 });
     }
 
     const supabase = createServerClient();
@@ -72,33 +76,21 @@ Order Statuses: ${[...new Set(websiteData.recentOrderStatuses)].join(', ')}
 
 Please analyze this data and provide insights and recommendations for the business.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: model || 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
+    const anthropic = new Anthropic({
+      apiKey: apiKey,
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      return NextResponse.json({ 
-        error: errorData.error?.message || 'Failed to analyze website' 
-      }, { status: response.status });
-    }
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
+      temperature: 0.7,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt }
+      ],
+    });
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || 'No analysis generated';
+    const content = message.content[0].type === 'text' ? message.content[0].text : 'No analysis generated';
 
     return NextResponse.json({ content });
   } catch (error) {

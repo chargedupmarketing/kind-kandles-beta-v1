@@ -134,17 +134,17 @@ export default function OrderDetailsModal({ order, onClose, onUpdate }: OrderDet
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-amber-100 text-amber-800';
+        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300';
       case 'processing':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300';
       case 'shipped':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300';
       case 'delivered':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     }
   };
 
@@ -482,9 +482,9 @@ export default function OrderDetailsModal({ order, onClose, onUpdate }: OrderDet
           {/* Display Notes when not editing */}
           {!isEditing && order.notes && (
             <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-4">Order Notes</h3>
-              <div className="bg-blue-50 rounded-lg p-5">
-                <p className="text-sm text-blue-900">{order.notes}</p>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Order Notes</h3>
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-5">
+                <p className="text-sm text-blue-900 dark:text-blue-100">{order.notes}</p>
               </div>
             </div>
           )}

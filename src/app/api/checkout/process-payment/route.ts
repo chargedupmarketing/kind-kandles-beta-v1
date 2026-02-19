@@ -1,8 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSquareClient, getSquareConfig, isSquareConfiguredAsync, toSquareAmount, generateIdempotencyKey } from '@/lib/square';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import type { Square } from 'square';
 
 export const dynamic = 'force-dynamic';
+
+interface TaxSettings {
+  default_rate: number;
+  tax_shipping: boolean;
+}
+
+async function getTaxSettings(): Promise<TaxSettings> {
+  const defaults: TaxSettings = { default_rate: 0.06, tax_shipping: false };
+  
+  if (!isSupabaseConfigured()) {
+    return defaults;
+  }
+  
+  try {
+    const serverClient = createServerClient();
+    const { data } = await serverClient
+      .from('store_settings')
+      .select('value')
+      .eq('key', 'tax_settings')
+      .single();
+    
+    if (data?.value) {
+      return {
+        default_rate: data.value.default_rate ?? defaults.default_rate,
+        tax_shipping: data.value.tax_shipping ?? defaults.tax_shipping
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching tax settings:', error);
+  }
+  
+  return defaults;
+}
 
 interface CartItem {
   productId: string;
@@ -61,11 +95,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No items in cart' }, { status: 400 });
     }
 
+    // Get tax settings from database
+    const taxSettings = await getTaxSettings();
+    
     // Calculate totals
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const discount = discountAmount || 0;
-    const taxableAmount = subtotal - discount;
-    const tax = Math.round(taxableAmount * 0.06 * 100) / 100; // 6% tax
+    const taxableAmount = subtotal - discount + (taxSettings.tax_shipping ? shippingCost : 0);
+    const tax = Math.round(taxableAmount * taxSettings.default_rate * 100) / 100;
     const total = subtotal + shippingCost + tax - discount;
 
     // Convert to cents for Square

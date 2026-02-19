@@ -4,6 +4,21 @@ import crypto from 'crypto';
 
 const webhookSignatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || '';
 
+// In-memory store for processed webhook events (idempotency)
+// In production, use Redis or database for multi-instance support
+const processedEvents = new Map<string, { timestamp: number; result: string }>();
+const EVENT_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+// Clean up old processed events periodically
+function cleanupProcessedEvents() {
+  const now = Date.now();
+  for (const [eventId, data] of processedEvents.entries()) {
+    if (now - data.timestamp > EVENT_TTL) {
+      processedEvents.delete(eventId);
+    }
+  }
+}
+
 // Verify Square webhook signature
 // Square uses: HMAC-SHA256(webhookUrl + body, signatureKey)
 function verifySignature(body: string, signature: string, webhookUrl: string): boolean {
@@ -19,20 +34,41 @@ function verifySignature(body: string, signature: string, webhookUrl: string): b
     hmac.update(payload);
     const expectedSignature = hmac.digest('base64');
     
-    console.log('Webhook signature verification:');
-    console.log('- Webhook URL:', webhookUrl);
-    console.log('- Received signature:', signature);
-    console.log('- Expected signature:', expectedSignature);
-    console.log('- Match:', signature === expectedSignature);
+    // Use timing-safe comparison to prevent timing attacks
+    const signatureBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
     
-    return signature === expectedSignature;
+    if (signatureBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+    
+    return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
   } catch (error) {
     console.error('Error verifying signature:', error);
     return false;
   }
 }
 
+// Log webhook event for audit trail
+async function logWebhookEvent(supabase: any, eventId: string, eventType: string, status: string, details?: any) {
+  try {
+    // Try to log to webhook_logs table if it exists
+    await supabase.from('webhook_logs').insert({
+      event_id: eventId,
+      event_type: eventType,
+      status,
+      details,
+      created_at: new Date().toISOString()
+    });
+  } catch (err) {
+    // Table might not exist, just log to console
+    console.log(`Webhook event logged: ${eventId} - ${eventType} - ${status}`);
+  }
+}
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
     const body = await request.text();
     const signature = request.headers.get('x-square-hmacsha256-signature') || '';
@@ -42,12 +78,7 @@ export async function POST(request: NextRequest) {
     const host = request.headers.get('host') || 'www.kindkandlesboutique.com';
     const webhookUrl = `${protocol}://${host}/api/webhooks/square`;
 
-    console.log('Square webhook received');
-    console.log('- Webhook URL:', webhookUrl);
-    console.log('- Has signature key:', !!webhookSignatureKey);
-    console.log('- Has signature header:', !!signature);
-
-    // Parse the event first to check if it's a test/validation request
+    // Parse the event
     let event;
     try {
       event = JSON.parse(body);
@@ -56,9 +87,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
+    // Extract event ID for idempotency
+    const eventId = event.event_id || event.id || `${event.type}-${Date.now()}`;
+    
+    // Check if we've already processed this event (idempotency)
+    if (processedEvents.has(eventId)) {
+      const cached = processedEvents.get(eventId)!;
+      console.log(`Duplicate webhook event ${eventId} - returning cached result`);
+      return NextResponse.json({ 
+        received: true, 
+        status: 'already_processed',
+        result: cached.result 
+      }, { status: 200 });
+    }
+
+    console.log(`Square webhook received: ${event.type} (${eventId})`);
+
     // Handle webhook validation/test events immediately
     if (event.type === 'webhook.test' || event.type === 'webhook.subscription.created') {
       console.log('Webhook test/validation event received');
+      processedEvents.set(eventId, { timestamp: Date.now(), result: 'test_acknowledged' });
       return NextResponse.json({ received: true, status: 'ok' }, { status: 200 });
     }
 
@@ -72,7 +120,6 @@ export async function POST(request: NextRequest) {
       if (!verifySignature(body, signature, webhookUrl)) {
         console.error('Invalid Square webhook signature');
         // In sandbox mode, we might want to still process the webhook
-        // but log the error for debugging
         if (process.env.SQUARE_ENVIRONMENT === 'sandbox') {
           console.warn('Proceeding anyway in sandbox mode...');
         } else {
@@ -80,29 +127,47 @@ export async function POST(request: NextRequest) {
         }
       }
     }
-    const supabase = createServerClient();
 
-    console.log('Square webhook event:', event.type);
+    const supabase = createServerClient();
+    let result = 'processed';
 
     switch (event.type) {
       case 'payment.completed': {
         const payment = event.data.object.payment;
         console.log('Payment completed:', payment.id);
 
-        // Update order status to paid
-        const { error } = await supabase
-          .from('orders')
-          .update({
-            payment_status: 'paid',
-            status: 'processing',
-          })
-          .eq('payment_id', payment.id);
+        // Update order status to paid (with retry)
+        let retries = 3;
+        let updateError = null;
+        
+        while (retries > 0) {
+          const { error } = await supabase
+            .from('orders')
+            .update({
+              payment_status: 'paid',
+              status: 'processing',
+              updated_at: new Date().toISOString()
+            })
+            .eq('payment_id', payment.id);
 
-        if (error) {
-          console.error('Error updating order:', error);
+          if (!error) {
+            result = 'payment_completed';
+            break;
+          }
+          
+          updateError = error;
+          retries--;
+          if (retries > 0) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
 
-        // TODO: Send order confirmation email
+        if (updateError) {
+          console.error('Error updating order after retries:', updateError);
+          result = 'payment_completed_update_failed';
+        }
+
+        await logWebhookEvent(supabase, eventId, event.type, result, { paymentId: payment.id });
         break;
       }
 
@@ -111,14 +176,24 @@ export async function POST(request: NextRequest) {
         console.log('Payment updated:', payment.id, payment.status);
 
         if (payment.status === 'FAILED' || payment.status === 'CANCELED') {
-          await supabase
+          const { error } = await supabase
             .from('orders')
             .update({
               payment_status: 'failed',
               status: 'cancelled',
+              updated_at: new Date().toISOString()
             })
             .eq('payment_id', payment.id);
+
+          result = error ? 'payment_failed_update_error' : 'payment_failed';
+        } else {
+          result = 'payment_updated';
         }
+
+        await logWebhookEvent(supabase, eventId, event.type, result, { 
+          paymentId: payment.id, 
+          status: payment.status 
+        });
         break;
       }
 
@@ -128,26 +203,57 @@ export async function POST(request: NextRequest) {
         console.log('Refund event:', refund.id, refund.status);
 
         if (refund.status === 'COMPLETED') {
-          await supabase
+          const { error } = await supabase
             .from('orders')
             .update({
               payment_status: 'refunded',
               status: 'refunded',
+              updated_at: new Date().toISOString()
             })
             .eq('payment_id', refund.payment_id);
+
+          result = error ? 'refund_update_error' : 'refund_completed';
+        } else {
+          result = 'refund_pending';
         }
+
+        await logWebhookEvent(supabase, eventId, event.type, result, { 
+          refundId: refund.id, 
+          status: refund.status 
+        });
         break;
       }
 
       default:
         console.log(`Unhandled Square event type: ${event.type}`);
+        result = 'unhandled_event_type';
     }
 
-    return NextResponse.json({ received: true, status: 'ok' }, { status: 200 });
+    // Mark event as processed (idempotency)
+    processedEvents.set(eventId, { timestamp: Date.now(), result });
+    
+    // Periodic cleanup
+    if (processedEvents.size > 1000) {
+      cleanupProcessedEvents();
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`Webhook processed in ${duration}ms: ${eventId} -> ${result}`);
+
+    return NextResponse.json({ 
+      received: true, 
+      status: 'ok',
+      result,
+      processingTime: duration
+    }, { status: 200 });
   } catch (error) {
     console.error('Square webhook error:', error);
     // Still return 200 to prevent Square from retrying on our internal errors
-    return NextResponse.json({ received: true, error: 'Internal processing error' }, { status: 200 });
+    return NextResponse.json({ 
+      received: true, 
+      error: 'Internal processing error',
+      processingTime: Date.now() - startTime
+    }, { status: 200 });
   }
 }
 

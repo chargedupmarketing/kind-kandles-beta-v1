@@ -3,7 +3,7 @@
  * Provides haptic feedback for touch interactions where supported
  */
 
-type HapticStyle = 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error' | 'selection';
+type HapticStyle = 'light' | 'medium' | 'success' | 'error';
 
 // Check if vibration API is available
 const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator;
@@ -12,11 +12,8 @@ const canVibrate = typeof navigator !== 'undefined' && 'vibrate' in navigator;
 const VIBRATION_PATTERNS: Record<HapticStyle, number | number[]> = {
   light: 10,
   medium: 20,
-  heavy: 30,
   success: [10, 50, 10],
-  warning: [20, 100, 20],
   error: [30, 100, 30, 100, 30],
-  selection: 5,
 };
 
 /**
@@ -50,24 +47,10 @@ export function hapticMedium(): void {
 }
 
 /**
- * Heavy feedback - for destructive actions
- */
-export function hapticHeavy(): void {
-  haptic('heavy');
-}
-
-/**
  * Success feedback - for completed actions
  */
 export function hapticSuccess(): void {
   haptic('success');
-}
-
-/**
- * Warning feedback - for caution alerts
- */
-export function hapticWarning(): void {
-  haptic('warning');
 }
 
 /**
@@ -76,20 +59,4 @@ export function hapticWarning(): void {
 export function hapticError(): void {
   haptic('error');
 }
-
-/**
- * Selection feedback - for selecting items
- */
-export function hapticSelection(): void {
-  haptic('selection');
-}
-
-/**
- * Check if haptic feedback is available
- */
-export function isHapticAvailable(): boolean {
-  return canVibrate;
-}
-
-export default haptic;
 

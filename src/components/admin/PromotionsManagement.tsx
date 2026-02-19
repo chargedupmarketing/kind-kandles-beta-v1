@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { 
   Megaphone, 
   Save, 
@@ -20,8 +20,11 @@ import {
   ChevronUp,
   Calendar,
   Type,
-  Palette
+  Palette,
+  Star
 } from 'lucide-react';
+
+const FeaturedProductsManagement = lazy(() => import('./FeaturedProductsManagement'));
 
 interface TopBarBanner {
   enabled: boolean;
@@ -120,8 +123,10 @@ const DEFAULT_SETTINGS: PromotionsSettings = {
 };
 
 type SectionKey = 'top_bar' | 'countdown' | 'urgency' | 'popup';
+type TabKey = 'banners' | 'featured';
 
 export default function PromotionsManagement() {
+  const [activeTab, setActiveTab] = useState<TabKey>('banners');
   const [settings, setSettings] = useState<PromotionsSettings>(DEFAULT_SETTINGS);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -240,25 +245,59 @@ export default function PromotionsManagement() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Megaphone className="h-7 w-7 text-pink-600" />
-            Promotions & Banners
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Manage promotional banners, countdown timers, and special offers displayed on your site
-          </p>
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Megaphone className="h-7 w-7 text-pink-600" />
+              Promotions & Featured Products
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              Manage promotional banners, countdown timers, and featured product sections
+            </p>
+          </div>
+          {activeTab === 'banners' && (
+            <button
+              onClick={saveSettings}
+              disabled={isSaving}
+              className="flex items-center gap-2 px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save All Changes'}
+            </button>
+          )}
         </div>
-        <button
-          onClick={saveSettings}
-          disabled={isSaving}
-          className="flex items-center gap-2 px-6 py-3 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors"
-        >
-          <Save className="h-4 w-4" />
-          {isSaving ? 'Saving...' : 'Save All Changes'}
-        </button>
+
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 mb-6">
+          <button
+            onClick={() => setActiveTab('banners')}
+            className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'banners'
+                ? 'border-pink-600 text-pink-600'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            <Megaphone className="h-4 w-4" />
+            Banners & Promotions
+          </button>
+          <button
+            onClick={() => setActiveTab('featured')}
+            className={`flex items-center gap-2 px-6 py-3 font-medium transition-colors border-b-2 ${
+              activeTab === 'featured'
+                ? 'border-pink-600 text-pink-600'
+                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            <Star className="h-4 w-4" />
+            Featured Products
+          </button>
+        </div>
       </div>
+
+      {/* Tab Content */}
+      {activeTab === 'banners' ? (
+        <div className="space-y-6">
 
       {/* Top Bar Banner Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
@@ -276,12 +315,20 @@ export default function PromotionsManagement() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 updateTopBar({ enabled: !settings.top_bar_banner.enabled });
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  updateTopBar({ enabled: !settings.top_bar_banner.enabled });
+                }
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
                 settings.top_bar_banner.enabled
                   ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
@@ -289,7 +336,7 @@ export default function PromotionsManagement() {
             >
               {settings.top_bar_banner.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               {settings.top_bar_banner.enabled ? 'Visible' : 'Hidden'}
-            </button>
+            </div>
             {expandedSections.includes('top_bar') ? (
               <ChevronUp className="h-5 w-5 text-gray-400" />
             ) : (
@@ -517,12 +564,20 @@ export default function PromotionsManagement() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 updateCountdown({ enabled: !settings.countdown_promo.enabled });
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  updateCountdown({ enabled: !settings.countdown_promo.enabled });
+                }
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
                 settings.countdown_promo.enabled
                   ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
@@ -530,7 +585,7 @@ export default function PromotionsManagement() {
             >
               {settings.countdown_promo.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               {settings.countdown_promo.enabled ? 'Visible' : 'Hidden'}
-            </button>
+            </div>
             {expandedSections.includes('countdown') ? (
               <ChevronUp className="h-5 w-5 text-gray-400" />
             ) : (
@@ -658,7 +713,7 @@ export default function PromotionsManagement() {
           <div className="p-6 pt-0 space-y-6 border-t dark:border-gray-700">
             {/* Preview */}
             <div className="flex justify-center">
-              <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 rounded-full px-6 py-3">
+              <div className="inline-flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-full px-6 py-3">
                 {settings.flash_sale_urgency.show_icon && (
                   <Clock className="h-5 w-5 text-red-600 animate-pulse" />
                 )}
@@ -714,12 +769,20 @@ export default function PromotionsManagement() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 updatePopup({ enabled: !settings.popup_promo.enabled });
               }}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation();
+                  updatePopup({ enabled: !settings.popup_promo.enabled });
+                }
+              }}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors cursor-pointer ${
                 settings.popup_promo.enabled
                   ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
                   : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
@@ -727,7 +790,7 @@ export default function PromotionsManagement() {
             >
               {settings.popup_promo.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
               {settings.popup_promo.enabled ? 'Active' : 'Disabled'}
-            </button>
+            </div>
             {expandedSections.includes('popup') ? (
               <ChevronUp className="h-5 w-5 text-gray-400" />
             ) : (
@@ -866,6 +929,16 @@ export default function PromotionsManagement() {
           <li>• Changes will apply immediately after saving</li>
         </ul>
       </div>
+        </div>
+      ) : (
+        <Suspense fallback={
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-pink-600 border-t-transparent" />
+          </div>
+        }>
+          <FeaturedProductsManagement />
+        </Suspense>
+      )}
     </div>
   );
 }

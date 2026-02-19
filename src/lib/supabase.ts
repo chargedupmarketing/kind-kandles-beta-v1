@@ -8,8 +8,13 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
 
 // Server-side Supabase client with service role (for admin operations)
 export function createServerClient(): SupabaseClient {
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
-  return createClient(supabaseUrl, supabaseServiceKey);
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!supabaseServiceKey || supabaseServiceKey === 'placeholder-service-key') {
+    console.error(
+      'SUPABASE_SERVICE_ROLE_KEY is not set. Add it to .env.local for story submissions and admin data to work.'
+    );
+  }
+  return createClient(supabaseUrl, supabaseServiceKey || 'placeholder-service-key');
 }
 
 // Helper to check if Supabase is configured

@@ -1,15 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createServerClient, isSupabaseConfigured } from '@/lib/supabase';
 import bcrypt from 'bcryptjs';
+import { cookies } from 'next/headers';
+import { jwtVerify } from 'jose';
 
 export const dynamic = 'force-dynamic';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long'
+);
+
+// Verify admin from cookie
+async function verifyAdmin(): Promise<{ userId: string; email: string; role: string } | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('admin-token')?.value;
+    
+    if (!token) return null;
+    
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as string
+    };
+  } catch {
+    return null;
+  }
+}
 
 // GET /api/admin/users - List all admin users
 export async function GET(request: NextRequest) {
   try {
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
+    const supabase = createServerClient();
+
     const { data: users, error } = await supabase
       .from('admin_users')
-      .select('id, email, first_name, last_name, role, is_active, last_login, created_at')
+      .select('id, email, first_name, last_name, role, is_active, last_login, created_at, sub_levels')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -27,6 +63,21 @@ export async function GET(request: NextRequest) {
 // POST /api/admin/users - Create a new admin user
 export async function POST(request: NextRequest) {
   try {
+    const admin = await verifyAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
+    // Only super admins can create users
+    if (admin.role !== 'super_admin') {
+      return NextResponse.json({ error: 'Only super admins can create users' }, { status: 403 });
+    }
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
+
+    const supabase = createServerClient();
     const body = await request.json();
     const { email, password, first_name, last_name, role } = body;
 
@@ -79,7 +130,7 @@ export async function POST(request: NextRequest) {
         is_active: true,
         two_factor_enabled: true
       })
-      .select('id, email, first_name, last_name, role, is_active, created_at')
+      .select('id, email, first_name, last_name, role, is_active, created_at, sub_levels')
       .single();
 
     if (error) {
@@ -93,5 +144,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
-
 

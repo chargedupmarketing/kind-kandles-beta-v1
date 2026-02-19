@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { Resend } from 'resend';
+import { notifyCustomerEventConfirmed } from '@/lib/notifications';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -246,6 +247,18 @@ export async function PATCH(
           to: currentBooking.customer_email,
           subject: `Booking Confirmed: ${event.title}`,
           html: confirmationEmailHtml,
+        });
+
+        // Also send via notification service for logging and potential SMS
+        notifyCustomerEventConfirmed({
+          id: currentBooking.id,
+          event_name: event.title,
+          event_date: eventDateTime,
+          customer_name: currentBooking.customer_name,
+          customer_email: currentBooking.customer_email,
+          customer_phone: currentBooking.customer_phone,
+        }).catch(err => {
+          console.error('Failed to log event confirmation notification:', err);
         });
 
         console.log('✅ Booking confirmation email sent successfully');

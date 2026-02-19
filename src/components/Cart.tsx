@@ -1,20 +1,114 @@
 'use client';
 
+import { memo, useCallback } from 'react';
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/localStore';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface CartProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function Cart({ isOpen, onClose }: CartProps) {
-  const router = useRouter();
+// Memoized cart item component to prevent unnecessary re-renders
+interface CartItemProps {
+  item: {
+    variantId: string;
+    title: string;
+    variantTitle?: string;
+    price: number;
+    quantity: number;
+    image?: string;
+    handle: string;
+  };
+  onUpdateQuantity: (variantId: string, quantity: number) => void;
+  onRemove: (variantId: string) => void;
+  onClose: () => void;
+}
+
+const CartItem = memo(function CartItem({ item, onUpdateQuantity, onRemove, onClose }: CartItemProps) {
+  const handleDecrease = useCallback(() => {
+    onUpdateQuantity(item.variantId, item.quantity - 1);
+  }, [item.variantId, item.quantity, onUpdateQuantity]);
+
+  const handleIncrease = useCallback(() => {
+    onUpdateQuantity(item.variantId, item.quantity + 1);
+  }, [item.variantId, item.quantity, onUpdateQuantity]);
+
+  const handleRemove = useCallback(() => {
+    onRemove(item.variantId);
+  }, [item.variantId, onRemove]);
+
+  return (
+    <div className="flex gap-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+      {/* Product Image */}
+      {item.image && (
+        <div className="relative w-20 h-20 flex-shrink-0">
+          <Image
+            src={item.image}
+            alt={item.title}
+            fill
+            className="object-cover rounded"
+          />
+        </div>
+      )}
+
+      {/* Product Info */}
+      <div className="flex-1 min-w-0">
+        <Link
+          href={`/products/${item.handle}`}
+          onClick={onClose}
+          className="font-semibold hover:text-pink-600 dark:hover:text-pink-400 transition-colors line-clamp-2"
+        >
+          {item.title}
+        </Link>
+        {item.variantTitle && item.variantTitle !== 'Default Title' && (
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {item.variantTitle}
+          </p>
+        )}
+        <p className="text-pink-600 dark:text-pink-400 font-semibold mt-1">
+          {formatPrice(item.price)}
+        </p>
+
+        {/* Quantity Controls */}
+        <div className="flex items-center gap-2 mt-2">
+          <button
+            onClick={handleDecrease}
+            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+            aria-label="Decrease quantity"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+          <span className="w-8 text-center font-semibold">{item.quantity}</span>
+          <button
+            onClick={handleIncrease}
+            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+            aria-label="Increase quantity"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+          <button
+            onClick={handleRemove}
+            className="ml-auto p-1 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded transition-colors"
+            aria-label="Remove item"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function Cart({ isOpen, onClose }: CartProps) {
   const { items, removeItem, updateQuantity, totalItems, subtotal, clearCart } = useCart();
+
+  const handleClearCart = useCallback(() => {
+    clearCart();
+  }, [clearCart]);
 
   if (!isOpen) return null;
 
@@ -59,73 +153,19 @@ export default function Cart({ isOpen, onClose }: CartProps) {
           ) : (
             <div className="space-y-4">
               {items.map((item) => (
-                <div
+                <CartItem
                   key={item.variantId}
-                  className="flex gap-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg"
-                >
-                  {/* Product Image */}
-                  {item.image && (
-                    <div className="relative w-20 h-20 flex-shrink-0">
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        className="object-cover rounded"
-                      />
-                    </div>
-                  )}
-
-                  {/* Product Info */}
-                  <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/products/${item.handle}`}
-                      onClick={onClose}
-                      className="font-semibold hover:text-pink-600 dark:hover:text-pink-400 transition-colors line-clamp-2"
-                    >
-                      {item.title}
-                    </Link>
-                    {item.variantTitle && item.variantTitle !== 'Default Title' && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {item.variantTitle}
-                      </p>
-                    )}
-                    <p className="text-pink-600 dark:text-pink-400 font-semibold mt-1">
-                      {formatPrice(item.price)}
-                    </p>
-
-                    {/* Quantity Controls */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <button
-                        onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                        aria-label="Decrease quantity"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </button>
-                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
-                        aria-label="Increase quantity"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => removeItem(item.variantId)}
-                        className="ml-auto p-1 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded transition-colors"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  item={item}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeItem}
+                  onClose={onClose}
+                />
               ))}
 
               {/* Clear Cart Button */}
               {items.length > 0 && (
                 <button
-                  onClick={clearCart}
+                  onClick={handleClearCart}
                   className="w-full text-sm text-red-600 dark:text-red-400 hover:underline"
                 >
                   Clear Cart
@@ -169,4 +209,6 @@ export default function Cart({ isOpen, onClose }: CartProps) {
     </>
   );
 }
+
+export default memo(Cart);
 

@@ -125,11 +125,11 @@ export default function AnalyticsDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-700';
-      case 'shipped': return 'bg-blue-100 text-blue-700';
-      case 'processing': return 'bg-purple-100 text-purple-700';
-      case 'paid': return 'bg-indigo-100 text-indigo-700';
-      default: return 'bg-yellow-100 text-yellow-700';
+      case 'delivered': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
+      case 'shipped': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
+      case 'processing': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300';
+      case 'paid': return 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300';
+      default: return 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300';
     }
   };
 
@@ -257,10 +257,10 @@ export default function AnalyticsDashboard() {
                 {topProducts.map((product, index) => (
                   <div key={product.product_id} className="flex items-center gap-3 sm:gap-4">
                     <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm flex-shrink-0 ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-700' :
-                      index === 1 ? 'bg-gray-100 text-gray-700' :
-                      index === 2 ? 'bg-orange-100 text-orange-700' :
-                      'bg-gray-50 text-gray-500'
+                      index === 0 ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
+                      index === 1 ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' :
+                      index === 2 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' :
+                      'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
                     }`}>
                       {index + 1}
                     </div>
@@ -295,7 +295,7 @@ export default function AnalyticsDashboard() {
               <h3 className="font-bold text-sm sm:text-base text-gray-900 dark:text-white">Low Stock</h3>
             </div>
             {lowStockProducts.length > 0 && (
-              <span className="px-2 py-0.5 sm:py-1 bg-orange-100 text-orange-700 rounded-full text-xs sm:text-sm font-medium">
+              <span className="px-2 py-0.5 sm:py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs sm:text-sm font-medium">
                 {lowStockProducts.length}
               </span>
             )}
@@ -317,8 +317,8 @@ export default function AnalyticsDashboard() {
                     <div className="text-right flex-shrink-0">
                       <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap ${
                         product.inventory_quantity === 0 
-                          ? 'bg-red-100 text-red-700' 
-                          : 'bg-orange-100 text-orange-700'
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' 
+                          : 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
                       }`}>
                         {product.inventory_quantity === 0 ? 'Out' : `${product.inventory_quantity} left`}
                       </span>

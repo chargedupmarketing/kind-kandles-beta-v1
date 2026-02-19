@@ -134,7 +134,7 @@ export default function SurveyPopup() {
                 Welcome to My Kind Kandles! 🕯️
               </h2>
               <p className="text-sm sm:text-lg text-gray-200" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)' }}>
-                Get <span className="font-bold text-pink-400" style={{ textShadow: '0 0 15px rgba(236, 72, 153, 0.5)' }}>20% OFF</span> your first order by completing our quick survey!
+                Get <span className="font-bold text-pink-400" style={{ textShadow: '0 0 15px rgba(236, 72, 153, 0.5)' }}>10% OFF</span> your first order by completing our quick survey!
               </p>
             </div>
 
@@ -341,7 +341,7 @@ export default function SurveyPopup() {
             </h2>
             
             <p className="text-sm sm:text-lg text-gray-200 mb-4 sm:mb-6" style={{ textShadow: '0 0 10px rgba(255, 255, 255, 0.2)' }}>
-              Here's your exclusive 20% discount code:
+              Here's your exclusive 10% discount code:
             </p>
 
             <div className="bg-gradient-to-br from-pink-500/20 to-purple-500/20 border-2 border-pink-500/50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 backdrop-blur-sm">

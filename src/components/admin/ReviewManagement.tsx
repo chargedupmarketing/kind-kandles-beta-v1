@@ -84,18 +84,27 @@ export default function ReviewManagement() {
         params.append('search', searchQuery);
       }
 
-      const response = await fetch(`/api/admin/reviews?${params}`);
+      const response = await fetch(`/api/admin/reviews?${params}`, {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews || []);
         setStats(data.stats || null);
         setTotalPages(data.pagination?.totalPages || 1);
         setTotal(data.pagination?.total || 0);
+        // Clear error on success
+        setError(null);
+        // Show info message if table doesn't exist
+        if (data.message) {
+          setError(data.message);
+        }
       } else {
-        setError('Failed to fetch reviews');
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.error || 'Failed to fetch reviews');
       }
     } catch (err) {
-      setError('Error fetching reviews');
+      setError('Error fetching reviews. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -106,6 +115,7 @@ export default function ReviewManagement() {
       const response = await fetch('/api/admin/reviews', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ id: reviewId, status: newStatus }),
       });
 
@@ -129,6 +139,7 @@ export default function ReviewManagement() {
     try {
       const response = await fetch(`/api/admin/reviews?id=${reviewId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (response.ok) {
@@ -150,6 +161,7 @@ export default function ReviewManagement() {
       const response = await fetch('/api/admin/reviews', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           id: selectedReview.id,
           admin_response: adminResponse,
@@ -200,21 +212,21 @@ export default function ReviewManagement() {
     switch (status) {
       case 'approved':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full text-xs font-medium">
             <CheckCircle className="h-3 w-3" />
             Approved
           </span>
         );
       case 'rejected':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full text-xs font-medium">
             <XCircle className="h-3 w-3" />
             Rejected
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 rounded-full text-xs font-medium">
             <Clock className="h-3 w-3" />
             Pending
           </span>
@@ -243,13 +255,13 @@ export default function ReviewManagement() {
 
       {/* Success/Error Messages */}
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 px-4 py-3 rounded-lg flex items-center gap-2">
           <CheckCircle className="h-5 w-5" />
           {success}
         </div>
       )}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-center gap-2">
           <AlertCircle className="h-5 w-5" />
           {error}
           <button onClick={() => setError(null)} className="ml-auto text-red-500 hover:text-red-700">
@@ -265,13 +277,13 @@ export default function ReviewManagement() {
             onClick={() => setStatusFilter('pending')}
             className={`p-4 rounded-xl cursor-pointer transition-all ${
               statusFilter === 'pending'
-                ? 'bg-yellow-100 border-2 border-yellow-400'
+                ? 'bg-yellow-100 dark:bg-yellow-900/30 border-2 border-yellow-400 dark:border-yellow-600'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-yellow-300'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock className="h-5 w-5 text-yellow-600" />
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
@@ -283,13 +295,13 @@ export default function ReviewManagement() {
             onClick={() => setStatusFilter('approved')}
             className={`p-4 rounded-xl cursor-pointer transition-all ${
               statusFilter === 'approved'
-                ? 'bg-green-100 border-2 border-green-400'
+                ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-400 dark:border-green-600'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-green-300'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
@@ -301,13 +313,13 @@ export default function ReviewManagement() {
             onClick={() => setStatusFilter('rejected')}
             className={`p-4 rounded-xl cursor-pointer transition-all ${
               statusFilter === 'rejected'
-                ? 'bg-red-100 border-2 border-red-400'
+                ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-400 dark:border-red-600'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-red-300'
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <XCircle className="h-5 w-5 text-red-600" />
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                <XCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Rejected</p>
@@ -337,7 +349,7 @@ export default function ReviewManagement() {
           onClick={() => setStatusFilter('all')}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg border ${
             statusFilter === 'all'
-              ? 'bg-amber-100 border-amber-400 text-amber-700'
+              ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-400 dark:border-amber-600 text-amber-700 dark:text-amber-300'
               : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
           }`}
         >
@@ -375,7 +387,7 @@ export default function ReviewManagement() {
                     {renderStars(review.rating)}
                     {getStatusBadge(review.status)}
                     {review.verified_purchase && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
                         <CheckCircle className="h-3 w-3" />
                         Verified Purchase
                       </span>

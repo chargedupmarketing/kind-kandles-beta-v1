@@ -152,13 +152,11 @@ export default function BlogManagement() {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // AI States
-  const [openaiKey, setOpenaiKey] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPanel, setAiPanel] = useState<'hidden' | 'assistant' | 'suggestions'>('hidden');
   const [aiTopic, setAiTopic] = useState('');
   const [aiTone, setAiTone] = useState<'professional' | 'friendly' | 'casual' | 'inspiring'>('friendly');
   const [generatedContent, setGeneratedContent] = useState('');
-  const [showAiSettings, setShowAiSettings] = useState(false);
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
@@ -181,9 +179,6 @@ export default function BlogManagement() {
 
   useEffect(() => {
     fetchSettings();
-    // Load OpenAI key from localStorage
-    const savedKey = localStorage.getItem('openai_api_key');
-    if (savedKey) setOpenaiKey(savedKey);
   }, []);
 
   const fetchSettings = async () => {
@@ -251,103 +246,34 @@ export default function BlogManagement() {
 
   // AI Content Generation
   const generateWithAI = async (options: AIGenerationOptions) => {
-    if (!openaiKey) {
-      setShowAiSettings(true);
-      setErrorMessage('Please enter your OpenAI API key first');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return;
-    }
-
     setIsGenerating(true);
     setGeneratedContent('');
 
     try {
-      const systemPrompt = `You are a skilled content writer for My Kind Kandles & Boutique, a premium candle and skincare brand. The brand voice is warm, inviting, and empowering with the tagline "Do All Things With Kindness". Write content that:
-- Is engaging and relatable
-- Focuses on self-care, wellness, home ambiance, and the joy of candles
-- Uses a ${options.tone || 'friendly'} tone
-- Is SEO-optimized when appropriate
-- Never uses generic filler content`;
-
-      let userPrompt = '';
-      const topic = options.topic || aiTopic || formData.title || 'candles and self-care';
-
-      switch (options.type) {
-        case 'title':
-          userPrompt = `Generate 5 compelling blog post titles about "${topic}" for a candle and boutique brand. Make them catchy, SEO-friendly, and engaging. Format as a numbered list.`;
-          break;
-        case 'excerpt':
-          userPrompt = `Write a compelling 2-3 sentence excerpt/summary for a blog post titled "${formData.title || topic}". It should hook the reader and make them want to read more. Keep it under 160 characters for SEO.`;
-          break;
-        case 'outline':
-          userPrompt = `Create a detailed blog post outline for "${formData.title || topic}". Include:
-- An attention-grabbing introduction hook
-- 4-6 main sections with subpoints
-- A strong conclusion with call-to-action
-Format with headers and bullet points.`;
-          break;
-        case 'content':
-          userPrompt = `Write a complete, engaging blog post about "${formData.title || topic}". 
-${formData.content ? `Build upon this existing content:\n${formData.content}\n\n` : ''}
-Requirements:
-- Length: ${options.length === 'short' ? '400-600' : options.length === 'long' ? '1200-1500' : '800-1000'} words
-- Include practical tips and insights
-- Use HTML formatting (h2, h3, p, ul, li, strong, em tags)
-- Add a compelling introduction and conclusion
-- Include a subtle mention of Kind Kandles products where natural`;
-          break;
-        case 'seo':
-          userPrompt = `Generate SEO metadata for a blog post titled "${formData.title}" with excerpt: "${formData.excerpt}". Provide:
-1. SEO Title (50-60 characters, include primary keyword)
-2. Meta Description (150-160 characters, compelling with call-to-action)
-3. 5-7 relevant keywords/tags
-Format clearly with labels.`;
-          break;
-        case 'tags':
-          userPrompt = `Suggest 8-10 relevant tags/keywords for a blog post titled "${formData.title}" about ${topic}. Focus on:
-- Primary topic keywords
-- Related candle/self-care terms
-- Long-tail keywords for SEO
-Format as a comma-separated list.`;
-          break;
-        case 'improve':
-          userPrompt = `Improve and enhance this blog content while maintaining its core message:
-
-${formData.content}
-
-Make it more:
-- Engaging and readable
-- Well-structured with clear sections
-- SEO-optimized
-- On-brand for a candle boutique
-Use HTML formatting.`;
-          break;
-      }
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/admin/ai/blog', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`
         },
+        credentials: 'include',
         body: JSON.stringify({
-          model: 'gpt-4-turbo',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          temperature: 0.7,
-          max_tokens: options.type === 'content' || options.type === 'improve' ? 2000 : 500
+          type: options.type,
+          topic: options.topic || aiTopic,
+          tone: options.tone || aiTone,
+          length: options.length,
+          title: formData.title,
+          excerpt: formData.excerpt,
+          content: formData.content,
         })
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || 'AI generation failed');
+        throw new Error(error.error || 'AI generation failed');
       }
 
       const data = await response.json();
-      const content = data.choices[0]?.message?.content || '';
+      const content = data.content || '';
       setGeneratedContent(content);
 
       // Auto-apply for certain types
@@ -567,14 +493,6 @@ Use HTML formatting.`;
     }));
   };
 
-  const saveApiKey = () => {
-    if (openaiKey) {
-      localStorage.setItem('openai_api_key', openaiKey);
-      setShowAiSettings(false);
-      setSuccessMessage('API key saved!');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
 
   const filteredPosts = settings.posts.filter(post => {
     const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -619,13 +537,6 @@ Use HTML formatting.`;
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAiSettings(true)}
-            className="flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-600 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          >
-            <Sparkles className="h-4 w-4" />
-            AI Settings
-          </button>
           <button
             onClick={handleCreateNew}
             className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -1315,59 +1226,6 @@ Use HTML formatting.`;
                   {isSaving ? 'Saving...' : (isCreating ? 'Create Post' : 'Save Changes')}
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI Settings Modal */}
-      {showAiSettings && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full">
-            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-bold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-purple-600" />
-                AI Settings
-              </h3>
-              <button onClick={() => setShowAiSettings(false)} className="text-gray-500 hover:text-gray-700">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">OpenAI API Key</label>
-                <input
-                  type="password"
-                  value={openaiKey}
-                  onChange={(e) => setOpenaiKey(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600"
-                  placeholder="sk-..."
-                />
-                <p className="text-xs text-gray-500 mt-2">
-                  Your API key is stored locally in your browser and never sent to our servers.
-                </p>
-              </div>
-              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4">
-                <h4 className="font-medium text-purple-700 dark:text-purple-300 mb-2">💡 Model Info</h4>
-                <p className="text-sm text-purple-600 dark:text-purple-400">
-                  This feature uses <strong>GPT-4 Turbo</strong> - OpenAI's most capable model with a 128K context window. 
-                  Excellent for high-quality, nuanced blog content with better reasoning and creativity.
-                </p>
-              </div>
-            </div>
-            <div className="p-4 border-t dark:border-gray-700 flex justify-end gap-3">
-              <button
-                onClick={() => setShowAiSettings(false)}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveApiKey}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-              >
-                Save Key
-              </button>
             </div>
           </div>
         </div>

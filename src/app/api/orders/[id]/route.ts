@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { sendShippingNotification, isEmailConfigured } from '@/lib/email';
+import { sendShippingNotification, sendOrderDeliveredNotification, isEmailConfigured } from '@/lib/email';
+import { notifyAdminsOrderIssue, notifyCustomerOrderDelivered } from '@/lib/notifications';
 
 // GET /api/orders/[id] - Get single order
 export async function GET(
@@ -95,6 +96,36 @@ export async function PUT(
       } else {
         console.log('Email not configured, skipping shipping notification');
       }
+    }
+
+    // Send delivered notification if status changed to delivered
+    if (body.status === 'delivered' && body.send_notification && order) {
+      notifyCustomerOrderDelivered({
+        id: order.id,
+        order_number: order.order_number,
+        customer_name: order.customer_name,
+        customer_email: order.customer_email,
+        customer_phone: order.customer_phone,
+      }).catch(err => {
+        console.error('Failed to send delivered notification:', err);
+      });
+    }
+
+    // Send order issue notification if status changed to cancelled or payment failed
+    if ((body.status === 'cancelled' || body.payment_status === 'failed') && order) {
+      const issueType = body.status === 'cancelled' ? 'Order Cancelled' : 'Payment Failed';
+      const details = body.status === 'cancelled' 
+        ? `Order ${order.order_number} was cancelled.`
+        : `Payment failed for order ${order.order_number}.`;
+
+      notifyAdminsOrderIssue({
+        id: order.id,
+        order_number: order.order_number,
+        issue_type: issueType,
+        details,
+      }).catch(err => {
+        console.error('Failed to send order issue notification:', err);
+      });
     }
 
     return NextResponse.json({ order, emailSent });

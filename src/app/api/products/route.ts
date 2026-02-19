@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, createServerClient } from '@/lib/supabase';
 import type { ProductInsert } from '@/lib/database.types';
+import { appCache, CacheKeys, CacheTTL, CacheInvalidation } from '@/lib/cache';
 
 // GET /api/products - List all products
 export async function GET(request: NextRequest) {
@@ -14,6 +15,22 @@ export async function GET(request: NextRequest) {
     const productType = searchParams.get('type');
     const tag = searchParams.get('tag');
     const includeAll = searchParams.get('include_all') === 'true'; // Admin flag to include all products
+    const noCache = searchParams.get('no_cache') === 'true'; // Skip cache for admin operations
+
+    // Generate cache key based on query parameters
+    const cacheKey = `products:list:${JSON.stringify({
+      collection, featured, limit, offset, search, productType, tag, includeAll
+    })}`;
+
+    // Check cache first (unless noCache is set or admin is requesting all)
+    if (!noCache && !includeAll) {
+      const cached = appCache.get<any>(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: { 'X-Cache': 'HIT' }
+        });
+      }
+    }
 
     let query = supabase
       .from('products')
@@ -85,11 +102,21 @@ export async function GET(request: NextRequest) {
     // Apply pagination after filtering
     const paginatedProducts = filteredProducts.slice(offset, offset + limit);
 
-    return NextResponse.json({
+    const response = {
       products: paginatedProducts,
       total: filteredProducts.length,
       limit,
       offset
+    };
+
+    // Cache the response (shorter TTL for search results)
+    if (!includeAll) {
+      const ttl = search ? CacheTTL.SHORT : CacheTTL.MEDIUM;
+      appCache.set(cacheKey, response, ttl);
+    }
+
+    return NextResponse.json(response, {
+      headers: { 'X-Cache': 'MISS' }
     });
   } catch (error) {
     console.error('Products API error:', error);
@@ -205,6 +232,9 @@ export async function POST(request: NextRequest) {
       `)
       .eq('id', product.id)
       .single();
+
+    // Invalidate product caches
+    CacheInvalidation.products();
 
     return NextResponse.json({ product: completeProduct }, { status: 201 });
   } catch (error) {
