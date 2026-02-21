@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS social_calendars (
   description TEXT,
   color VARCHAR(7) DEFAULT '#db2777',
   is_active BOOLEAN DEFAULT true,
-  created_by UUID NOT NULL,
+  created_by UUID NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

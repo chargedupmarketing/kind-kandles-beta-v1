@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
 
-async function getCurrentAdmin(): Promise<{ id: string; email: string; name?: string } | null> {
+async function getCurrentAdmin(): Promise<{ id: string; email: string } | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('admin-token')?.value;
@@ -19,7 +19,6 @@ async function getCurrentAdmin(): Promise<{ id: string; email: string; name?: st
     return {
       id: payload.userId as string,
       email: payload.email as string,
-      name: payload.name as string | undefined,
     };
   } catch (error) {
     return null;
@@ -98,43 +97,40 @@ export async function PUT(
       return NextResponse.json({ error: 'Failed to update post' }, { status: 500 });
     }
 
-    // Send notifications for status changes
+    // Send notifications for status changes (non-blocking)
     if (currentPost && currentPost.status !== status) {
-      if (status === 'scheduled') {
-        await supabase.from('notifications').insert({
-          user_id: currentPost.created_by,
-          type: 'social_post_scheduled',
-          title: 'Post Scheduled',
-          message: `Your post "${title}" is scheduled for publishing`,
-          metadata: {
-            post_id: id,
-            calendar_id: currentPost.calendar_id,
-            scheduled_date: scheduled_date,
-          },
-        });
-      } else if (status === 'published') {
-        await supabase.from('notifications').insert({
-          user_id: currentPost.created_by,
-          type: 'social_post_published',
-          title: 'Post Published',
-          message: `Your post "${title}" has been published successfully!`,
-          metadata: {
-            post_id: id,
-            calendar_id: currentPost.calendar_id,
-            post_url: post_url,
-          },
-        });
-      } else if (status === 'failed') {
-        await supabase.from('notifications').insert({
-          user_id: currentPost.created_by,
-          type: 'social_post_failed',
-          title: 'Post Failed',
-          message: `Your post "${title}" failed to publish. Please check and try again.`,
-          metadata: {
-            post_id: id,
-            calendar_id: currentPost.calendar_id,
-          },
-        });
+      try {
+        let notifPayload: any = null;
+        if (status === 'scheduled') {
+          notifPayload = {
+            user_id: currentPost.created_by,
+            type: 'social_post_scheduled',
+            title: 'Post Scheduled',
+            message: `Your post "${title}" is scheduled for publishing`,
+            metadata: { post_id: id, calendar_id: currentPost.calendar_id, scheduled_date },
+          };
+        } else if (status === 'published') {
+          notifPayload = {
+            user_id: currentPost.created_by,
+            type: 'social_post_published',
+            title: 'Post Published',
+            message: `Your post "${title}" has been published successfully!`,
+            metadata: { post_id: id, calendar_id: currentPost.calendar_id, post_url },
+          };
+        } else if (status === 'failed') {
+          notifPayload = {
+            user_id: currentPost.created_by,
+            type: 'social_post_failed',
+            title: 'Post Failed',
+            message: `Your post "${title}" failed to publish. Please check and try again.`,
+            metadata: { post_id: id, calendar_id: currentPost.calendar_id },
+          };
+        }
+        if (notifPayload) {
+          await supabase.from('notifications').insert(notifPayload);
+        }
+      } catch (notifError) {
+        console.error('Notification insert failed (non-blocking):', notifError);
       }
     }
 

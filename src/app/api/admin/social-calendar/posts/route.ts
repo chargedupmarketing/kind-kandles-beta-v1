@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secure-jwt-secret-at-least-32-characters-long';
 
-async function getCurrentAdmin(): Promise<{ id: string; email: string; name?: string } | null> {
+async function getCurrentAdmin(): Promise<{ id: string; email: string } | null> {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('admin-token')?.value;
@@ -19,7 +19,6 @@ async function getCurrentAdmin(): Promise<{ id: string; email: string; name?: st
     return {
       id: payload.userId as string,
       email: payload.email as string,
-      name: payload.name as string | undefined,
     };
   } catch (error) {
     return null;
@@ -121,6 +120,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerClient();
 
+    // Look up admin name
+    const { data: adminUser } = await supabase
+      .from('admin_users')
+      .select('first_name, last_name')
+      .eq('id', admin.id)
+      .single();
+    const adminName = adminUser
+      ? [adminUser.first_name, adminUser.last_name].filter(Boolean).join(' ') || admin.email
+      : admin.email;
+
     // Create post
     const { data: post, error: postError } = await supabase
       .from('social_posts')
@@ -136,7 +145,7 @@ export async function POST(request: NextRequest) {
         location: location || null,
         notes: notes || null,
         created_by: admin.id,
-        created_by_name: admin.name || admin.email,
+        created_by_name: adminName,
       })
       .select()
       .single();
@@ -156,19 +165,22 @@ export async function POST(request: NextRequest) {
 
       await supabase.from('social_post_collaborators').insert(collaboratorInserts);
 
-      // Notify collaborators
       for (const collab of collaborators) {
-        await supabase.from('notifications').insert({
-          user_id: collab.user_id,
-          type: 'social_post_collaboration',
-          title: 'Added to Social Post',
-          message: `You've been added as a collaborator on "${title}"`,
-          metadata: {
-            post_id: post.id,
-            calendar_id: calendar_id,
-            added_by: admin.id,
-          },
-        });
+        try {
+          await supabase.from('notifications').insert({
+            user_id: collab.user_id,
+            type: 'social_post_collaboration',
+            title: 'Added to Social Post',
+            message: `You've been added as a collaborator on "${title}"`,
+            metadata: {
+              post_id: post.id,
+              calendar_id: calendar_id,
+              added_by: admin.id,
+            },
+          });
+        } catch (notifError) {
+          console.error('Notification insert failed (non-blocking):', notifError);
+        }
       }
     }
 
