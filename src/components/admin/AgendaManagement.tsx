@@ -608,6 +608,58 @@ export default function AgendaManagementEnhanced() {
     }
   };
 
+  const populateFormForEdit = (item: AgendaItem) => {
+    setFormData({
+      title: item.title,
+      description: item.description || '',
+      type: item.type,
+      priority: item.priority,
+      due_date: item.due_date ? new Date(item.due_date).toISOString().split('T')[0] : '',
+      start_date: item.start_date ? new Date(item.start_date).toISOString().split('T')[0] : '',
+      assigned_to: item.assigned_to || user?.id || '',
+      tags: item.tags?.join(', ') || '',
+      tag_ids: item.item_tags?.map(t => t.id) || [],
+      notes: item.notes || '',
+      notify_on_due: item.notify_on_due,
+      notify_on_update: item.notify_on_update,
+      estimated_hours: item.estimated_hours ? String(item.estimated_hours) : '',
+      color: item.color || '#3b82f6',
+      subtasks: [],
+      recurrence: item.recurrence_pattern
+        ? { enabled: true, type: item.recurrence_pattern.type || 'daily', interval: item.recurrence_pattern.interval || 1, end_date: item.recurrence_pattern.end_date || '' }
+        : { enabled: false, type: 'daily', interval: 1, end_date: '' },
+    });
+    setEditingId(item.id);
+  };
+
+  const handleEditSave = async () => {
+    if (!editingId || !formData.title.trim()) {
+      showError('Title is required');
+      return;
+    }
+
+    const recurrencePattern = formData.recurrence.enabled ? {
+      type: formData.recurrence.type,
+      interval: formData.recurrence.interval,
+      end_date: formData.recurrence.end_date || null,
+    } : null;
+
+    await handleUpdateItem(editingId, {
+      title: formData.title,
+      description: formData.description,
+      type: formData.type,
+      priority: formData.priority,
+      due_date: formData.due_date || null,
+      start_date: formData.start_date || null,
+      assigned_to: formData.assigned_to,
+      tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+      notes: formData.notes,
+      notify_on_due: formData.notify_on_due,
+      notify_on_update: formData.notify_on_update,
+    } as any);
+    resetForm();
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -1128,14 +1180,41 @@ export default function AgendaManagementEnhanced() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      {/* Quick Status Buttons */}
+                      {item.status !== 'completed' && (
+                        <button
+                          onClick={() => handleUpdateItem(item.id, {
+                            status: item.status === 'pending' ? 'in_progress' : 'completed',
+                            ...(item.status === 'in_progress' ? { completed_at: new Date().toISOString() } : {}),
+                          } as any)}
+                          className={`p-2 rounded-lg transition-colors ${
+                            item.status === 'pending'
+                              ? 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                              : 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20'
+                          }`}
+                          title={item.status === 'pending' ? 'Start' : 'Complete'}
+                        >
+                          {item.status === 'pending' ? <PlayCircle className="h-5 w-5" /> : <CheckCircle className="h-5 w-5" />}
+                        </button>
+                      )}
+                      {item.status === 'completed' && (
+                        <button
+                          onClick={() => handleUpdateItem(item.id, { status: 'pending', completed_at: null } as any)}
+                          className="p-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                          title="Reopen"
+                        >
+                          <Circle className="h-5 w-5" />
+                        </button>
+                      )}
+                      {/* Timer */}
                       {!hasTimer ? (
                         <button
                           onClick={() => handleStartTimer(item.id)}
                           className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                           title="Start Timer"
                         >
-                          <PlayCircle className="h-5 w-5" />
+                          <Timer className="h-4 w-4" />
                         </button>
                       ) : (
                         <button
@@ -1147,20 +1226,35 @@ export default function AgendaManagementEnhanced() {
                         </button>
                       )}
                       <button
-                        onClick={() => setEditingId(item.id)}
+                        onClick={() => populateFormForEdit(item)}
                         className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                         title="Edit"
                       >
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteItem(item.id)}
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this agenda item?')) {
+                            handleDeleteItem(item.id);
+                          }
+                        }}
                         className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                      <button
+                        onClick={() => {
+                          setExpandedId(isExpanded ? null : item.id);
+                          if (!isExpanded) {
+                            fetchSubtasks(item.id);
+                            fetchAttachments(item.id);
+                            fetchTimeLogs(item.id);
+                            if (!item.comments) fetchComments(item.id);
+                          }
+                        }}
+                        className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      >
                         <ChevronDown className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </button>
                     </div>
@@ -1773,6 +1867,195 @@ export default function AgendaManagementEnhanced() {
               >
                 <Save className="h-4 w-4" />
                 Create Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Item Modal */}
+      {editingId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 sticky top-0 bg-white dark:bg-gray-800 z-10">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  Edit Agenda Item
+                </h2>
+                <button
+                  onClick={() => { setEditingId(null); resetForm(); }}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Title *</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="task">Task</option>
+                    <option value="note">Note</option>
+                    <option value="reminder">Reminder</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Priority</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
+                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
+                  <input
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-full h-10 rounded-lg cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estimated Hours</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={formData.estimated_hours}
+                    onChange={(e) => setFormData({ ...formData, estimated_hours: e.target.value })}
+                    className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {allTags.map(tag => (
+                    <button
+                      key={tag.id}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          tag_ids: prev.tag_ids.includes(tag.id)
+                            ? prev.tag_ids.filter(id => id !== tag.id)
+                            : [...prev.tag_ids, tag.id]
+                        }));
+                      }}
+                      className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
+                        formData.tag_ids.includes(tag.id) ? 'ring-2 ring-offset-2 ring-teal-500' : ''
+                      }`}
+                      style={{ backgroundColor: `${tag.color}30`, color: tag.color }}
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Internal Notes</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-teal-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.notify_on_due}
+                    onChange={(e) => setFormData({ ...formData, notify_on_due: e.target.checked })}
+                    className="rounded text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    <Bell className="h-4 w-4 inline mr-1" />
+                    Notify on due date
+                  </span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.notify_on_update}
+                    onChange={(e) => setFormData({ ...formData, notify_on_update: e.target.checked })}
+                    className="rounded text-teal-600 focus:ring-teal-500"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    <Bell className="h-4 w-4 inline mr-1" />
+                    Notify on updates
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3 sticky bottom-0 bg-white dark:bg-gray-800">
+              <button
+                onClick={() => { setEditingId(null); resetForm(); }}
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditSave}
+                className="flex items-center gap-2 px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+              >
+                <Save className="h-4 w-4" />
+                Save Changes
               </button>
             </div>
           </div>
