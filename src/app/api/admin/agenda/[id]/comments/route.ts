@@ -156,7 +156,7 @@ export async function POST(
       id: newComment.id,
       agenda_item_id: newComment.agenda_item_id,
       user_id: newComment.user_id,
-      user_name: newComment.user?.name || newComment.user?.email || 'Unknown',
+      user_name: [newComment.user?.first_name, newComment.user?.last_name].filter(Boolean).join(' ') || newComment.user?.email || 'Unknown',
       comment: newComment.comment,
       created_at: newComment.created_at,
     };

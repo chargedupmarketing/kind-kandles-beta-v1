@@ -168,7 +168,7 @@ DECLARE
   v_user_name VARCHAR(255);
 BEGIN
   -- Get user name
-  SELECT name INTO v_user_name FROM admin_users WHERE id = auth.uid();
+  SELECT COALESCE(first_name || ' ' || last_name, email) INTO v_user_name FROM admin_users WHERE id = COALESCE(auth.uid(), NEW.created_by);
 
   -- Log creation
   IF TG_OP = 'INSERT' THEN

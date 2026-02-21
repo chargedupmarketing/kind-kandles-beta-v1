@@ -45,7 +45,7 @@ export async function GET(
 
     const { data: subtasks, error } = await supabase
       .from('agenda_subtasks')
-      .select('*, completed_by_user:admin_users!agenda_subtasks_completed_by_fkey(name)')
+      .select('*, completed_by_user:admin_users!agenda_subtasks_completed_by_fkey(first_name, last_name)')
       .eq('agenda_item_id', id)
       .order('position', { ascending: true });
 
