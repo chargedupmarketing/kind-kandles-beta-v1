@@ -209,14 +209,18 @@ export async function POST(request: NextRequest) {
       })
       .select(`
         *,
-        assigned_to_user:admin_users!agenda_items_assigned_to_fkey(id, email, name),
-        created_by_user:admin_users!agenda_items_created_by_fkey(id, email, name)
+        assigned_to_user:admin_users!agenda_items_assigned_to_fkey(id, email, first_name, last_name),
+        created_by_user:admin_users!agenda_items_created_by_fkey(id, email, first_name, last_name)
       `)
       .single();
 
     if (error) {
       console.error('Error creating agenda item:', error);
-      return NextResponse.json({ error: 'Failed to create agenda item' }, { status: 500 });
+      const message =
+        error.code === '23503'
+          ? 'Invalid assignee or creator: ensure the user exists in admin users.'
+          : error.message || 'Failed to create agenda item';
+      return NextResponse.json({ error: message, details: error.code }, { status: 500 });
     }
 
     // Create subtasks if provided
