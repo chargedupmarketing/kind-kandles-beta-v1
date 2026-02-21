@@ -486,6 +486,38 @@ export default function SocialCalendar() {
     }
   };
 
+  const getWeekDays = () => {
+    const date = new Date(currentDate);
+    const day = date.getDay();
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      days.push(d);
+    }
+    return days;
+  };
+
+  const getHoursOfDay = () => {
+    return Array.from({ length: 24 }, (_, i) => i);
+  };
+
+  const getPostsForDateHour = (date: Date, hour: number) => {
+    return posts.filter(post => {
+      const postDate = new Date(post.scheduled_date);
+      return (
+        postDate.getFullYear() === date.getFullYear() &&
+        postDate.getMonth() === date.getMonth() &&
+        postDate.getDate() === date.getDate() &&
+        postDate.getHours() === hour
+      );
+    });
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -759,6 +791,65 @@ export default function SocialCalendar() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Week View */}
+          {viewMode === 'week' && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              {/* Day Headers */}
+              <div className="grid grid-cols-[80px_repeat(7,1fr)] bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <div className="p-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Time</div>
+                {getWeekDays().map((day, index) => {
+                  const isToday = day.toDateString() === new Date().toDateString();
+                  return (
+                    <div key={index} className={`p-3 text-center border-l border-gray-200 dark:border-gray-700 ${isToday ? 'bg-purple-50 dark:bg-purple-900/20' : ''}`}>
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </div>
+                      <div className={`text-lg font-bold ${isToday ? 'text-purple-600' : 'text-gray-900 dark:text-white'}`}>
+                        {day.getDate()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Time Slots */}
+              <div className="max-h-[600px] overflow-y-auto">
+                {getHoursOfDay().filter(h => h >= 6 && h <= 23).map(hour => (
+                  <div key={hour} className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-gray-100 dark:border-gray-700/50 min-h-[60px]">
+                    <div className="p-2 text-xs text-gray-500 dark:text-gray-400 text-right pr-3 pt-1 border-r border-gray-200 dark:border-gray-700">
+                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                    </div>
+                    {getWeekDays().map((day, dayIndex) => {
+                      const hourPosts = getPostsForDateHour(day, hour);
+                      const isToday = day.toDateString() === new Date().toDateString();
+                      return (
+                        <div
+                          key={dayIndex}
+                          className={`p-1 border-l border-gray-100 dark:border-gray-700/50 ${isToday ? 'bg-purple-50/30 dark:bg-purple-900/10' : ''}`}
+                        >
+                          {hourPosts.map(post => {
+                            const statusColor = getStatusColor(post.status);
+                            return (
+                              <div
+                                key={post.id}
+                                onClick={() => setEditingPost(post)}
+                                className={`text-xs p-1.5 rounded cursor-pointer mb-1 bg-${statusColor}-100 dark:bg-${statusColor}-900/30 text-${statusColor}-700 dark:text-${statusColor}-300 hover:bg-${statusColor}-200 dark:hover:bg-${statusColor}-900/50 transition-colors truncate`}
+                                title={`${post.title} - ${formatTime(post.scheduled_date)}`}
+                              >
+                                {post.title}
+                                {post.is_recurring && <Repeat className="h-3 w-3 inline ml-1" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
