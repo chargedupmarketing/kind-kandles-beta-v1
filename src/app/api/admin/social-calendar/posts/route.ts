@@ -25,6 +25,69 @@ async function getCurrentAdmin(): Promise<{ id: string; email: string } | null> 
   }
 }
 
+function generateRecurrenceDates(
+  startDate: Date,
+  pattern: { type: string; interval: number; days_of_week?: number[]; end_date?: string | null; occurrences?: number | null }
+): Date[] {
+  const dates: Date[] = [];
+  const maxOccurrences = pattern.occurrences || 52; // default cap at 52
+  const endDate = pattern.end_date ? new Date(pattern.end_date) : null;
+  const maxFuture = new Date();
+  maxFuture.setFullYear(maxFuture.getFullYear() + 1); // never generate more than 1 year out
+
+  let current = new Date(startDate);
+
+  for (let i = 0; i < maxOccurrences; i++) {
+    // Advance to next occurrence
+    switch (pattern.type) {
+      case 'daily':
+        current = new Date(current);
+        current.setDate(current.getDate() + pattern.interval);
+        break;
+      case 'weekly':
+        current = new Date(current);
+        current.setDate(current.getDate() + 7 * pattern.interval);
+        break;
+      case 'biweekly':
+        current = new Date(current);
+        current.setDate(current.getDate() + 14);
+        break;
+      case 'monthly':
+        current = new Date(current);
+        current.setMonth(current.getMonth() + pattern.interval);
+        break;
+      case 'custom_days': {
+        // Post on specific days of the week
+        const daysOfWeek = pattern.days_of_week || [];
+        if (daysOfWeek.length === 0) break;
+        current = new Date(current);
+        let found = false;
+        for (let d = 1; d <= 7; d++) {
+          const next = new Date(current);
+          next.setDate(next.getDate() + d);
+          if (daysOfWeek.includes(next.getDay())) {
+            current = next;
+            found = true;
+            break;
+          }
+        }
+        if (!found) break;
+        break;
+      }
+      default:
+        current = new Date(current);
+        current.setDate(current.getDate() + 7);
+    }
+
+    if (endDate && current > endDate) break;
+    if (current > maxFuture) break;
+
+    dates.push(new Date(current));
+  }
+
+  return dates;
+}
+
 // GET - Fetch social posts for a calendar
 export async function GET(request: NextRequest) {
   try {
@@ -109,6 +172,7 @@ export async function POST(request: NextRequest) {
       location,
       notes,
       collaborators,
+      recurrence,
     } = body;
 
     if (!calendar_id || !title || !content || !scheduled_date) {
@@ -130,7 +194,16 @@ export async function POST(request: NextRequest) {
       ? [adminUser.first_name, adminUser.last_name].filter(Boolean).join(' ') || admin.email
       : admin.email;
 
-    // Create post
+    const isRecurring = recurrence?.enabled === true;
+    const recurrencePattern = isRecurring ? {
+      type: recurrence.type,
+      interval: recurrence.interval || 1,
+      days_of_week: recurrence.days_of_week || [],
+      end_date: recurrence.end_date || null,
+      occurrences: recurrence.occurrences || null,
+    } : null;
+
+    // Create the parent post
     const { data: post, error: postError } = await supabase
       .from('social_posts')
       .insert({
@@ -146,6 +219,9 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         created_by: admin.id,
         created_by_name: adminName,
+        is_recurring: isRecurring,
+        recurrence_pattern: recurrencePattern,
+        recurrence_index: isRecurring ? 0 : null,
       })
       .select()
       .single();
@@ -155,13 +231,57 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
     }
 
+    // Generate recurring child posts
+    let childPosts: any[] = [];
+    if (isRecurring && recurrencePattern) {
+      const dates = generateRecurrenceDates(
+        new Date(scheduled_date),
+        recurrencePattern
+      );
+
+      if (dates.length > 0) {
+        const childInserts = dates.map((date, index) => ({
+          calendar_id,
+          title,
+          content,
+          media_urls: media_urls || [],
+          scheduled_date: date.toISOString(),
+          status: status || 'draft',
+          hashtags: hashtags || [],
+          mentions: mentions || [],
+          location: location || null,
+          notes: notes || null,
+          created_by: admin.id,
+          created_by_name: adminName,
+          is_recurring: true,
+          recurrence_pattern: recurrencePattern,
+          recurrence_parent_id: post.id,
+          recurrence_index: index + 1,
+        }));
+
+        const { data: children, error: childError } = await supabase
+          .from('social_posts')
+          .insert(childInserts)
+          .select();
+
+        if (childError) {
+          console.error('Error creating recurring child posts:', childError);
+        } else {
+          childPosts = children || [];
+        }
+      }
+    }
+
     // Add collaborators if provided
     if (collaborators && collaborators.length > 0) {
-      const collaboratorInserts = collaborators.map((collab: any) => ({
-        post_id: post.id,
-        user_id: collab.user_id,
-        user_name: collab.user_name,
-      }));
+      const allPostIds = [post.id, ...childPosts.map((c: any) => c.id)];
+      const collaboratorInserts = allPostIds.flatMap((postId: string) =>
+        collaborators.map((collab: any) => ({
+          post_id: postId,
+          user_id: collab.user_id,
+          user_name: collab.user_name,
+        }))
+      );
 
       await supabase.from('social_post_collaborators').insert(collaboratorInserts);
 
@@ -184,7 +304,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ post });
+    return NextResponse.json({
+      post,
+      recurring_posts_created: childPosts.length,
+    });
   } catch (error) {
     console.error('Error in POST /api/admin/social-calendar/posts:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

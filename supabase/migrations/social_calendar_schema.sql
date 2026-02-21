@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS social_posts (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Add recurrence columns to social_posts
+ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT false;
+ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS recurrence_pattern JSONB;
+ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS recurrence_parent_id UUID REFERENCES social_posts(id) ON DELETE CASCADE;
+ALTER TABLE social_posts ADD COLUMN IF NOT EXISTS recurrence_index INTEGER;
+
+CREATE INDEX IF NOT EXISTS idx_social_posts_recurrence_parent ON social_posts(recurrence_parent_id);
+
 -- ============================================================================
 -- Table: social_post_collaborators
 -- Track who can edit specific posts

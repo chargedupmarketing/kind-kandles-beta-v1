@@ -32,6 +32,7 @@ import {
   Copy,
   ExternalLink,
   Sparkles,
+  Repeat,
 } from 'lucide-react';
 
 interface SocialCalendar {
@@ -67,6 +68,16 @@ interface SocialPost {
   published_by?: string;
   created_at: string;
   updated_at: string;
+  is_recurring?: boolean;
+  recurrence_pattern?: {
+    type: string;
+    interval: number;
+    days_of_week?: number[];
+    end_date?: string | null;
+    occurrences?: number | null;
+  } | null;
+  recurrence_parent_id?: string | null;
+  recurrence_index?: number | null;
   calendar?: {
     name: string;
     platform: string;
@@ -126,6 +137,14 @@ export default function SocialCalendar() {
     mentions: '',
     location: '',
     notes: '',
+    recurrence: {
+      enabled: false,
+      type: 'weekly' as string,
+      interval: 1,
+      days_of_week: [] as number[],
+      end_date: '',
+      occurrences: '',
+    },
   });
 
   useEffect(() => {
@@ -244,6 +263,14 @@ export default function SocialCalendar() {
           mentions: newPost.mentions.split(',').map(m => m.trim()).filter(Boolean),
           location: newPost.location || null,
           notes: newPost.notes || null,
+          recurrence: newPost.recurrence.enabled ? {
+            enabled: true,
+            type: newPost.recurrence.type,
+            interval: newPost.recurrence.interval,
+            days_of_week: newPost.recurrence.days_of_week,
+            end_date: newPost.recurrence.end_date || null,
+            occurrences: newPost.recurrence.occurrences ? parseInt(newPost.recurrence.occurrences) : null,
+          } : undefined,
         }),
       });
 
@@ -260,6 +287,14 @@ export default function SocialCalendar() {
           mentions: '',
           location: '',
           notes: '',
+          recurrence: {
+            enabled: false,
+            type: 'weekly',
+            interval: 1,
+            days_of_week: [],
+            end_date: '',
+            occurrences: '',
+          },
         });
         fetchPosts();
       } else {
@@ -774,6 +809,12 @@ export default function SocialCalendar() {
                               <span className={`px-2 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 dark:bg-${statusColor}-900/30 text-${statusColor}-700 dark:text-${statusColor}-300`}>
                                 {post.status}
                               </span>
+                              {post.is_recurring && (
+                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">
+                                  <Repeat className="h-3 w-3 inline mr-1" />
+                                  Recurring
+                                </span>
+                              )}
                             </div>
                             <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                               {post.content}
@@ -1094,6 +1135,158 @@ export default function SocialCalendar() {
                   className="w-full px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+
+              {/* Recurring Post Settings */}
+              {!editingPost && (
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <input
+                      type="checkbox"
+                      checked={newPost.recurrence.enabled}
+                      onChange={(e) => setNewPost({
+                        ...newPost,
+                        recurrence: { ...newPost.recurrence, enabled: e.target.checked }
+                      })}
+                      className="rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <Repeat className="h-4 w-4 inline mr-1" />
+                      Make this a recurring post
+                    </label>
+                  </div>
+                  {newPost.recurrence.enabled && (
+                    <div className="space-y-4 mt-3">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Frequency
+                          </label>
+                          <select
+                            value={newPost.recurrence.type}
+                            onChange={(e) => setNewPost({
+                              ...newPost,
+                              recurrence: { ...newPost.recurrence, type: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Every 2 Weeks</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="custom_days">Specific Days of Week</option>
+                          </select>
+                        </div>
+                        {(newPost.recurrence.type === 'daily' || newPost.recurrence.type === 'weekly' || newPost.recurrence.type === 'monthly') && (
+                          <div>
+                            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                              Every
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="number"
+                                min="1"
+                                max="30"
+                                value={newPost.recurrence.interval}
+                                onChange={(e) => setNewPost({
+                                  ...newPost,
+                                  recurrence: { ...newPost.recurrence, interval: parseInt(e.target.value) || 1 }
+                                })}
+                                className="w-20 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                              />
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {newPost.recurrence.type === 'daily' ? 'day(s)' : newPost.recurrence.type === 'weekly' ? 'week(s)' : 'month(s)'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {newPost.recurrence.type === 'custom_days' && (
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                            Post on these days
+                          </label>
+                          <div className="flex gap-2">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                              <button
+                                key={day}
+                                onClick={() => {
+                                  const days = newPost.recurrence.days_of_week.includes(index)
+                                    ? newPost.recurrence.days_of_week.filter(d => d !== index)
+                                    : [...newPost.recurrence.days_of_week, index];
+                                  setNewPost({
+                                    ...newPost,
+                                    recurrence: { ...newPost.recurrence, days_of_week: days }
+                                  });
+                                }}
+                                className={`w-10 h-10 rounded-full text-xs font-medium transition-all ${
+                                  newPost.recurrence.days_of_week.includes(index)
+                                    ? 'bg-purple-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
+                              >
+                                {day}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            End Date (optional)
+                          </label>
+                          <input
+                            type="date"
+                            value={newPost.recurrence.end_date}
+                            onChange={(e) => setNewPost({
+                              ...newPost,
+                              recurrence: { ...newPost.recurrence, end_date: e.target.value }
+                            })}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Max Occurrences (optional)
+                          </label>
+                          <input
+                            type="number"
+                            min="2"
+                            max="52"
+                            value={newPost.recurrence.occurrences}
+                            onChange={(e) => setNewPost({
+                              ...newPost,
+                              recurrence: { ...newPost.recurrence, occurrences: e.target.value }
+                            })}
+                            placeholder="e.g. 12"
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-purple-700 dark:text-purple-300">
+                        Individual posts will be created for each occurrence. You can edit or delete any single instance.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Recurring badge for editing */}
+              {editingPost?.is_recurring && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <Repeat className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm text-purple-700 dark:text-purple-300">
+                    This is a recurring post
+                    {editingPost.recurrence_parent_id ? ' (instance)' : ' (parent)'}
+                    {editingPost.recurrence_index !== null && editingPost.recurrence_index !== undefined
+                      ? ` - #${editingPost.recurrence_index + 1}`
+                      : ''}
+                  </span>
+                </div>
+              )}
 
               {/* Notes */}
               <div>
